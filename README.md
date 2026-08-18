@@ -27,6 +27,8 @@ parties accept it; a single refusal escalates to a human reviewer.
 apps/web         Landing page and interactive walkthrough (React 19 + Vite)
 packages/core    Domain logic: money, transaction and dispute lifecycles,
                  AI resolution contract. Pure TypeScript, no framework.
+packages/ai      Dispute resolution pipeline: prompt, model call, validation,
+                 escalation, audit trail.
 supabase/        Postgres schema, migrations and SQL test suite
 ```
 
@@ -67,6 +69,13 @@ publishing, so a failing domain test blocks release.
   talk the database into an illegal move. `schema-parity.test.ts` parses the
   migrations and fails if the two copies disagree. Change a transition on one side
   and you must change it on the other. See [supabase/README.md](supabase/README.md).
+- **The model never computes money.** It returns a whole percentage to the seller
+  and `splitByPercent` derives the fils, so no model output can lose or invent a
+  fil. Judgment is the model's job; arithmetic is the code's.
+- **Nothing the model returns reaches a party unvalidated.** Refusals, truncation,
+  malformed output, hallucinated evidence citations, and low confidence all route
+  to a human reviewer instead. Every run is written to the audit trail, failures
+  included.
 
 ## Status
 
