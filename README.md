@@ -27,6 +27,7 @@ parties accept it; a single refusal escalates to a human reviewer.
 apps/web         Landing page and interactive walkthrough (React 19 + Vite)
 packages/core    Domain logic: money, transaction and dispute lifecycles,
                  AI resolution contract. Pure TypeScript, no framework.
+supabase/        Postgres schema, migrations and SQL test suite
 ```
 
 `packages/core` is deliberately framework-free so the same rules run unchanged in the
@@ -39,14 +40,16 @@ Run from the repository root.
 ```bash
 npm install      # install all workspaces
 npm run dev      # local dev server for the web app
-npm test         # domain test suite
+npm test         # domain test suite (93 tests)
+npm run test:db  # schema test suite against a throwaway Postgres (needs Docker)
 npm run typecheck
 npm run lint
 npm run build    # build core, then the web app into apps/web/dist
 ```
 
-CI runs lint, typecheck, tests and build on every pull request. The GitHub Pages
-deploy runs the same gate before publishing, so a failing domain test blocks release.
+CI runs lint, typecheck, tests and build on every pull request, plus the schema
+suite in a second job. The GitHub Pages deploy runs the same gate before
+publishing, so a failing domain test blocks release.
 
 ## Domain rules worth knowing before changing code
 
@@ -60,12 +63,16 @@ deploy runs the same gate before publishing, so a failing domain test blocks rel
 - **The model's output is never trusted.** `validateProposal` rejects allocations
   that do not balance, decisions contradicting their own allocation, and findings
   citing evidence nobody submitted.
+- **These rules exist twice on purpose**, in TypeScript and in SQL, so no client can
+  talk the database into an illegal move. `schema-parity.test.ts` parses the
+  migrations and fails if the two copies disagree. Change a transition on one side
+  and you must change it on the other. See [supabase/README.md](supabase/README.md).
 
 ## Status
 
-The landing page is live and reflects the product honestly. The domain layer is built
-and tested. Not yet built: backend, authentication, identity verification, the mobile
-app, and escrow.
+The landing page is live and reflects the product honestly, with escrow visibly
+dated to v2. The domain layer and the database schema are built and tested. Not yet
+built: the application backend, evidence storage, the mobile app, and escrow.
 
 ## Roadmap
 

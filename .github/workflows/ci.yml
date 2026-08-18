@@ -19,3 +19,12 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Applies every migration to a throwaway Postgres and runs the SQL
+      # assertions: RLS coverage, state machine guards, money invariants,
+      # append-only audit trail.
+      - run: npm run test:db

@@ -12,6 +12,7 @@
     "preview": "npm run preview -w @trustiq/web",
     "lint": "oxlint",
     "test": "npm run test -w @trustiq/core",
+    "test:db": "bash scripts/db-test.sh",
     "typecheck": "npm run typecheck -w @trustiq/core"
   },
   "devDependencies": {
