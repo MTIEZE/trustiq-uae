@@ -46,16 +46,21 @@ function Hero() {
         <span className="label">AI-Powered Trust Infrastructure</span>
         <h1>Secure transactions between strangers in the UAE</h1>
         <p className="hero-sub">
-          TrustIQ locks payment in escrow until both parties confirm the deal is complete.
-          If a dispute arises, an AI agent analyzes evidence and returns a structured resolution
-          in under 60 seconds.
+          TrustIQ turns a handshake between strangers into a tracked contract: agreed terms,
+          timestamped evidence, and a delivery both sides can follow. When something goes wrong,
+          an AI agent reads the evidence and proposes a fair resolution in under 60 seconds.
         </p>
         <a href="#how-it-works" className="hero-cta">See How It Works</a>
         <div className="hero-pills">
-          <span className="pill"><span className="pill-dot"></span>Escrow Protection</span>
+          <span className="pill"><span className="pill-dot"></span>Digital Contracts</span>
+          <span className="pill"><span className="pill-dot"></span>Timestamped Evidence</span>
           <span className="pill"><span className="pill-dot"></span>AI Dispute Resolution</span>
-          <span className="pill"><span className="pill-dot"></span>Under 60s Response</span>
+          <span className="pill upcoming"><span className="pill-dot"></span>Escrow · v2</span>
         </div>
+        <p className="hero-note">
+          Escrow, where payment is held until both parties confirm, ships in v2 with a licensed
+          UAE payment partner. Everything else is what TrustIQ does today.
+        </p>
       </div>
     </section>
   )
@@ -159,7 +164,8 @@ function HowItWorks() {
       title: 'Payment is locked in escrow',
       subtitle: 'ESCROW',
       icon: '🔒',
-      description: 'Once both parties sign, the buyer\'s payment (500 AED) is locked in TrustIQ escrow. The seller can start working, knowing the money is secured. The buyer knows the money won\'t be released until the job is done.',
+      phase: 'v2',
+      description: 'Once both parties sign, the buyer\'s payment (500 AED) is locked in TrustIQ escrow. The seller can start working, knowing the money is secured. The buyer knows the money won\'t be released until the job is done. Holding funds in the UAE requires a licensed partner, so this step ships in v2. In v1 the parties pay each other directly, and every other step below works exactly as shown.',
       visual: (
         <div className="step-visual">
           <div className="mock-card wide">
@@ -194,7 +200,7 @@ function HowItWorks() {
       title: 'Seller delivers, buyer confirms',
       subtitle: 'DELIVERY',
       icon: '✅',
-      description: 'The seller completes the work and marks the delivery as done. The buyer reviews and can either confirm satisfaction (releasing payment) or open a dispute if something is wrong.',
+      description: 'The seller completes the work and marks the delivery as done. The buyer reviews and can either confirm satisfaction, which closes the contract and clears payment, or open a dispute if something is wrong.',
       visual: (
         <div className="step-visual">
           <div className="mock-card wide">
@@ -235,10 +241,10 @@ function HowItWorks() {
     },
     {
       num: '05',
-      title: 'Dispute? AI resolves in 60 seconds',
+      title: 'Dispute? AI proposes a resolution in 60 seconds',
       subtitle: 'AI RESOLUTION',
       icon: '🧠',
-      description: 'If the buyer is not satisfied and opens a dispute, both parties submit their claims and evidence. TrustIQ\'s AI agent analyzes everything and returns a fair, structured resolution, no human mediator needed.',
+      description: 'If the buyer is not satisfied and opens a dispute, both parties submit their claims and evidence. TrustIQ\'s AI agent analyzes everything and proposes a structured resolution. The AI does not rule: the dispute closes only when both parties accept the proposal, and a single refusal sends the case to a human reviewer.',
       visual: (
         <div className="step-visual">
           <div className="mock-card wide ai-glow">
@@ -263,8 +269,9 @@ function HowItWorks() {
               <span className="ai-arrow">↓</span>
             </div>
             <div className="mini-verdict">
-              <div className="mock-field"><span className="mock-label">DECISION</span><span className="mock-value amber">Split Resolution</span></div>
-              <div className="mock-field"><span className="mock-label">ACTION</span><span className="mock-value">300 AED → Seller, 200 AED → Buyer</span></div>
+              <div className="mock-field"><span className="mock-label">PROPOSAL</span><span className="mock-value amber">Split Resolution</span></div>
+              <div className="mock-field"><span className="mock-label">ALLOCATION</span><span className="mock-value">300 AED → Seller, 200 AED → Buyer</span></div>
+              <div className="mock-field"><span className="mock-label">CLOSES WHEN</span><span className="mock-value">Both parties accept. Either can escalate to a human.</span></div>
             </div>
           </div>
         </div>
@@ -288,6 +295,7 @@ function HowItWorks() {
             >
               <span className="step-nav-num">{s.num}</span>
               <span className="step-nav-title">{s.subtitle}</span>
+              {s.phase === 'v2' && <span className="step-nav-phase">v2</span>}
             </button>
           ))}
         </div>
@@ -296,6 +304,9 @@ function HowItWorks() {
           <div className="step-info">
             <span className="label">{steps[activeStep].subtitle}</span>
             <h3>{steps[activeStep].icon} {steps[activeStep].title}</h3>
+            {steps[activeStep].phase === 'v2' && (
+              <span className="phase-banner">Ships in v2, once a licensed payment partner is in place</span>
+            )}
             <p>{steps[activeStep].description}</p>
             {activeStep < 4 && (
               <button className="step-next-btn" onClick={() => setActiveStep(activeStep + 1)}>
@@ -395,13 +406,13 @@ function VerdictCard({ resolution }) {
     <div className="verdict-card">
       <div className="verdict-header">
         <div className="verdict-header-left">
-          <span className="ai-badge"><span className="ai-badge-dot"></span>AI Resolution</span>
+          <span className="ai-badge"><span className="ai-badge-dot"></span>AI Proposal</span>
         </div>
-        <span className="verdict-time">Resolved in {resolution.resolvedIn}</span>
+        <span className="verdict-time">Drafted in {resolution.resolvedIn}</span>
       </div>
       <div className="verdict-body">
         <div className="verdict-field">
-          <div className="verdict-field-label">Decision</div>
+          <div className="verdict-field-label">Proposal</div>
           <div className="verdict-decision">{resolution.decision}</div>
         </div>
         <div className="verdict-field">
@@ -415,6 +426,13 @@ function VerdictCard({ resolution }) {
         <div className="verdict-field">
           <div className="verdict-field-label">Confidence</div>
           <span className="verdict-confidence">{resolution.confidence}</span>
+        </div>
+        <div className="verdict-field">
+          <div className="verdict-field-label">Next step</div>
+          <div className="verdict-field-value">
+            Both parties review this proposal. It takes effect only if both accept.
+            Either side can refuse and send the case to a human reviewer.
+          </div>
         </div>
       </div>
     </div>

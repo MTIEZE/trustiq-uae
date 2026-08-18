@@ -95,6 +95,24 @@
   background: var(--accent);
   box-shadow: 0 0 8px var(--accent);
 }
+/* Capability that is planned but not shipped. Deliberately dimmer than a live
+   pill so the roadmap never reads as a claim about today. */
+.pill.upcoming {
+  border-style: dashed;
+  border-color: var(--accent-dim);
+  color: var(--text-faint);
+}
+.pill.upcoming .pill-dot {
+  background: var(--text-faint);
+  box-shadow: none;
+}
+.hero-note {
+  max-width: 620px;
+  margin: 20px auto 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
 @media (max-width: 768px) {
   .hero { padding-top: 110px; padding-bottom: 56px; }
   .hero h1 { font-size: 2.2rem; }
@@ -188,6 +206,28 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+.step-nav-phase {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px dashed var(--amber);
+  color: var(--amber);
+  margin-top: 2px;
+}
+.phase-banner {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  padding: 6px 12px;
+  margin-bottom: 14px;
+  border-left: 2px solid var(--amber);
+  background: rgba(232, 179, 106, 0.08);
+  color: var(--amber);
 }
 .step-display {
   display: grid;
