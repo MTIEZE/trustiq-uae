@@ -19,7 +19,7 @@ const DEMO_RESPONSE = {
 const LOADING_STEPS = [
   "Receiving dispute payload...",
   "Routing to AI resolution engine...",
-  "GPT-5.4 analyzing evidence...",
+  "AI agent analyzing evidence...",
   "Writing resolution to database..."
 ]
 
@@ -336,24 +336,24 @@ function DemoForm({ onSubmit, loading }) {
   return (
     <form className="demo-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label>Transaction Description</label>
-        <input name="transaction_description" value={form.transaction_description} onChange={handleChange} />
+        <label htmlFor="transaction_description">Transaction Description</label>
+        <input id="transaction_description" name="transaction_description" value={form.transaction_description} onChange={handleChange} />
       </div>
       <div className="form-group">
-        <label>Amount (AED)</label>
-        <input name="amount" value={form.amount} onChange={handleChange} />
+        <label htmlFor="amount">Amount (AED)</label>
+        <input id="amount" name="amount" value={form.amount} onChange={handleChange} />
       </div>
       <div className="form-group">
-        <label>Buyer Claim</label>
-        <textarea name="buyer_claim" value={form.buyer_claim} onChange={handleChange} />
+        <label htmlFor="buyer_claim">Buyer Claim</label>
+        <textarea id="buyer_claim" name="buyer_claim" value={form.buyer_claim} onChange={handleChange} />
       </div>
       <div className="form-group">
-        <label>Seller Claim</label>
-        <textarea name="seller_claim" value={form.seller_claim} onChange={handleChange} />
+        <label htmlFor="seller_claim">Seller Claim</label>
+        <textarea id="seller_claim" name="seller_claim" value={form.seller_claim} onChange={handleChange} />
       </div>
       <div className="form-group">
-        <label>Evidence Notes</label>
-        <textarea name="evidence_notes" value={form.evidence_notes} onChange={handleChange} />
+        <label htmlFor="evidence_notes">Evidence Notes</label>
+        <textarea id="evidence_notes" name="evidence_notes" value={form.evidence_notes} onChange={handleChange} />
       </div>
       <button type="submit" className="submit-btn" disabled={loading}>
         {loading ? 'Processing...' : 'Submit Dispute for AI Resolution'}
@@ -470,11 +470,10 @@ function Demo() {
           </div>
         </div>
         <div className="demo-note">
-          <strong>Transparency note:</strong> This demo showcases a real AI-generated resolution
-          from TrustIQ's live backend (Make.com webhook → OpenAI GPT-5.4 → Supabase).
-          The response shown was captured from an actual end-to-end pipeline run, not fabricated
-          for this demo. The frontend does not make live API calls to avoid CORS limitations
-          with the Make webhook.
+          <strong>Transparency note:</strong> The resolution shown is an illustrative example of the
+          structured output TrustIQ's AI agent is designed to return. The dispute-resolution backend
+          (Make.com webhook → OpenAI → Supabase) is the target architecture; this demo renders the
+          response locally so you can see the format and flow without a live API call.
         </div>
       </div>
     </section>
@@ -485,14 +484,14 @@ function Architecture() {
   const nodes = [
     { icon: '🌐', title: 'Web Interface', sub: 'React App', active: false },
     { icon: '⚡', title: 'Make Webhook', sub: 'Orchestration', active: true },
-    { icon: '🧠', title: 'OpenAI GPT-5.4', sub: 'AI Resolution', active: true },
+    { icon: '🧠', title: 'OpenAI', sub: 'AI Resolution', active: true },
     { icon: '🗄️', title: 'Supabase', sub: 'PostgreSQL', active: false },
   ]
 
   const details = [
     { step: '01', title: 'Dispute Submitted', desc: 'When a buyer opens a dispute, both parties submit their claims and evidence through the web interface.' },
     { step: '02', title: 'Webhook Receives', desc: 'Make.com custom webhook receives the JSON payload and routes it to the AI processing module.' },
-    { step: '03', title: 'AI Analyzes', desc: 'GPT-5.4-mini, prompted as TrustIQ Dispute Resolution Agent, analyzes evidence from both parties and generates a structured verdict.' },
+    { step: '03', title: 'AI Analyzes', desc: 'An OpenAI model, prompted as the TrustIQ Dispute Resolution Agent, analyzes evidence from both parties and generates a structured verdict.' },
     { step: '04', title: 'Resolution Stored', desc: 'The AI decision (verdict, reasoning, action, confidence) is written to the Supabase disputes table and escrow is adjusted accordingly.' },
   ]
 
