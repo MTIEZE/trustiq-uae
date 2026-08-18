@@ -2,45 +2,75 @@
 
 **Trust infrastructure for peer-to-peer transactions in the United Arab Emirates.**
 
-TrustIQ locks a buyer's payment in escrow until both parties confirm the deal is
-complete. If a dispute arises, an AI agent analyzes the evidence submitted by each
-side and returns a structured, reasoned resolution in under 60 seconds, without a
-human mediator.
+TrustIQ turns a handshake between strangers into a tracked contract: agreed terms,
+timestamped evidence, and a delivery lifecycle both sides can see. When a delivery
+goes wrong, an AI agent reads the evidence and proposes a structured resolution
+that both parties can accept or send to a human reviewer.
 
 Target use cases: freelancer vs. client, merchant vs. buyer, and any P2P or small-SME
 transaction that has no platform guarantee behind it.
 
-## Current status
+## Product scope
 
-This repository is the **landing page and interactive demo**. It walks through the full
-transaction journey (registration → contract → escrow → delivery → AI resolution) and
-lets you try the dispute-resolution step.
+**v1 does not hold funds.** Payment happens directly between the parties. This is a
+deliberate choice: holding third-party funds in the UAE is a regulated activity
+requiring a CBUAE licence or an equivalent DIFC/ADGM permission, and building the
+contract, evidence and dispute layers first lets the product ship while that path is
+worked out. Escrow arrives in v2 through a licensed payment partner.
 
-The AI resolution shown in the demo is an **illustrative static example** of the output
-format, rendered locally. The live backend (Make.com webhook → OpenAI → Supabase) is the
-target architecture and is not yet wired up.
+The AI never rules. It issues a **proposal** that closes the dispute only when both
+parties accept it; a single refusal escalates to a human reviewer.
 
-## Stack
+## Repository layout
 
-- **Frontend:** React 19 + Vite 8
-- **Lint:** Oxlint
-- **Deployment:** GitHub Pages via GitHub Actions (`.github/workflows/deploy.yml`, on push to `main`)
+```
+apps/web         Landing page and interactive walkthrough (React 19 + Vite)
+packages/core    Domain logic: money, transaction and dispute lifecycles,
+                 AI resolution contract. Pure TypeScript, no framework.
+```
+
+`packages/core` is deliberately framework-free so the same rules run unchanged in the
+web app, the future mobile app, and on the server. It has no runtime dependencies.
 
 ## Commands
 
+Run from the repository root.
+
 ```bash
-npm install      # install dependencies
-npm run dev      # local dev server
-npm run build    # production build (dist/)
-npm run lint     # oxlint
-npm run preview  # preview the production build locally
+npm install      # install all workspaces
+npm run dev      # local dev server for the web app
+npm test         # domain test suite
+npm run typecheck
+npm run lint
+npm run build    # build core, then the web app into apps/web/dist
 ```
 
-Always run `npm run build` before committing code changes: the GitHub Pages deploy
-depends on a passing build.
+CI runs lint, typecheck, tests and build on every pull request. The GitHub Pages
+deploy runs the same gate before publishing, so a failing domain test blocks release.
+
+## Domain rules worth knowing before changing code
+
+- **Money is an integer number of fils** (1 AED = 100 fils). Never a float. See
+  `packages/core/src/money.ts`.
+- **Splits must conserve the total exactly.** `allocate` uses the largest-remainder
+  method and is tested to never lose or invent a fil.
+- **State changes go through the machines.** `transaction-machine.ts` and
+  `dispute-machine.ts` declare every legal move as a data table, including which
+  party may make it. Anything absent from the table is refused.
+- **The model's output is never trusted.** `validateProposal` rejects allocations
+  that do not balance, decisions contradicting their own allocation, and findings
+  citing evidence nobody submitted.
+
+## Status
+
+The landing page is live and reflects the product honestly. The domain layer is built
+and tested. Not yet built: backend, authentication, identity verification, the mobile
+app, and escrow.
 
 ## Roadmap
 
-- Connect dispute resolution to a real AI backend (currently a hardcoded demo response).
-- Real escrow backend (payments, wallets, transaction state).
-- UAE product positioning and go-to-market.
+1. Legal scoping with a UAE fintech firm. Confirm the no-funds v1 needs no licence.
+2. Backend on Supabase: schema, row-level security, authentication.
+3. Mobile app (React Native + Expo), contract and dispute flows, UAE Pass identity.
+4. Store submission and a closed beta with freelancers in Dubai and Sharjah.
+5. Escrow via a licensed partner, once usage numbers justify the negotiation.

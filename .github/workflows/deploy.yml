@@ -24,11 +24,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
+      # The domain rules ship to production too. A broken money split or an
+      # illegal state transition must never reach the site.
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: apps/web/dist
       - id: deployment
         uses: actions/deploy-pages@v4

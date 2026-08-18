@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Contexte de travail local, non versionne (repo public)
+CLAUDE.md
