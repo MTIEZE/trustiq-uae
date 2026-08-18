@@ -10,10 +10,13 @@ migrations/
   0004_evidence.sql     the evidence vault, append-only and hash-pinned
   0005_disputes.sql     disputes, AI proposals, grounded findings, acceptance
   0006_ai_audit.sql     full model call trail, service role only
+  0007_evidence_storage.sql
+                        private evidence bucket; evidence rows and stored
+                        objects both become server-written only
 
 tests/
-  00_supabase_stubs.sql  local-only stubs for auth.uid() and the Supabase roles
-  schema.test.sql        51 assertions run against a real Postgres
+  00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
+  schema.test.sql        56 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -84,14 +87,16 @@ supabase db push
 Or paste each migration into the SQL editor in filename order. Do not apply
 anything in `tests/`.
 
+**The evidence digest cannot be chosen by the uploader.** 0007 removes the
+client INSERT policy on `evidence` and grants no write policy on the storage
+bucket, so rows and objects are both written only by the upload path in
+`packages/server`, which hashes the bytes it stores. Without both halves a party
+could either pick the digest or swap the file after it was recorded.
+
 ## Not in this schema yet
 
-- **Storage bucket and policies for evidence files.** The `evidence` table holds
-  `storage_path` and the SHA-256; the bucket itself and its access policies are
-  still to be created.
 - **Escrow.** v1 does not hold funds. Where the states belong is marked
   `ESCROW-V2` in `0001_foundation.sql`.
-- **The `sha256` write path.** The column is documented as server-computed at
-  upload. Nothing enforces that yet, because the upload endpoint does not exist.
-  A client-supplied hash would defeat the point, so this must be closed before
-  evidence is trusted in a real dispute.
+- **HTTP endpoints.** `packages/server` holds the upload and resolution flows
+  behind ports; the Supabase-backed adapters and the routes that call them are
+  still to be written.

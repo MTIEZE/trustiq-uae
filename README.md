@@ -29,6 +29,8 @@ packages/core    Domain logic: money, transaction and dispute lifecycles,
                  AI resolution contract. Pure TypeScript, no framework.
 packages/ai      Dispute resolution pipeline: prompt, model call, validation,
                  escalation, audit trail.
+packages/server  Evidence upload path and the resolution run. Written against
+                 ports, so it runs in tests with no Supabase and no network.
 supabase/        Postgres schema, migrations and SQL test suite
 ```
 
@@ -76,6 +78,11 @@ publishing, so a failing domain test blocks release.
   malformed output, hallucinated evidence citations, and low confidence all route
   to a human reviewer instead. Every run is written to the audit trail, failures
   included.
+- **No audit record, no proposal.** If the audit write fails, the run escalates
+  rather than showing the parties a resolution nobody could later explain.
+- **The evidence digest is the server's.** Clients cannot insert evidence rows or
+  write to the bucket; the upload path hashes the bytes it stores. A digest the
+  uploader chose would prove nothing, and every grounded finding rests on it.
 
 ## Status
 

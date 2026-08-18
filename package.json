@@ -8,12 +8,12 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @trustiq/web",
-    "build": "npm run build -w @trustiq/core && npm run build -w @trustiq/ai && npm run build -w @trustiq/web",
+    "build": "npm run build -w @trustiq/core && npm run build -w @trustiq/ai && npm run build -w @trustiq/server && npm run build -w @trustiq/web",
     "preview": "npm run preview -w @trustiq/web",
     "lint": "oxlint",
-    "test": "npm run test -w @trustiq/core && npm run test -w @trustiq/ai",
+    "test": "npm run test -w @trustiq/core && npm run test -w @trustiq/ai && npm run test -w @trustiq/server",
     "test:db": "bash scripts/db-test.sh",
-    "typecheck": "npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai"
+    "typecheck": "npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server"
   },
   "devDependencies": {
     "oxlint": "^1.69.0"

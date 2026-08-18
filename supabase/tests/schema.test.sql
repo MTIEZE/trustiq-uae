@@ -313,6 +313,45 @@ select pg_temp.expect_error(
   'a malformed SHA-256 is rejected');
 
 \echo ''
+\echo '== Evidence is server-written only (the SHA-256 hole) =='
+
+-- A party can read the evidence on their own contract...
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+select pg_temp.check(
+  (select count(*) from public.evidence) = 2,
+  'a party can read the evidence on their own contract');
+
+-- ...but cannot write a row, which is what would let them choose the digest.
+-- RLS filters SELECT silently; on INSERT with no policy it raises.
+select pg_temp.expect_error(
+  $q$ insert into public.evidence
+        (transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+         content_type, byte_size, sha256)
+      values ('aaaaaaaa-0000-0000-0000-000000000001',
+              '11111111-1111-1111-1111-111111111111', 'buyer',
+              'evidence/aaaa/forged.pdf', 'forged.pdf', 'application/pdf', 10,
+              repeat('d', 64)) $q$,
+  'a party cannot insert an evidence row, so cannot choose its own digest');
+
+reset role;
+
+select pg_temp.check(
+  (select count(*) from pg_policies
+   where schemaname = 'public' and tablename = 'evidence' and cmd = 'INSERT') = 0,
+  'no INSERT policy exists on evidence for any client role');
+
+select pg_temp.check(
+  (select public from storage.buckets where id = 'evidence') = false,
+  'the evidence bucket is private');
+
+select pg_temp.check(
+  (select count(*) from pg_policies
+   where schemaname = 'storage' and tablename = 'objects' and cmd <> 'SELECT') = 0,
+  'clients cannot write to storage, so a stored object cannot be swapped after hashing');
+
+\echo ''
 \echo '== Disputes and proposals =='
 
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
