@@ -1,0 +1,13 @@
+name: trustiq_core
+description: >-
+  TrustIQ domain rules for the Flutter app: money in fils, the transaction and
+  dispute lifecycles, and the AI resolution contract. Pure Dart, no Flutter.
+version: 0.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dev_dependencies:
+  lints: ^5.1.0
+  test: ^1.25.0

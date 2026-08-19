@@ -17,6 +17,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      # Includes the parity guards: TypeScript against SQL, and TypeScript
+      # against the Dart port. Both parse source as text, so neither needs a
+      # database or a Dart SDK on this runner.
       - run: npm test
       - run: npm run build
 
@@ -26,5 +29,19 @@ jobs:
       - uses: actions/checkout@v4
       # Applies every migration to a throwaway Postgres and runs the SQL
       # assertions: RLS coverage, state machine guards, money invariants,
-      # append-only audit trail.
+      # append-only audit trail, server-only evidence writes.
       - run: npm run test:db
+
+  dart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+        working-directory: packages/core-dart
+      - run: dart analyze --fatal-infos
+        working-directory: packages/core-dart
+      - run: dart test
+        working-directory: packages/core-dart

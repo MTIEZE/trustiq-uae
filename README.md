@@ -31,6 +31,7 @@ packages/ai      Dispute resolution pipeline: prompt, model call, validation,
                  escalation, audit trail.
 packages/server  Evidence upload path and the resolution run. Written against
                  ports, so it runs in tests with no Supabase and no network.
+packages/core-dart  The domain rules again, in Dart, for the Flutter app.
 supabase/        Postgres schema, migrations and SQL test suite
 ```
 
@@ -42,18 +43,20 @@ web app, the future mobile app, and on the server. It has no runtime dependencie
 Run from the repository root.
 
 ```bash
-npm install      # install all workspaces
-npm run dev      # local dev server for the web app
-npm test         # domain test suite (93 tests)
-npm run test:db  # schema test suite against a throwaway Postgres (needs Docker)
+npm install       # install all workspaces
+npm run dev       # local dev server for the web app
+npm test          # TypeScript suites (175 tests)
+npm run test:db   # schema suite against a throwaway Postgres (needs Docker)
+npm run test:dart # Dart suite (50 tests, needs the Dart SDK)
 npm run typecheck
 npm run lint
-npm run build    # build core, then the web app into apps/web/dist
+npm run build
 ```
 
-CI runs lint, typecheck, tests and build on every pull request, plus the schema
-suite in a second job. The GitHub Pages deploy runs the same gate before
-publishing, so a failing domain test blocks release.
+CI runs three jobs on every pull request: lint / typecheck / tests / build, the
+schema suite against a real Postgres, and the Dart analyzer and suite. The
+GitHub Pages deploy runs the same gate before publishing, so a failing domain
+test blocks release.
 
 ## Domain rules worth knowing before changing code
 
@@ -67,10 +70,13 @@ publishing, so a failing domain test blocks release.
 - **The model's output is never trusted.** `validateProposal` rejects allocations
   that do not balance, decisions contradicting their own allocation, and findings
   citing evidence nobody submitted.
-- **These rules exist twice on purpose**, in TypeScript and in SQL, so no client can
-  talk the database into an illegal move. `schema-parity.test.ts` parses the
-  migrations and fails if the two copies disagree. Change a transition on one side
-  and you must change it on the other. See [supabase/README.md](supabase/README.md).
+- **These rules exist three times on purpose**: in TypeScript so the apps reason
+  offline, in SQL so no client can talk the database into an illegal move, and in
+  Dart so the Flutter app enforces them too. Three copies is two chances to
+  disagree, so both pairs are pinned by tests that parse the other side as text:
+  `schema-parity.test.ts` for TypeScript against SQL, `dart-parity.test.ts` for
+  TypeScript against Dart. Change a transition and you change all three, in the
+  same commit. See [supabase/README.md](supabase/README.md).
 - **The model never computes money.** It returns a whole percentage to the seller
   and `splitByPercent` derives the fils, so no model output can lose or invent a
   fil. Judgment is the model's job; arithmetic is the code's.
@@ -87,13 +93,18 @@ publishing, so a failing domain test blocks release.
 ## Status
 
 The landing page is live and reflects the product honestly, with escrow visibly
-dated to v2. The domain layer and the database schema are built and tested. Not yet
-built: the application backend, evidence storage, the mobile app, and escrow.
+dated to v2. Built and tested: the domain layer, the database schema, the AI
+resolution pipeline, the evidence upload path, and the Dart port of the domain
+rules. Not yet built: the Supabase adapters behind the server ports, HTTP
+endpoints, the Flutter UI, and escrow.
+
+Nothing runs end to end yet, because there is no Supabase project to connect to.
 
 ## Roadmap
 
 1. Legal scoping with a UAE fintech firm. Confirm the no-funds v1 needs no licence.
-2. Backend on Supabase: schema, row-level security, authentication.
-3. Mobile app (React Native + Expo), contract and dispute flows, UAE Pass identity.
+2. Supabase project, then the adapters behind the ports in `packages/server`.
+3. Flutter app on top of `packages/core-dart`: contract and dispute flows,
+   UAE Pass identity.
 4. Store submission and a closed beta with freelancers in Dubai and Sharjah.
 5. Escrow via a licensed partner, once usage numbers justify the negotiation.

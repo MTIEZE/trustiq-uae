@@ -13,6 +13,7 @@
     "lint": "oxlint",
     "test": "npm run test -w @trustiq/core && npm run test -w @trustiq/ai && npm run test -w @trustiq/server",
     "test:db": "bash scripts/db-test.sh",
+    "test:dart": "cd packages/core-dart && dart test",
     "typecheck": "npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server"
   },
   "devDependencies": {

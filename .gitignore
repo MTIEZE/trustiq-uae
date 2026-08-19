@@ -25,3 +25,9 @@ dist-ssr
 
 # Contexte de travail local, non versionne (repo public)
 CLAUDE.md
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+pubspec.lock
