@@ -25,6 +25,8 @@ parties accept it; a single refusal escalates to a human reviewer.
 
 ```
 apps/web         Landing page and interactive walkthrough (React 19 + Vite)
+apps/mobile      The product itself: Flutter app for the contract and dispute
+                 flows, on top of packages/core-dart.
 packages/core    Domain logic: money, transaction and dispute lifecycles,
                  AI resolution contract. Pure TypeScript, no framework.
 packages/ai      Dispute resolution pipeline: prompt, model call, validation,
@@ -47,14 +49,24 @@ npm install       # install all workspaces
 npm run dev       # local dev server for the web app
 npm test          # TypeScript suites (175 tests)
 npm run test:db   # schema suite against a throwaway Postgres (needs Docker)
-npm run test:dart # Dart suite (50 tests, needs the Dart SDK)
+npm run test:dart # Dart domain suite (50 tests, needs the Dart SDK)
 npm run typecheck
 npm run lint
 npm run build
 ```
 
-CI runs three jobs on every pull request: lint / typecheck / tests / build, the
-schema suite against a real Postgres, and the Dart analyzer and suite. The
+The Flutter app has its own commands, run from `apps/mobile`:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test      # 8 widget tests
+flutter run -d edge   # or any connected device
+```
+
+CI runs four jobs on every pull request: lint / typecheck / tests / build, the
+schema suite against a real Postgres, the Dart analyzer and suite, and the
+Flutter analyzer and widget tests. The
 GitHub Pages deploy runs the same gate before publishing, so a failing domain
 test blocks release.
 
@@ -104,7 +116,7 @@ Nothing runs end to end yet, because there is no Supabase project to connect to.
 
 1. Legal scoping with a UAE fintech firm. Confirm the no-funds v1 needs no licence.
 2. Supabase project, then the adapters behind the ports in `packages/server`.
-3. Flutter app on top of `packages/core-dart`: contract and dispute flows,
+3. Wire the Flutter app to the real backend, then add evidence capture and
    UAE Pass identity.
 4. Store submission and a closed beta with freelancers in Dubai and Sharjah.
 5. Escrow via a licensed partner, once usage numbers justify the negotiation.

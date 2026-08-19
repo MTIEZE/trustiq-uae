@@ -30,4 +30,6 @@ CLAUDE.md
 .dart_tool/
 .packages
 build/
-pubspec.lock
+# A library's lock file is not committed; an application's is, so its builds
+# are reproducible. apps/mobile/pubspec.lock is tracked on purpose.
+packages/core-dart/pubspec.lock

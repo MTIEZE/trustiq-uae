@@ -45,3 +45,20 @@ jobs:
         working-directory: packages/core-dart
       - run: dart test
         working-directory: packages/core-dart
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+        working-directory: apps/mobile
+      - run: flutter analyze
+        working-directory: apps/mobile
+      # Widget tests pin the rule that matters in the UI: the actions offered
+      # are exactly what the shared state machine allows for that role, and no
+      # single party can close a dispute alone.
+      - run: flutter test
+        working-directory: apps/mobile
