@@ -135,6 +135,24 @@ class Contract {
   Party partyFor(Role role) => role == Role.buyer ? buyer : seller;
   Party counterpartyFor(Role role) => partyFor(role.counterparty);
 
+  /// Evidence is append-only, so this only ever grows the list.
+  Contract withEvidence(List<EvidenceItem> updated) => Contract(
+        id: id,
+        reference: reference,
+        state: state,
+        description: description,
+        terms: terms,
+        totalAmount: totalAmount,
+        buyer: buyer,
+        seller: seller,
+        createdAt: createdAt,
+        acceptanceDeadline: acceptanceDeadline,
+        milestones: milestones,
+        timeline: timeline,
+        evidence: updated,
+        dispute: dispute,
+      );
+
   Contract copyWith({
     TransactionState? state,
     List<TimelineEntry>? timeline,

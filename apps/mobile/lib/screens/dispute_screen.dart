@@ -5,6 +5,7 @@ import '../app_state.dart';
 import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'add_evidence_screen.dart';
 import 'open_dispute_screen.dart';
 
 class DisputeScreen extends StatelessWidget {
@@ -75,6 +76,21 @@ class DisputeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _EvidenceCard(evidence: contract.evidence),
+              if (!dispute.state.isTerminal) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AddEvidenceScreen(
+                        contractId: contract.id,
+                        state: state,
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add evidence'),
+                ),
+              ],
               if (_awaitingYourAccount(dispute, state.viewingAs)) ...[
                 const SizedBox(height: 12),
                 InfoCard(

@@ -223,3 +223,81 @@ describe('Dart money parity', () => {
     expect(MONEY).toContain(String.raw`^(-)?(\d+)(?:\.(\d{1,2}))?$`)
   })
 })
+
+describe('evidence policy parity', () => {
+  // This rule lives in the server package rather than here, so it is read as
+  // text on both sides. Importing @trustiq/server would make core depend on a
+  // package that already depends on core.
+  const serverSource = readFileSync(
+    new URL('../../server/src/evidence.ts', import.meta.url),
+    'utf8',
+  )
+  const POLICY = dartSource('evidence_policy.dart')
+
+  function quotedList(source: string, after: string): string[] {
+    const start = source.indexOf(after)
+    if (start === -1) throw new Error(`"${after}" not found`)
+    // Anchor on the assignment, not the first bracket: a type annotation such
+    // as `readonly string[]` puts a bracket pair in the way first.
+    const open = source.indexOf('= [', start)
+    if (open === -1) throw new Error(`no array assigned to "${after}"`)
+    const close = source.indexOf(']', open)
+    const values = [...source.slice(open, close).matchAll(/'([^']+)'/g)].map(
+      (m) => m[1] as string,
+    )
+    if (values.length === 0) throw new Error(`"${after}" parsed as an empty list`)
+    return values
+  }
+
+  it('accepts exactly the same content types, in the same order', () => {
+    // Order is compared too: the list is mirrored a third time in the bucket's
+    // allowed_mime_types, and a reordered list is a sign someone edited one
+    // copy by hand.
+    expect(quotedList(POLICY, 'allowedContentTypes')).toEqual(
+      quotedList(serverSource, 'ALLOWED_CONTENT_TYPES'),
+    )
+  })
+
+  it('uses the same size ceiling as the server and the bucket', () => {
+    expect(POLICY).toMatch(/maxEvidenceBytes\s*=\s*52428800/)
+    expect(serverSource).toMatch(/MAX_EVIDENCE_BYTES\s*=\s*52_428_800/)
+  })
+
+  it('does not reject a filename the server would accept', () => {
+    // A stricter client check would turn away files the server is happy with,
+    // and the person would never learn why. Spaces are the case that bit.
+    for (const source of [POLICY, serverSource]) {
+      expect(source).toContain("includes('/')".replace('includes', source === POLICY ? 'contains' : 'includes'))
+    }
+    expect(POLICY).not.toMatch(/contains\('\s'\)/)
+  })
+
+  it('gives every rejection code a Dart counterpart or leaves it to the server', () => {
+    // The TypeScript side is a union type, not an array, so it is read from
+    // the type declaration. The union runs up to the interface that follows
+    // it, which avoids depending on blank-line layout.
+    const unionStart = serverSource.indexOf('export type UploadRejectionCode')
+    expect(unionStart, 'UploadRejectionCode not found').toBeGreaterThan(-1)
+    const unionEnd = serverSource.indexOf('export interface', unionStart)
+    expect(unionEnd, 'no interface follows the union').toBeGreaterThan(unionStart)
+
+    const serverCodes = [
+      ...serverSource.slice(unionStart, unionEnd).matchAll(/'([A-Z_]+)'/g),
+    ].map((m) => m[1] as string)
+    expect(serverCodes.length, 'union parsed as empty').toBeGreaterThan(0)
+    const dartCodes = [...POLICY.matchAll(/\('([A-Z_]+)'\)/g)].map((m) => m[1] as string)
+
+    // The app cannot decide these; they are the server's alone.
+    const serverOnly = new Set([
+      'NOT_A_PARTY',
+      'DIGEST_MISMATCH',
+      'STORAGE_FAILED',
+      'RECORD_FAILED',
+    ])
+
+    for (const code of serverCodes) {
+      if (serverOnly.has(code)) continue
+      expect(dartCodes, `${code} has no Dart counterpart`).toContain(code)
+    }
+  })
+})

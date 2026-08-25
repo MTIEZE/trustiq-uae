@@ -1,7 +1,9 @@
+
 import 'package:flutter/foundation.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
 import 'data/demo_data.dart';
+import 'data/evidence_service.dart';
 
 /// App state over the in-memory demo data.
 ///
@@ -10,9 +12,12 @@ import 'data/demo_data.dart';
 /// itself whether a move is legal, so the app cannot offer a button the rest of
 /// the system would refuse.
 class AppState extends ChangeNotifier {
-  AppState() : _contracts = seedContracts();
+  AppState({EvidenceUploader? uploader}) : _contracts = seedContracts() {
+    _uploader = uploader ?? InMemoryEvidenceUploader(() => _contracts);
+  }
 
   List<Contract> _contracts;
+  late final EvidenceUploader _uploader;
 
   /// Which side of the contracts you are looking at.
   ///
@@ -141,6 +146,36 @@ class AppState extends ChangeNotifier {
       ),
     ));
     notifyListeners();
+  }
+
+  /// Files a document against a contract.
+  ///
+  /// The digest on the stored item is the uploader's, which stands in for the
+  /// server here. The app never writes a fingerprint of its own into the
+  /// record: whatever it could compute locally is a claim, and the value kept
+  /// is the one computed from the bytes that were actually stored.
+  Future<EvidenceUploadResult> fileEvidence({
+    required String contractId,
+    required String filename,
+    required String contentType,
+    required Uint8List bytes,
+    String? note,
+  }) async {
+    final result = await _uploader.upload(
+      contractId: contractId,
+      uploaderRole: _viewingAs,
+      filename: filename,
+      contentType: contentType,
+      bytes: bytes,
+      note: note,
+    );
+
+    if (result case EvidenceUploaded(:final item)) {
+      final contract = contractById(contractId);
+      _replace(contract.withEvidence([...contract.evidence, item]));
+      notifyListeners();
+    }
+    return result;
   }
 
   /// Applies an event, or returns why the domain refused it.

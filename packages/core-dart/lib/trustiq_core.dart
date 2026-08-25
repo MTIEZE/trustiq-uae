@@ -7,6 +7,7 @@
 library;
 
 export 'src/dispute_machine.dart';
+export 'src/evidence_policy.dart';
 export 'src/money.dart';
 export 'src/transaction_machine.dart';
 export 'src/types.dart';
