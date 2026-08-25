@@ -585,8 +585,6 @@ select pg_temp.check(
    where transaction_id = 'aaaaaaaa-0000-0000-0000-000000000002') = 10000,
   'milestones that sum to the contract total are accepted');
 
-\echo ''
-\echo 'ALL SCHEMA TESTS PASSED'
 
 \echo ''
 \echo '== A bad id is reported as a bad id =='
@@ -615,3 +613,184 @@ begin
     'the message says "not found" rather than blaming the caller (' || coalesce(v_message, 'no error') || ')');
 end
 $$;
+
+\echo ''
+\echo '== issue_ai_proposal writes a whole proposal or none of it =='
+
+-- A third contract, walked to `disputed`, so the proposal path can be tested
+-- without disturbing the acceptance fixtures above.
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-000000000003',
+   '11111111-1111-1111-1111-111111111111',
+   '22222222-2222-2222-2222-222222222222',
+   'Landing page copy',
+   'Deliver 800 words of landing page copy within 5 days.',
+   50000,
+   '11111111-1111-1111-1111-111111111111');
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000003', 'submit');
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000003', 'accept');
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000003', 'mark_delivered');
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000003', 'open_dispute');
+select set_config('request.jwt.claim.sub', '', false);
+
+insert into public.evidence
+  (id, transaction_id, uploaded_by, uploaded_by_role, storage_path, filename, content_type, byte_size, sha256)
+values
+  ('ee000000-0000-0000-0000-000000000003',
+   'aaaaaaaa-0000-0000-0000-000000000003',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'evidence/aaa3/brief.txt', 'brief.txt', 'text/plain', 400, repeat('3', 64)),
+  ('ee000000-0000-0000-0000-000000000004',
+   'aaaaaaaa-0000-0000-0000-000000000003',
+   '22222222-2222-2222-2222-222222222222', 'seller',
+   'evidence/aaa3/draft.txt', 'draft.txt', 'text/plain', 900, repeat('4', 64));
+
+insert into public.disputes
+  (id, transaction_id, opened_by, opened_by_role, buyer_claim, seller_claim, disputed_amount_fils)
+values
+  ('dd000000-0000-0000-0000-000000000002',
+   'aaaaaaaa-0000-0000-0000-000000000003',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'The copy came in at 300 words, not 800.',
+   'The brief changed halfway through.',
+   50000);
+
+select public.apply_dispute_event('dd000000-0000-0000-0000-000000000002', 'submit_for_ai');
+
+-- A party must not be able to author the proposal that decides their own case.
+-- Two independent barriers, tested separately because either one alone would
+-- be enough to hide a hole in the other.
+select pg_temp.check(
+  not has_function_privilege('authenticated',
+    'public.issue_ai_proposal(uuid, public.resolution_decision, text, bigint, bigint, bigint, numeric, text, timestamptz, jsonb)',
+    'EXECUTE'),
+  'authenticated holds no EXECUTE grant on issue_ai_proposal');
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select pg_temp.expect_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-000000000002', 'split', 'Written by a party.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"Mine.","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb) $q$,
+  'issue_ai_proposal refuses a caller holding a user session');
+select set_config('request.jwt.claim.sub', '', false);
+
+-- An unknown dispute is reported as unknown, not as a permissions problem.
+select pg_temp.expect_error(
+  $q$ select public.issue_ai_proposal(
+        'dddddddd-dead-dead-dead-dddddddddddd', 'split', 'Nowhere to put this.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"x","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb) $q$,
+  'issue_ai_proposal refuses an unknown dispute id');
+
+-- A proposal with no findings at all is not a proposal.
+select pg_temp.expect_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-000000000002', 'split', 'No basis given.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(), '[]'::jsonb) $q$,
+  'issue_ai_proposal refuses a proposal carrying no findings');
+
+-- The hallucinated citation, arriving through the function rather than as a
+-- bare insert. The foreign key fires inside the call and takes the proposal
+-- row with it.
+select pg_temp.expect_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-000000000002', 'split', 'Cites a document nobody filed.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"There was a signed addendum.",
+           "evidenceIds":["ee000000-0000-0000-0000-0000000000fe"]}]'::jsonb) $q$,
+  'issue_ai_proposal refuses a finding citing evidence nobody submitted');
+
+select pg_temp.check(
+  (select count(*) from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000002') = 0,
+  'the refused call left no proposal row behind');
+
+-- An uncited statement. The grounding trigger is deferred, so it only fires
+-- when constraints are forced immediate; the whole call unwinds when it does.
+select pg_temp.expect_deferred_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-000000000002', 'split', 'One statement floats free.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"The brief asked for 800 words.",
+           "evidenceIds":["ee000000-0000-0000-0000-000000000003"]},
+          {"statement":"The seller was obviously careless.",
+           "evidenceIds":[]}]'::jsonb) $q$,
+  'issue_ai_proposal refuses a proposal containing an ungrounded finding');
+
+select pg_temp.check(
+  (select count(*) from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000002') = 0,
+  'the ungrounded proposal left nothing behind either');
+
+select pg_temp.check(
+  (select state from public.disputes where id = 'dd000000-0000-0000-0000-000000000002') = 'ai_review',
+  'a refused proposal leaves the dispute where it was');
+
+-- The whole thing, the way the pipeline calls it. This is the case that used to
+-- fail: findings inserted before their citations, in one transaction.
+do $$
+declare
+  v_id uuid;
+begin
+  v_id := public.issue_ai_proposal(
+    'dd000000-0000-0000-0000-000000000002', 'split',
+    'The copy fell short of the agreed length, but a usable draft was delivered.',
+    50000, 30000, 20000, 0.78, 'claude-opus-5', now(),
+    '[{"statement":"The brief specified 800 words.",
+       "evidenceIds":["ee000000-0000-0000-0000-000000000003"]},
+      {"statement":"The delivered draft was shorter than agreed.",
+       "evidenceIds":["ee000000-0000-0000-0000-000000000003",
+                      "ee000000-0000-0000-0000-000000000004"]}]'::jsonb);
+
+  -- Force the deferred grounding check here rather than at the end of the
+  -- suite, so this assertion is what proves it passed.
+  set constraints all immediate;
+
+  perform pg_temp.check(v_id is not null, 'issue_ai_proposal returns the new proposal id');
+end
+$$;
+
+select pg_temp.check(
+  (select count(*) from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000002') = 1,
+  'the proposal was stored');
+
+select pg_temp.check(
+  (select count(*) from public.resolution_findings f
+   join public.resolution_proposals p on p.id = f.proposal_id
+   where p.dispute_id = 'dd000000-0000-0000-0000-000000000002') = 2,
+  'both findings were stored in the same call');
+
+select pg_temp.check(
+  (select count(*) from public.resolution_finding_evidence fe
+   join public.resolution_findings f on f.id = fe.finding_id
+   join public.resolution_proposals p on p.id = f.proposal_id
+   where p.dispute_id = 'dd000000-0000-0000-0000-000000000002') = 3,
+  'all three citations were stored in the same call');
+
+select pg_temp.check(
+  (select array_agg(f.position order by f.position)
+   from public.resolution_findings f
+   join public.resolution_proposals p on p.id = f.proposal_id
+   where p.dispute_id = 'dd000000-0000-0000-0000-000000000002') = array[0, 1],
+  'findings keep the order the pipeline sent them in');
+
+select pg_temp.check(
+  (select state from public.disputes where id = 'dd000000-0000-0000-0000-000000000002') = 'proposal_issued',
+  'the same call publishes the proposal to the parties');
+
+select pg_temp.check(
+  (select actor from public.dispute_events
+   where dispute_id = 'dd000000-0000-0000-0000-000000000002'
+   order by occurred_at desc, id desc limit 1) = 'system',
+  'the publish is recorded as a system action, not a party''s');
+
+\echo ''
+\echo 'ALL SCHEMA TESTS PASSED'

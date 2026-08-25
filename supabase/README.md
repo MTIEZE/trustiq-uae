@@ -13,10 +13,16 @@ migrations/
   0007_evidence_storage.sql
                         private evidence bucket; evidence rows and stored
                         objects both become server-written only
+  0008_dispute_actor_diagnostics.sql
+                        a bad dispute id is reported as a bad id, not as a
+                        permissions problem
+  0009_issue_ai_proposal.sql
+                        one call that writes a proposal, its findings and their
+                        citations in a single transaction
 
 tests/
   00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
-  schema.test.sql        56 assertions run against a real Postgres
+  schema.test.sql        75 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -67,6 +73,14 @@ distinct roles have accepted the same proposal.
 to the disputed amount fails a CHECK. A decision contradicting its own numbers
 fails a CHECK. A finding citing evidence nobody submitted fails a foreign key. A
 finding citing nothing at all fails a deferred constraint trigger at commit.
+
+**A proposal is written in one transaction, or not at all.** The grounding
+trigger is deferred, which only works if the finding and its citations share a
+transaction. PostgREST gives each request its own, so the server cannot provide
+one from the client side: `issue_ai_proposal()` does the whole write inside the
+database instead. The function is granted to `service_role` only and refuses any
+caller holding a user session, so a party can never author the proposal that
+decides their own dispute.
 
 **The record cannot be rewritten.** Evidence, both audit logs, proposals and
 acceptances are append-only, enforced by a trigger that fires even for roles

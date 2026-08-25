@@ -217,63 +217,40 @@ export class SupabaseDisputeRepository implements DisputeRepository {
   async saveProposal(input: SaveProposalInput): Promise<{ proposalId: string }> {
     const { proposal, disputeId } = input
 
-    const { data: saved, error } = await this.client
-      .from('resolution_proposals')
-      .insert({
-        dispute_id: disputeId,
-        source: 'ai',
-        decision: proposal.decision,
-        summary: proposal.summary,
-        // Sent explicitly rather than left to the database to infer: the
-        // CHECK that the allocation balances is what catches a mismatch, and
-        // it can only fire if all three numbers arrive together.
-        disputed_amount_fils: proposal.allocation.seller + proposal.allocation.buyer,
-        seller_amount_fils: proposal.allocation.seller,
-        buyer_amount_fils: proposal.allocation.buyer,
-        confidence: proposal.confidence,
-        model_id: proposal.modelId,
-        issued_at: proposal.issuedAt,
-      })
-      .select('id')
-      .single<{ id: string }>()
+    // One call, because the write has to be one transaction.
+    //
+    // A finding must cite evidence, and the schema enforces that with a
+    // DEFERRABLE INITIALLY DEFERRED trigger that runs at commit. Inserting the
+    // proposal, the findings and the citations as separate PostgREST requests
+    // puts each one in its own transaction, so the check ran before any
+    // citation existed and refused every proposal, leaving the proposal row
+    // behind. PostgREST cannot span a transaction across requests, so the
+    // whole write lives in `issue_ai_proposal` instead. See migration 0009.
+    const { data, error } = await this.client.rpc('issue_ai_proposal', {
+      p_dispute_id: disputeId,
+      p_decision: proposal.decision,
+      p_summary: proposal.summary,
+      // Sent explicitly rather than left to the database to infer: the CHECK
+      // that the allocation balances is what catches a mismatch, and it can
+      // only fire if all three numbers arrive together.
+      p_disputed_amount_fils: proposal.allocation.seller + proposal.allocation.buyer,
+      p_seller_amount_fils: proposal.allocation.seller,
+      p_buyer_amount_fils: proposal.allocation.buyer,
+      p_confidence: proposal.confidence,
+      p_model_id: proposal.modelId,
+      p_issued_at: proposal.issuedAt,
+      p_findings: proposal.findings.map((finding) => ({
+        statement: finding.statement,
+        evidenceIds: finding.evidenceIds,
+      })),
+    })
 
     if (error) fail('storing the proposal', error)
-
-    // Findings and their citations are written after the proposal exists. The
-    // deferred constraint means an ungrounded finding fails at commit, which is
-    // the behaviour we want: the proposal never lands half-built.
-    for (const [position, finding] of proposal.findings.entries()) {
-      const { data: savedFinding, error: findingError } = await this.client
-        .from('resolution_findings')
-        .insert({ proposal_id: saved.id, position, statement: finding.statement })
-        .select('id')
-        .single<{ id: string }>()
-
-      if (findingError) fail('storing a finding', findingError)
-
-      const { error: citationError } = await this.client
-        .from('resolution_finding_evidence')
-        .insert(
-          finding.evidenceIds.map((evidenceId) => ({
-            finding_id: savedFinding.id,
-            evidence_id: evidenceId,
-          })),
-        )
-
-      if (citationError) fail('storing a citation', citationError)
+    if (typeof data !== 'string' || data.length === 0) {
+      throw new RowMappingError('issue_ai_proposal returned no proposal id')
     }
 
-    // Only now does the dispute become one the parties are asked about. The
-    // transition comes last so a proposal that failed to store completely
-    // never becomes visible: the findings are written above, and an ungrounded
-    // one fails at commit.
-    const { error: transitionError } = await this.client.rpc('apply_dispute_event', {
-      p_dispute_id: disputeId,
-      p_event: 'issue_proposal',
-    })
-    if (transitionError) fail('publishing the proposal', transitionError)
-
-    return { proposalId: saved.id }
+    return { proposalId: data }
   }
 
   async markEscalated(disputeId: string, reason: string): Promise<void> {

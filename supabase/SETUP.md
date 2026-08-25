@@ -73,7 +73,7 @@ select id, public from storage.buckets where id = 'evidence';
 These three are the ones worth checking by hand, because each is a rule the
 whole product leans on and none of them fails loudly if it is missing.
 
-`npm run test:db` runs the full suite of 59 assertions against a throwaway
+`npm run test:db` runs the full suite of 75 assertions against a throwaway
 Postgres, so a failure there means the migrations are wrong rather than the
 project being misconfigured.
 
@@ -113,16 +113,26 @@ verified even with a valid session.
 
 ## 7. Deploying the Edge Function
 
-`resolve-dispute` runs one dispute through the resolution pipeline. It needs
-the Supabase CLI:
+`resolve-dispute` runs one dispute through the resolution pipeline. It needs the
+Supabase CLI and a **personal access token with full access**.
+
+Read-only tokens are the trap here. They pass `supabase projects list` and every
+other read, then fail the deploy with a 403 that talks about privileges rather
+than about the token:
+
+```
+unexpected create function status 403: Your account does not have the
+necessary privileges to access this endpoint.
+```
+
+Generate the token at https://supabase.com/dashboard/account/tokens and choose
+full access, not read-only. Put it in `.env` as `SUPABASE_ACCESS_TOKEN`, with no
+space after the `=`.
 
 ```bash
-npm i -D supabase              # already a devDependency
-npx supabase login
-npx supabase link --project-ref your-project-ref
-
-./scripts/vendor-shared.sh     # builds and copies the packages the function imports
-npx supabase functions deploy resolve-dispute
+export SUPABASE_ACCESS_TOKEN=...            # or read it from .env
+./scripts/vendor-shared.sh                  # builds and copies the packages the function imports
+npx supabase functions deploy resolve-dispute --project-ref your-project-ref
 ```
 
 The vendoring step is not optional. Edge Functions are bundled from their own
@@ -135,23 +145,62 @@ Then set the secret the function reads. `SUPABASE_URL`,
 platform; the model key is not:
 
 ```bash
-npx supabase secrets set ANTHROPIC_API_KEY=...
+npx supabase secrets set ANTHROPIC_API_KEY=... --project-ref your-project-ref
 ```
 
 Run that in a terminal, not in a committed file.
 
-## 8. What is not wired up yet
+## 8. Proving it works, without spending model budget
 
-The adapters in `packages/server/src/supabase` implement the ports, and their
-row mapping is tested. What does not exist yet:
+Two scripts, in this order. Both read `.env` and print no keys.
+
+```bash
+node scripts/seed-live-dispute.mjs      # builds a real contract, evidence and dispute
+node scripts/dry-run-resolution.mjs     # runs the pipeline with a stub model
+```
+
+The seed script drives the real code: contracts move through
+`apply_transaction_event`, evidence goes through `uploadEvidence` with the
+Supabase adapters, and every rule the schema enforces gets a chance to refuse.
+
+The dry run is the whole resolution pipeline with only `ModelClient` replaced.
+It proves the parts a unit test cannot reach: that the live database accepts the
+writes, that the transitions are legal in the order the pipeline fires them, and
+that an audit row lands. It says nothing about the quality of a real model's
+judgment, and the `model_id` it stores says `stub:dry-run/...` so a proposal
+written this way is never mistaken for a real one.
+
+`--refuse`, `--invent-evidence` and `--unsure` exercise the escalation branches.
+A dispute resolves once, so re-seed between runs.
+
+**This pair is what found the bug that migration 0009 fixes.** Everything passed
+in memory and in the SQL suite; the proposal write failed the first time it met
+a real PostgREST connection, because each request is its own transaction and the
+deferred grounding check fired before any citation existed. Run these against
+the live project after any change to the pipeline or the adapters.
+
+## 9. Seeded data cannot be deleted
+
+`--clean` on the seed script removes what it can and tells you what it could
+not. Once a seeded case has a contract, it stays: evidence, proposals, dispute
+events and the audit log are append-only, and contracts hold their parties with
+ON DELETE RESTRICT, so neither the profile nor the auth user behind it can be
+removed. Each run uses its own tag so they never collide.
+
+That is correct for a trust product, and it is also a question to put to the
+lawyer alongside the escrow work: a right-to-erasure request under UAE data
+protection law meets a schema that is deliberately unable to erase. The answer
+is probably redaction rather than deletion, but it needs deciding before launch
+rather than after the first request arrives.
+
+## 10. What is not wired up yet
 
 - The evidence upload endpoint. `packages/server` has the logic and the
-  adapters; there is no function in front of it yet.
+  adapters, and `scripts/seed-live-dispute.mjs` drives them against the live
+  project; there is no Edge Function in front of it yet.
 - Text extraction from uploaded evidence. `extractedText` is null everywhere,
   so the model sees filenames and notes rather than contents.
 - Anything that calls `resolve-dispute` automatically. Today it is a POST
   someone has to make.
-
-`resolve-dispute` typechecks under Deno against real types, and every layer it
-calls is tested. It has not yet run against the live project: that needs the
-function deployed and a real dispute with both accounts in.
+- A real model call. The pipeline has never run against Anthropic; that needs
+  `ANTHROPIC_API_KEY` set as a function secret, and it costs money per dispute.
