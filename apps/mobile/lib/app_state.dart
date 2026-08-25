@@ -4,6 +4,7 @@ import 'package:trustiq_core/trustiq_core.dart';
 
 import 'data/demo_data.dart';
 import 'data/evidence_service.dart';
+import 'data/identity_provider.dart';
 
 /// App state over the in-memory demo data.
 ///
@@ -12,12 +13,22 @@ import 'data/evidence_service.dart';
 /// itself whether a move is legal, so the app cannot offer a button the rest of
 /// the system would refuse.
 class AppState extends ChangeNotifier {
-  AppState({EvidenceUploader? uploader}) : _contracts = seedContracts() {
+  AppState({EvidenceUploader? uploader, IdentityProvider? identityProvider})
+      : _contracts = seedContracts() {
     _uploader = uploader ?? InMemoryEvidenceUploader(() => _contracts);
+    _identity = identityProvider ?? const DemoIdentityProvider();
   }
 
   List<Contract> _contracts;
   late final EvidenceUploader _uploader;
+  late final IdentityProvider _identity;
+
+  /// Names the provider so a screen can say what it is sending someone to.
+  String get identityProviderName => _identity.displayName;
+
+  /// False while the real UAE Pass integration is not wired up. Screens use
+  /// this to be honest about what verifying does and does not prove today.
+  bool get identityProviderConnected => _identity is! DemoIdentityProvider;
 
   /// Which side of the contracts you are looking at.
   ///
@@ -46,6 +57,52 @@ class AppState extends ChangeNotifier {
           .where((e) => e != TransactionEvent.resolveDispute)
           .where((e) => e != TransactionEvent.cancelByAgreement)
           .toList();
+
+  /// Whether each side of a contract has a verified identity.
+  PartyVerification verificationFor(Contract contract) => PartyVerification(
+        buyerVerified: contract.buyer.verified,
+        sellerVerified: contract.seller.verified,
+      );
+
+  /// Why an action is blocked beyond the transition table, or null.
+  ///
+  /// Delegates to the shared guard rather than re-deciding here, so the app,
+  /// the server and the database all answer the same question the same way.
+  TransitionError? guardFor(Contract contract, TransactionEvent event) =>
+      identityGate(event, verificationFor(contract), actor);
+
+  /// Runs identity verification and marks you verified on success.
+  Future<VerificationOutcome> verifyIdentity() async {
+    final outcome = await _identity.verify(role: _viewingAs);
+    if (outcome is VerificationSucceeded) {
+      _markVerified(_viewingAs);
+      notifyListeners();
+    }
+    return outcome;
+  }
+
+  /// Marks the given side verified everywhere they appear.
+  ///
+  /// Verification belongs to a person, not to one contract, so it lands on
+  /// every contract they are on rather than only the one they were looking at.
+  void _markVerified(Role role) {
+    final me = _contracts
+        .map((c) => c.partyFor(role))
+        .where((p) => p.id == 'usr_you' || p.verified == false)
+        .toList();
+    if (me.isEmpty) return;
+
+    _contracts = [
+      for (final c in _contracts)
+        c.withParties(
+          buyer: role == Role.buyer ? _verified(c.buyer) : c.buyer,
+          seller: role == Role.seller ? _verified(c.seller) : c.seller,
+        ),
+    ];
+  }
+
+  static Party _verified(Party party) =>
+      Party(id: party.id, name: party.name, verified: true);
 
   /// Creates a contract in draft.
   ///

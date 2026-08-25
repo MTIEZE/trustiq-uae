@@ -209,3 +209,44 @@ export function toMermaid(): string {
   }
   return lines.join('\n')
 }
+
+/* ------------------------------------------------------------------ *
+ * The identity gate
+ * ------------------------------------------------------------------ */
+
+export interface PartyVerification {
+  readonly buyerVerified: boolean
+  readonly sellerVerified: boolean
+}
+
+/**
+ * A contract only becomes binding between verified identities.
+ *
+ * This is a guard on top of the transition table rather than a row in it: the
+ * move is legal, the parties are not yet eligible to make it. The database
+ * enforces the same rule inside apply_transaction_event, so a client that
+ * skipped this check would be refused there. It lives here as well so an app
+ * can explain the situation instead of surfacing a raw failure after the fact.
+ *
+ * Returns null when the event may proceed.
+ */
+export function identityGate(
+  event: TransactionEvent,
+  verification: PartyVerification,
+  actor: Actor,
+): TransitionError | null {
+  if (event !== 'accept') return null
+  if (verification.buyerVerified && verification.sellerVerified) return null
+
+  const missing: string[] = []
+  if (!verification.buyerVerified) missing.push('buyer')
+  if (!verification.sellerVerified) missing.push('seller')
+
+  return {
+    code: 'GUARD_FAILED',
+    message: `Both parties must have a verified identity before a contract becomes active. Not yet verified: ${missing.join(', ')}.`,
+    from: 'pending_acceptance',
+    event,
+    actor,
+  }
+}

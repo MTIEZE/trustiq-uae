@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'dispute_screen.dart';
 import 'open_dispute_screen.dart';
+import 'verify_identity_screen.dart';
 
 class ContractDetailScreen extends StatelessWidget {
   const ContractDetailScreen({
@@ -27,6 +28,14 @@ class ContractDetailScreen extends StatelessWidget {
         final me = contract.partyFor(state.viewingAs);
         final other = contract.counterpartyFor(state.viewingAs);
         final actions = state.actionsFor(contract);
+        // A move can be legal in the table and still blocked by a guard. The
+        // database refuses these too, so the screen must not offer them as if
+        // they would work.
+        final blocked = {
+          for (final event in actions)
+            if (state.guardFor(contract, event) != null) event,
+        };
+        final offerable = actions.where((e) => !blocked.contains(e)).toList();
 
         return Scaffold(
           appBar: AppBar(
@@ -143,7 +152,16 @@ class ContractDetailScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _Timeline(contract: contract),
               const SizedBox(height: 20),
-              if (actions.isEmpty)
+              if (blocked.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                IdentityGateNotice(
+                  state: state,
+                  verification: state.verificationFor(contract),
+                  counterpartyName: other.name,
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (offerable.isEmpty && blocked.isEmpty)
                 RuleNote(
                   contract.state.isTerminal
                       ? 'This contract is closed. Its record stays available to both '
@@ -152,10 +170,10 @@ class ContractDetailScreen extends StatelessWidget {
                           '${other.name}.',
                   icon: contract.state.isTerminal ? Icons.lock_outline : Icons.hourglass_empty,
                 )
-              else ...[
+              else if (offerable.isNotEmpty) ...[
                 const SectionLabel('What you can do'),
                 const SizedBox(height: 10),
-                for (final event in actions) ...[
+                for (final event in offerable) ...[
                   _ActionButton(
                     event: event,
                     onPressed: () => _fire(context, event),

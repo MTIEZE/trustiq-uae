@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  identityGate,
   TRANSITIONS,
   applyEvent,
   availableEvents,
@@ -254,6 +255,42 @@ describe('toMermaid', () => {
     expect(diagram.startsWith('stateDiagram-v2')).toBe(true)
     for (const rule of TRANSITIONS) {
       expect(diagram).toContain(`${rule.from} --> ${rule.to}: ${rule.event}`)
+    }
+  })
+})
+
+describe('the identity gate', () => {
+  const both = { buyerVerified: true, sellerVerified: true }
+
+  it('lets an accept through when both parties are verified', () => {
+    expect(identityGate('accept', both, 'seller')).toBeNull()
+  })
+
+  it('blocks an accept while either party is unverified', () => {
+    for (const verification of [
+      { buyerVerified: false, sellerVerified: true },
+      { buyerVerified: true, sellerVerified: false },
+      { buyerVerified: false, sellerVerified: false },
+    ]) {
+      const error = identityGate('accept', verification, 'seller')
+      expect(error, JSON.stringify(verification)).not.toBeNull()
+      expect(error?.code).toBe('GUARD_FAILED')
+    }
+  })
+
+  it('names who is missing, so the app can say something useful', () => {
+    const error = identityGate('accept', { buyerVerified: false, sellerVerified: true }, 'buyer')
+    expect(error?.message).toContain('buyer')
+    expect(error?.message).not.toContain('seller.')
+  })
+
+  it('gates nothing but accept', () => {
+    // Drafting, delivering and disputing stay open to an unverified party.
+    // Only the moment a contract becomes binding requires verified identities.
+    const unverified = { buyerVerified: false, sellerVerified: false }
+    for (const event of TRANSACTION_EVENTS) {
+      if (event === 'accept') continue
+      expect(identityGate(event, unverified, 'buyer'), event).toBeNull()
     }
   })
 })

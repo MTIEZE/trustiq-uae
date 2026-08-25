@@ -115,4 +115,43 @@ void main() {
       }
     });
   });
+  _identityGate();
+}
+
+void _identityGate() {
+  group('the identity gate', () {
+    const both = PartyVerification(buyerVerified: true, sellerVerified: true);
+
+    test('lets an accept through when both parties are verified', () {
+      expect(identityGate(TransactionEvent.accept, both, Actor.seller), isNull);
+    });
+
+    test('blocks an accept while either party is unverified', () {
+      const cases = [
+        PartyVerification(buyerVerified: false, sellerVerified: true),
+        PartyVerification(buyerVerified: true, sellerVerified: false),
+        PartyVerification(buyerVerified: false, sellerVerified: false),
+      ];
+      for (final verification in cases) {
+        final error = identityGate(TransactionEvent.accept, verification, Actor.seller);
+        expect(error, isNotNull);
+        expect(error!.code, TransitionErrorCode.guardFailed);
+      }
+    });
+
+    test('names who is missing, so the app can say something useful', () {
+      const onlySeller = PartyVerification(buyerVerified: false, sellerVerified: true);
+      final error = identityGate(TransactionEvent.accept, onlySeller, Actor.buyer);
+      expect(error!.message, contains('buyer'));
+    });
+
+    test('gates nothing but accept', () {
+      // Drafting, delivering and disputing stay open to an unverified party.
+      const unverified = PartyVerification(buyerVerified: false, sellerVerified: false);
+      for (final event in TransactionEvent.values) {
+        if (event == TransactionEvent.accept) continue;
+        expect(identityGate(event, unverified, Actor.buyer), isNull, reason: event.name);
+      }
+    });
+  });
 }

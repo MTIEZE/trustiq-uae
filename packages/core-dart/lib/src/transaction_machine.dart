@@ -188,3 +188,48 @@ Result<TransactionState, TransitionError> applyEvent(
 
   return Ok(rule.to);
 }
+
+/// Whether each side has a verified identity.
+class PartyVerification {
+  const PartyVerification({
+    required this.buyerVerified,
+    required this.sellerVerified,
+  });
+
+  final bool buyerVerified;
+  final bool sellerVerified;
+
+  bool get bothVerified => buyerVerified && sellerVerified;
+}
+
+/// A contract only becomes binding between verified identities.
+///
+/// A guard on top of the transition table rather than a row in it: the move is
+/// legal, the parties are not yet eligible to make it. The database enforces
+/// the same rule inside `apply_transaction_event`, so a client that skipped
+/// this would be refused there. It exists here so the app can explain the
+/// situation rather than surface a raw failure after the fact.
+///
+/// Returns null when the event may proceed.
+TransitionError? identityGate(
+  TransactionEvent event,
+  PartyVerification verification,
+  Actor actor,
+) {
+  if (event != TransactionEvent.accept) return null;
+  if (verification.bothVerified) return null;
+
+  final missing = <String>[
+    if (!verification.buyerVerified) 'buyer',
+    if (!verification.sellerVerified) 'seller',
+  ];
+
+  return TransitionError(
+    code: TransitionErrorCode.guardFailed,
+    message: 'Both parties must have a verified identity before a contract '
+        'becomes active. Not yet verified: ${missing.join(', ')}.',
+    from: TransactionState.pendingAcceptance.wireName,
+    event: event.wireName,
+    actor: actor,
+  );
+}

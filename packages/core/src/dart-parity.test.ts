@@ -16,7 +16,7 @@
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { TRANSITIONS } from './transaction-machine.js'
+import { TRANSITIONS, identityGate } from './transaction-machine.js'
 import { DISPUTE_TRANSITIONS } from './dispute-machine.js'
 import { RESOLUTION_DECISIONS } from './resolution.js'
 import {
@@ -299,5 +299,36 @@ describe('evidence policy parity', () => {
       if (serverOnly.has(code)) continue
       expect(dartCodes, `${code} has no Dart counterpart`).toContain(code)
     }
+  })
+})
+
+describe('identity gate parity', () => {
+  const TRANSACTIONS_SQL_SOURCE = readFileSync(
+    new URL('../../../supabase/migrations/0003_transactions.sql', import.meta.url),
+    'utf8',
+  )
+
+  it('exists in all three copies', () => {
+    // TypeScript and Dart hold it as a named guard; SQL enforces it inside
+    // apply_transaction_event. A rule about who may bind a contract is not one
+    // to leave in a single place.
+    expect(TRANSACTIONS_DART).toContain('TransitionError? identityGate(')
+    expect(TRANSACTIONS_SQL_SOURCE).toContain(
+      'both parties must have a verified identity before a contract becomes active',
+    )
+  })
+
+  it('gates the same event in every copy', () => {
+    expect(identityGate('accept', { buyerVerified: false, sellerVerified: true }, 'buyer'))
+      .not.toBeNull()
+    expect(TRANSACTIONS_DART).toMatch(/event\s*!=\s*TransactionEvent\.accept/)
+    // The SQL guard is scoped to the same event and nothing else.
+    expect(TRANSACTIONS_SQL_SOURCE).toMatch(/if p_event = 'accept' then/)
+  })
+
+  it('reports the same failure code on both sides', () => {
+    const error = identityGate('accept', { buyerVerified: false, sellerVerified: false }, 'buyer')
+    expect(error?.code).toBe('GUARD_FAILED')
+    expect(TRANSACTIONS_DART).toContain('TransitionErrorCode.guardFailed')
   })
 })

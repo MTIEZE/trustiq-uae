@@ -135,6 +135,24 @@ class Contract {
   Party partyFor(Role role) => role == Role.buyer ? buyer : seller;
   Party counterpartyFor(Role role) => partyFor(role.counterparty);
 
+  /// Replaces the parties, used when someone's identity becomes verified.
+  Contract withParties({required Party buyer, required Party seller}) => Contract(
+        id: id,
+        reference: reference,
+        state: state,
+        description: description,
+        terms: terms,
+        totalAmount: totalAmount,
+        buyer: buyer,
+        seller: seller,
+        createdAt: createdAt,
+        acceptanceDeadline: acceptanceDeadline,
+        milestones: milestones,
+        timeline: timeline,
+        evidence: evidence,
+        dispute: dispute,
+      );
+
   /// Evidence is append-only, so this only ever grows the list.
   Contract withEvidence(List<EvidenceItem> updated) => Contract(
         id: id,
