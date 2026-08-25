@@ -45,6 +45,17 @@ export async function runResolution(disputeId: string, deps: RunDeps): Promise<R
     return { kind: 'escalated', disputeId, reason }
   }
 
+  // The dispute has to reach `ai_review` before anything else can happen to
+  // it: both `issue_proposal` and `escalate` are only legal from there. This
+  // is also the state the parties see while the case is being read.
+  try {
+    await deps.repository.beginAnalysis(disputeId)
+  } catch (error) {
+    const reason = `the dispute could not be moved into review: ${describe(error)}`
+    await deps.repository.markEscalated(disputeId, reason).catch(() => undefined)
+    return { kind: 'escalated', disputeId, reason }
+  }
+
   const outcome = await resolveDispute(dispute, deps.model, {
     policy: deps.policy,
     now: () => deps.clock.now(),

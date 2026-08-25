@@ -587,3 +587,31 @@ select pg_temp.check(
 
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'
+
+\echo ''
+\echo '== A bad id is reported as a bad id =='
+
+-- Both functions refuse an unknown id, and both say why it was refused rather
+-- than blaming the caller's permissions for the caller's typo.
+select pg_temp.expect_error(
+  $q$ select public.apply_transaction_event('aaaaaaaa-dead-dead-dead-aaaaaaaaaaaa', 'submit') $q$,
+  'an unknown transaction id is reported as not found');
+
+select pg_temp.expect_error(
+  $q$ select public.apply_dispute_event('dddddddd-dead-dead-dead-dddddddddddd', 'submit_for_ai') $q$,
+  'an unknown dispute id is reported as not found');
+
+do $$
+declare
+  v_message text;
+begin
+  begin
+    perform public.apply_dispute_event('dddddddd-dead-dead-dead-dddddddddddd', 'submit_for_ai');
+  exception when others then
+    v_message := sqlerrm;
+  end;
+  perform pg_temp.check(
+    v_message like '%not found%',
+    'the message says "not found" rather than blaming the caller (' || coalesce(v_message, 'no error') || ')');
+end
+$$;

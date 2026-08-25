@@ -44,6 +44,16 @@ export interface DisputeRepository {
   loadCase(disputeId: string): Promise<DisputeCase | null>
   /** The amount under dispute, used to reject a case that changed mid-flight. */
   disputedAmount(disputeId: string): Promise<Fils | null>
+  /**
+   * Moves the dispute from `open` to `ai_review`.
+   *
+   * Fired before the model is called, because the later transitions are only
+   * legal from `ai_review`: without it, the first escalation is refused by the
+   * state machine.
+   */
+  beginAnalysis(disputeId: string): Promise<void>
+
+  /** Stores the proposal and moves the dispute to `proposal_issued`. */
   saveProposal(input: SaveProposalInput): Promise<{ proposalId: string }>
   markEscalated(disputeId: string, reason: string): Promise<void>
   appendAuditRecord(record: AuditRecord): Promise<void>

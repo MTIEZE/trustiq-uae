@@ -206,6 +206,14 @@ export class SupabaseDisputeRepository implements DisputeRepository {
     return readFils(data.disputed_amount_fils, 'disputes.disputed_amount_fils')
   }
 
+  async beginAnalysis(disputeId: string): Promise<void> {
+    const { error } = await this.client.rpc('apply_dispute_event', {
+      p_dispute_id: disputeId,
+      p_event: 'submit_for_ai',
+    })
+    if (error) fail(`moving dispute ${disputeId} into review`, error)
+  }
+
   async saveProposal(input: SaveProposalInput): Promise<{ proposalId: string }> {
     const { proposal, disputeId } = input
 
@@ -254,6 +262,16 @@ export class SupabaseDisputeRepository implements DisputeRepository {
 
       if (citationError) fail('storing a citation', citationError)
     }
+
+    // Only now does the dispute become one the parties are asked about. The
+    // transition comes last so a proposal that failed to store completely
+    // never becomes visible: the findings are written above, and an ungrounded
+    // one fails at commit.
+    const { error: transitionError } = await this.client.rpc('apply_dispute_event', {
+      p_dispute_id: disputeId,
+      p_event: 'issue_proposal',
+    })
+    if (transitionError) fail('publishing the proposal', transitionError)
 
     return { proposalId: saved.id }
   }

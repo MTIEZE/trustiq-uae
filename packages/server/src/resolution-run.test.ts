@@ -47,6 +47,10 @@ class FakeRepo implements DisputeRepository {
   readonly proposals: SaveProposalInput[] = []
   failAudit = false
   failSave = false
+  failBeginAnalysis = false
+  // The order transitions were requested in, so a test can assert the dispute
+  // reached `ai_review` before anything tried to leave it.
+  readonly transitions: string[] = []
 
   async loadCase(): Promise<DisputeCase | null> {
     return this.caseFile
@@ -56,13 +60,20 @@ class FakeRepo implements DisputeRepository {
     return this.amount
   }
 
+  async beginAnalysis(): Promise<void> {
+    if (this.failBeginAnalysis) throw new Error('submit_for_ai refused')
+    this.transitions.push('submit_for_ai')
+  }
+
   async saveProposal(input: SaveProposalInput): Promise<{ proposalId: string }> {
+    this.transitions.push('issue_proposal')
     if (this.failSave) throw new Error('insert failed')
     this.proposals.push(input)
     return { proposalId: `prop_${this.proposals.length}` }
   }
 
   async markEscalated(disputeId: string, reason: string): Promise<void> {
+    this.transitions.push('escalate')
     this.escalations.push({ disputeId, reason })
   }
 
@@ -194,5 +205,45 @@ describe('guards around the run', () => {
     const result = await runResolution(DISPUTE, deps(repo, goodJson()))
     expect(result.kind).toBe('escalated')
     expect(repo.escalations[0]?.reason).toContain('could not be stored')
+  })
+})
+
+describe('the dispute reaches ai_review before anything else', () => {
+  it('moves into review before the model is called', async () => {
+    const repo = new FakeRepo()
+    await runResolution(DISPUTE, deps(repo, goodJson()))
+
+    // Both issue_proposal and escalate are only legal from ai_review, so this
+    // ordering is not cosmetic: without it the state machine refuses the next
+    // step and a real dispute gets stuck.
+    expect(repo.transitions[0]).toBe('submit_for_ai')
+    expect(repo.transitions).toEqual(['submit_for_ai', 'issue_proposal'])
+  })
+
+  it('reaches review before escalating too', async () => {
+    const repo = new FakeRepo()
+    await runResolution(DISPUTE, deps(repo, goodJson({ confidence: 0.1 })))
+    expect(repo.transitions).toEqual(['submit_for_ai', 'escalate'])
+  })
+
+  it('escalates without calling the model when review cannot be entered', async () => {
+    const repo = new FakeRepo()
+    repo.failBeginAnalysis = true
+
+    const result = await runResolution(DISPUTE, deps(repo, goodJson()))
+
+    expect(result.kind).toBe('escalated')
+    if (result.kind !== 'escalated') return
+    expect(result.reason).toContain('could not be moved into review')
+    // Nothing was proposed, and no model call was paid for.
+    expect(repo.proposals).toHaveLength(0)
+    expect(repo.audits).toHaveLength(0)
+  })
+
+  it('does not enter review for a dispute that does not exist', async () => {
+    const repo = new FakeRepo()
+    repo.caseFile = null
+    await runResolution(DISPUTE, deps(repo, goodJson()))
+    expect(repo.transitions).toEqual([])
   })
 })

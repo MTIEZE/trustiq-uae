@@ -109,15 +109,47 @@ Identity verification columns on `profiles` are server-written only. The RLS
 policy re-reads the stored row on update, so a user cannot mark themselves
 verified even with a valid session.
 
-## 7. What is not wired up yet
+## 7. Deploying the Edge Function
+
+`resolve-dispute` runs one dispute through the resolution pipeline. It needs
+the Supabase CLI:
+
+```bash
+npm i -D supabase              # already a devDependency
+npx supabase login
+npx supabase link --project-ref your-project-ref
+
+./scripts/vendor-shared.sh     # builds and copies the packages the function imports
+npx supabase functions deploy resolve-dispute
+```
+
+The vendoring step is not optional. Edge Functions are bundled from their own
+directory and cannot reach into the npm workspace, so the compiled packages are
+copied next to the function. Skip it and the function deploys against whatever
+the last build left behind.
+
+Then set the secret the function reads. `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` are injected by the
+platform; the model key is not:
+
+```bash
+npx supabase secrets set ANTHROPIC_API_KEY=...
+```
+
+Run that in a terminal, not in a committed file.
+
+## 8. What is not wired up yet
 
 The adapters in `packages/server/src/supabase` implement the ports, and their
 row mapping is tested. What does not exist yet:
 
-- An HTTP layer calling them. There is no endpoint to hit.
+- The evidence upload endpoint. `packages/server` has the logic and the
+  adapters; there is no function in front of it yet.
 - Text extraction from uploaded evidence. `extractedText` is null everywhere,
-  so the model currently sees filenames and notes rather than contents.
-- Anything that runs the resolution pipeline on a schedule or a trigger.
+  so the model sees filenames and notes rather than contents.
+- Anything that calls `resolve-dispute` automatically. Today it is a POST
+  someone has to make.
 
-Until those exist, the adapters compile and their mapping is verified, but no
-code path has run against a real project.
+`resolve-dispute` typechecks under Deno against real types, and every layer it
+calls is tested. It has not yet run against the live project: that needs the
+function deployed and a real dispute with both accounts in.
