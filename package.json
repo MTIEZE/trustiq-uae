@@ -15,7 +15,8 @@
     "test:db": "bash scripts/db-test.sh",
     "test:dart": "cd packages/core-dart && dart test",
     "typecheck": "npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server",
-    "verify:supabase": "node scripts/verify-supabase.mjs"
+    "verify:supabase": "node scripts/verify-supabase.mjs",
+    "seed:live": "node scripts/seed-live-dispute.mjs"
   },
   "devDependencies": {
     "oxlint": "^1.69.0",
