@@ -5,6 +5,7 @@ import '../app_state.dart';
 import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'open_dispute_screen.dart';
 
 class DisputeScreen extends StatelessWidget {
   const DisputeScreen({super.key, required this.contractId, required this.state});
@@ -74,6 +75,45 @@ class DisputeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _EvidenceCard(evidence: contract.evidence),
+              if (_awaitingYourAccount(dispute, state.viewingAs)) ...[
+                const SizedBox(height: 12),
+                InfoCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionLabel('Your turn'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'The other party has given their account. Nothing is '
+                        'analysed until you give yours, so the case is waiting '
+                        'on you.',
+                        style: TextStyle(fontSize: 14, height: 1.5),
+                      ),
+                      const SizedBox(height: 14),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => OpenDisputeScreen(
+                              contractId: contract.id,
+                              state: state,
+                              answering: true,
+                            ),
+                          ),
+                        ),
+                        child: const Text('Give your account'),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (dispute.state == DisputeState.open) ...[
+                const SizedBox(height: 12),
+                const RuleNote(
+                  'Both accounts are in. The case goes to the resolution agent, '
+                  'which reads them against the evidence and proposes an outcome. '
+                  'You will be asked to accept or refuse it.',
+                  icon: Icons.schedule_outlined,
+                ),
+              ],
               if (dispute.proposal != null) ...[
                 const SizedBox(height: 12),
                 _ProposalCard(
@@ -113,6 +153,13 @@ class DisputeScreen extends StatelessWidget {
       },
     );
   }
+}
+
+/// True when this party opened nothing and has not answered yet.
+bool _awaitingYourAccount(Dispute dispute, Role you) {
+  if (dispute.state != DisputeState.open) return false;
+  final yours = you == Role.buyer ? dispute.buyerClaim : dispute.sellerClaim;
+  return yours == null || yours.trim().isEmpty;
 }
 
 class _ClaimCard extends StatelessWidget {

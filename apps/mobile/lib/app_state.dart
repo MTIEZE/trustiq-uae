@@ -42,6 +42,107 @@ class AppState extends ChangeNotifier {
           .where((e) => e != TransactionEvent.cancelByAgreement)
           .toList();
 
+  /// Creates a contract in draft.
+  ///
+  /// The amount arrives as the text the person typed and is parsed by the
+  /// domain, so a value the domain would refuse never becomes a contract.
+  /// Nothing here rounds, and nothing here holds a double.
+  Contract createContract({
+    required String description,
+    required String terms,
+    required Fils amount,
+    required Role youAre,
+    required String counterpartyName,
+  }) {
+    final me = Party(
+      id: 'usr_you',
+      name: youAre == Role.buyer ? 'Ahmed Al-Rashid' : 'Sara Design Studio',
+      verified: true,
+    );
+    final them = Party(
+      id: 'usr_counterparty_${_contracts.length}',
+      name: counterpartyName,
+      verified: false,
+    );
+
+    final contract = Contract(
+      id: 'txn_${DateTime.now().microsecondsSinceEpoch}',
+      reference: 'TIQ-2026-${(900 + _contracts.length).toString().padLeft(4, '0')}',
+      state: TransactionState.draft,
+      description: description,
+      terms: terms,
+      totalAmount: amount,
+      buyer: youAre == Role.buyer ? me : them,
+      seller: youAre == Role.seller ? me : them,
+      createdAt: DateTime.now(),
+    );
+
+    _contracts = [contract, ..._contracts];
+    _viewingAs = youAre;
+    notifyListeners();
+    return contract;
+  }
+
+  /// Opens a dispute with the claim its author wrote.
+  ///
+  /// The contract transition and the dispute record are made together: a
+  /// contract in `disputed` with no dispute attached would be a state the rest
+  /// of the product cannot read.
+  TransitionError? openDispute(String contractId, String claim) {
+    final contract = contractById(contractId);
+    final result = applyEvent(contract.state, TransactionEvent.openDispute, actor);
+
+    if (result case Err(:final error)) return error;
+
+    final nextState = result.unwrap();
+    final isBuyer = _viewingAs == Role.buyer;
+
+    _replace(contract.copyWith(
+      state: nextState,
+      dispute: Dispute(
+        id: 'dsp_${DateTime.now().microsecondsSinceEpoch}',
+        // Opens at `open`, not at `ai_review`. The case only reaches the model
+        // once the server has both sides and the evidence; the app does not
+        // decide that and must not pretend the analysis has started.
+        state: DisputeState.open,
+        openedByRole: _viewingAs,
+        buyerClaim: isBuyer ? claim : '',
+        sellerClaim: isBuyer ? null : claim,
+      ),
+      timeline: [
+        ...contract.timeline,
+        TimelineEntry(
+          at: DateTime.now(),
+          event: TransactionEvent.openDispute,
+          actor: actor,
+          describe: _describe(contract, TransactionEvent.openDispute),
+        ),
+      ],
+    ));
+    notifyListeners();
+    return null;
+  }
+
+  /// The other party answering an open dispute.
+  void submitCounterClaim(String contractId, String claim) {
+    final contract = contractById(contractId);
+    final dispute = contract.dispute;
+    if (dispute == null) return;
+
+    _replace(contract.copyWith(
+      dispute: Dispute(
+        id: dispute.id,
+        state: dispute.state,
+        openedByRole: dispute.openedByRole,
+        buyerClaim: _viewingAs == Role.buyer ? claim : dispute.buyerClaim,
+        sellerClaim: _viewingAs == Role.seller ? claim : dispute.sellerClaim,
+        proposal: dispute.proposal,
+        escalationReason: dispute.escalationReason,
+      ),
+    ));
+    notifyListeners();
+  }
+
   /// Applies an event, or returns why the domain refused it.
   ///
   /// The refusal path is not dead code: it is what a stale screen hits when the

@@ -6,6 +6,7 @@ import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'contract_detail_screen.dart';
+import 'new_contract_screen.dart';
 
 class ContractsScreen extends StatelessWidget {
   const ContractsScreen({super.key, required this.state});
@@ -28,6 +29,17 @@ class ContractsScreen extends StatelessWidget {
           _RoleSwitch(state: state),
           const SizedBox(width: 12),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => NewContractScreen(state: state),
+          ),
+        ),
+        backgroundColor: TrustIqColors.accent,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('New contract'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

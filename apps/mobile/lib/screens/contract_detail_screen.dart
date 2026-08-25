@@ -6,6 +6,7 @@ import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'dispute_screen.dart';
+import 'open_dispute_screen.dart';
 
 class ContractDetailScreen extends StatelessWidget {
   const ContractDetailScreen({
@@ -178,7 +179,13 @@ class ContractDetailScreen extends StatelessWidget {
 
   void _fire(BuildContext context, TransactionEvent event) {
     if (event == TransactionEvent.openDispute) {
-      _confirmDispute(context);
+      // A dispute needs the claim that opens it, so this routes to a screen
+      // rather than firing the transition from a confirmation dialog.
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => OpenDisputeScreen(contractId: contractId, state: state),
+        ),
+      );
       return;
     }
     final error = state.fire(contractId, event);
@@ -192,38 +199,6 @@ class ContractDetailScreen extends StatelessWidget {
     }
   }
 
-  void _confirmDispute(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Open a dispute?'),
-        content: const Text(
-          'Both of you will be asked for your account and any evidence. An AI '
-          'agent reads it and proposes a resolution.\n\n'
-          'The proposal is not a ruling: it takes effect only if you both accept '
-          'it. Either of you can refuse, and the case then goes to a human '
-          'reviewer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Not yet'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: TrustIqColors.critical,
-              minimumSize: const Size(120, 44),
-            ),
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              state.fire(contractId, TransactionEvent.openDispute);
-            },
-            child: const Text('Open dispute'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PartyRow extends StatelessWidget {
