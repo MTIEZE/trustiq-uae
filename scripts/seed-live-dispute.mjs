@@ -20,7 +20,10 @@ import {
   SupabaseObjectStorage,
 } from '../packages/server/dist/supabase/repositories.js'
 
+// Every run gets its own tag. Seeded data cannot be fully removed afterwards
+// (see clean() below), so re-running must never collide with a previous run.
 const TAG = 'seed-e2e'
+const RUN = `${TAG}-${Math.random().toString(16).slice(2, 10)}`
 
 /* ------------------------------------------------------------------ */
 
@@ -62,21 +65,45 @@ const db = createClient(cfg.SUPABASE_URL, cfg.SUPABASE_SERVICE_ROLE_KEY, {
 
 const cleaning = process.argv.includes('--clean')
 
-/** Removes everything a previous run created. */
+/**
+ * Removes what can be removed, and says so honestly about the rest.
+ *
+ * Most of it cannot be removed, by design. Evidence, proposals, dispute events
+ * and the audit log are append-only: `app.forbid_mutation()` refuses DELETE
+ * even for the service role. Contracts hold their parties with ON DELETE
+ * RESTRICT, so a profile that is party to a contract cannot be deleted, and
+ * neither can the auth user behind it.
+ *
+ * That is the correct behaviour for a trust product. An audit trail somebody
+ * can quietly erase is not an audit trail. It does mean seeded cases stay in
+ * the database, which is why every run uses its own tag.
+ */
 async function clean() {
-  step('Removing anything a previous run left behind')
+  step('Removing what a previous run left behind, where the schema allows it')
 
-  const { data: users } = await db.auth.admin.listUsers({ perPage: 200 })
-  let removed = 0
-  for (const user of users?.users ?? []) {
-    if (user.email?.includes(TAG)) {
-      // Contracts, disputes, evidence and audit rows all cascade from the
-      // profile, which cascades from the auth user.
-      await db.auth.admin.deleteUser(user.id)
-      removed += 1
-    }
+  const { data: users, error: listError } = await db.auth.admin.listUsers({ perPage: 200 })
+  if (listError) {
+    console.error(`  could not list users: ${listError.message}`)
+    process.exit(1)
   }
-  ok(`removed ${removed} seeded user(s) and everything that hung off them`)
+
+  let removed = 0
+  let kept = 0
+  for (const user of users?.users ?? []) {
+    if (!user.email?.includes(TAG)) continue
+    const { error } = await db.auth.admin.deleteUser(user.id)
+    if (error) {
+      kept += 1
+      continue
+    }
+    removed += 1
+  }
+
+  if (removed > 0) ok(`removed ${removed} seeded user(s) that had no contracts yet`)
+  if (kept > 0) {
+    ok(`${kept} seeded user(s) stayed: they are party to a contract, and the schema refuses to delete those`)
+  }
+  if (removed === 0 && kept === 0) ok('nothing from a previous run was found')
 
   const { data: objects } = await db.storage.from('evidence').list(TAG)
   if (objects?.length) {
@@ -101,9 +128,9 @@ async function actAs(email, password) {
 async function seed() {
   await clean()
 
-  const password = `${TAG}-${crypto.randomUUID()}`
-  const buyerEmail = `buyer.${TAG}@example.test`
-  const sellerEmail = `seller.${TAG}@example.test`
+  const password = `${RUN}-${crypto.randomUUID()}`
+  const buyerEmail = `buyer.${RUN}@example.test`
+  const sellerEmail = `seller.${RUN}@example.test`
 
   step('Creating two verified people')
 
@@ -157,7 +184,7 @@ async function seed() {
       .insert({
         buyer_id: buyer.id,
         seller_id: seller.id,
-        description: `Logo design for a startup [${TAG}]`,
+        description: `Logo design for a startup [${RUN}]`,
         terms:
           'Deliver 3 distinct logo concepts within 7 days. Two rounds of revision ' +
           'included. Final files supplied as SVG and PNG.',
@@ -313,7 +340,9 @@ async function seed() {
   The dispute is 'open' with both accounts and two pieces of evidence, which
   is exactly the state resolve-dispute expects.
 
-  Remove all of it with:  node scripts/seed-live-dispute.mjs --clean
+  This data stays in the project. Evidence and audit rows are append-only and
+  contracts hold their parties, so there is no way to delete a seeded case once
+  it has one. Each run uses its own tag so they do not collide.
 `)
 }
 
