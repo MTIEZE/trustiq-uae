@@ -31,3 +31,29 @@ export type {
   ObjectStorage,
   SaveProposalInput,
 } from './ports.js'
+
+export {
+  EVIDENCE_BUCKET,
+  SupabaseDisputeRepository,
+  SupabaseEvidenceRepository,
+  SupabaseObjectStorage,
+} from './supabase/repositories.js'
+
+export {
+  createServiceRoleClient,
+  createUserClient,
+  readConnectionFromEnv,
+  type SupabaseConnection,
+} from './supabase/client.js'
+
+export {
+  RowMappingError,
+  readFils,
+  readMilestoneTimes,
+  readRole,
+  toEvidenceSummary,
+  type DisputeRow,
+  type EvidenceRow,
+  type TransactionEventRow,
+  type TransactionRow,
+} from './supabase/rows.js'

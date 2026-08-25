@@ -33,3 +33,8 @@ build/
 # A library's lock file is not committed; an application's is, so its builds
 # are reproducible. apps/mobile/pubspec.lock is tracked on purpose.
 packages/core-dart/pubspec.lock
+
+# Secrets. .env.example is the template; .env never gets committed.
+.env
+.env.local
+.env.*.local
