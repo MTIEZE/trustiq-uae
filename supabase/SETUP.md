@@ -73,13 +73,15 @@ select id, public from storage.buckets where id = 'evidence';
 These three are the ones worth checking by hand, because each is a rule the
 whole product leans on and none of them fails loudly if it is missing.
 
-`npm run test:db` runs the full suite of 56 assertions against a throwaway
+`npm run test:db` runs the full suite of 59 assertions against a throwaway
 Postgres, so a failure there means the migrations are wrong rather than the
 project being misconfigured.
 
 ## 5. Keys
 
-From **Project Settings > API**. Two keys, and they are not interchangeable.
+From **Project Settings > API Keys**. Two keys, and they are not interchangeable.
+On newer projects they are labelled "publishable" and "secret"; the roles and
+the risks are the same.
 
 | Key | Where it goes | What it can do |
 | --- | --- | --- |

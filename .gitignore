@@ -45,3 +45,6 @@ supabase/all-migrations.sql
 # Vendored build output for the Edge Functions; regenerate with
 # scripts/vendor-shared.sh rather than committing it.
 supabase/functions/_shared/
+
+# Supabase CLI scratch files.
+supabase/.temp/
