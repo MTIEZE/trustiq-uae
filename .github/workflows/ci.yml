@@ -2,8 +2,11 @@ name: CI
 
 on:
   pull_request:
+  # Every branch, main included. The deploy workflow gates the site on lint,
+  # typecheck, test and build, but it does not run the SQL suite, the Dart and
+  # Flutter suites, or the Edge Function check. Skipping main meant the branch
+  # the work actually lands on was the least checked one.
   push:
-    branches-ignore: [main]
 
 jobs:
   verify:
