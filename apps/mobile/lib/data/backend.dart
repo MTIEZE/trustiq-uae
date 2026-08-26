@@ -30,7 +30,35 @@ abstract interface class Backend {
   /// live path differ entirely.
   EvidenceUploader get uploader;
 
+  /// Emits whenever the session appears, changes or goes away.
+  ///
+  /// A session is not only created by [signIn]. It is restored from storage
+  /// when the app starts, refreshed in the background, and dropped when a
+  /// refresh token expires. None of those go through a button, so a screen
+  /// that only rebuilds after [signIn] shows a returning person an empty list
+  /// and a signed-out person a stale one.
+  Stream<BackendSession?> get sessionChanges;
+
   Future<void> signIn({required String email, required String password});
+
+  /// Creates an account.
+  ///
+  /// The name is stored on the auth user rather than written straight to
+  /// `profiles`, because when the project requires email confirmation there is
+  /// no session yet and row level security would refuse the insert. The
+  /// profile row is created on first sign-in from that stored name.
+  Future<SignUpOutcome> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+  });
+
+  /// Sends a reset link. Returns whether it could have been sent.
+  ///
+  /// Deliberately says nothing about whether the address has an account: that
+  /// answer turns a reset form into a way to enumerate a user list.
+  Future<void> sendPasswordReset(String email);
+
   Future<void> signOut();
 
   /// Every contract the signed-in person is party to.
@@ -65,6 +93,16 @@ abstract interface class Backend {
   /// makes the verification columns server-written, so a party cannot mark
   /// themselves verified even holding a valid session.
   Future<void> recordVerification(Role role);
+}
+
+/// What happened when an account was created.
+enum SignUpOutcome {
+  /// The account exists and the session is live. Straight into the app.
+  signedIn,
+
+  /// The project asks people to confirm their address first, so there is no
+  /// session yet and the screen has to say so rather than appearing to hang.
+  confirmationRequired,
 }
 
 /// Who is signed in.

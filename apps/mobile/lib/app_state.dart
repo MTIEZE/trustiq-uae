@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -29,6 +31,7 @@ class AppState extends ChangeNotifier {
 
   final Backend _backend;
   final IdentityProvider _identity;
+  StreamSubscription<BackendSession?>? _sessionWatch;
 
   List<Contract> _contracts = const [];
   bool _loading = false;
@@ -129,11 +132,60 @@ class AppState extends ChangeNotifier {
    * Session
    * ---------------------------------------------------------------- */
 
+  /// Starts watching the session and loads whatever is already there.
+  ///
+  /// Called once at startup. A session is not only created by [signIn]: it is
+  /// restored from storage when the app launches, refreshed in the background,
+  /// and dropped when a refresh token expires. Without this, a returning
+  /// person lands on their contract list and it is empty, because nothing
+  /// asked for the contracts.
+  Future<void> start() async {
+    _sessionWatch ??= _backend.sessionChanges.listen((session) {
+      if (session == null) {
+        if (_contracts.isEmpty) return;
+        _contracts = const [];
+        notifyListeners();
+        return;
+      }
+      // Fire and forget: this is a stream callback, and refresh reports its
+      // own failures through `error`.
+      unawaited(refresh());
+    });
+
+    if (_backend.session != null) await refresh();
+  }
+
+  @override
+  void dispose() {
+    _sessionWatch?.cancel();
+    super.dispose();
+  }
+
   Future<bool> signIn({required String email, required String password}) async {
     return _guard(() async {
       await _backend.signIn(email: email, password: password);
       _contracts = await _backend.loadContracts();
     });
+  }
+
+  /// Creates an account. Null means it failed and [error] says why.
+  Future<SignUpOutcome?> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    SignUpOutcome? outcome;
+    final ok = await _guard(() async {
+      outcome = await _backend.signUp(email: email, password: password, fullName: fullName);
+      if (outcome == SignUpOutcome.signedIn) {
+        _contracts = await _backend.loadContracts();
+      }
+    });
+    return ok ? outcome : null;
+  }
+
+  Future<bool> sendPasswordReset(String email) async {
+    return _guard(() async => _backend.sendPasswordReset(email));
   }
 
   Future<void> signOut() async {

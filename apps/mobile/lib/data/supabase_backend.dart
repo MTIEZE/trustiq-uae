@@ -57,13 +57,75 @@ class SupabaseBackend implements Backend {
   String? _displayName;
 
   @override
+  Stream<BackendSession?> get sessionChanges =>
+      _client.auth.onAuthStateChange.asyncMap((event) async {
+        // The profile has to exist before anything reads a contract, and a
+        // session can arrive without anyone pressing sign in: restored from
+        // storage at launch, or refreshed in the background.
+        if (event.session != null) await _ensureProfile();
+        return session;
+      });
+
+  @override
   Future<void> signIn({required String email, required String password}) async {
     try {
       await _client.auth.signInWithPassword(email: email.trim(), password: password);
     } on AuthException catch (e) {
-      throw BackendException(e.message);
+      throw BackendException(_friendly(e));
     }
     await _ensureProfile();
+  }
+
+  @override
+  Future<SignUpOutcome> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    try {
+      final result = await _client.auth.signUp(
+        email: email.trim(),
+        password: password,
+        // Carried on the auth user rather than written to `profiles` here:
+        // with email confirmation on there is no session yet, and row level
+        // security would refuse the insert. `_ensureProfile` picks it up on
+        // the first sign-in.
+        data: {'full_name': fullName.trim()},
+      );
+      if (result.session == null) return SignUpOutcome.confirmationRequired;
+      await _ensureProfile();
+      return SignUpOutcome.signedIn;
+    } on AuthException catch (e) {
+      throw BackendException(_friendly(e));
+    }
+  }
+
+  @override
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(email.trim());
+    } on AuthException catch (e) {
+      throw BackendException(_friendly(e));
+    }
+  }
+
+  /// Turns an auth error into something worth reading.
+  ///
+  /// Only where the original is actively unhelpful. Everything else is passed
+  /// through as written, because inventing a friendlier message for an error
+  /// nobody anticipated hides what actually happened.
+  static String _friendly(AuthException e) {
+    final raw = e.message.toLowerCase();
+    if (raw.contains('invalid login credentials')) {
+      return 'That email and password do not match an account.';
+    }
+    if (raw.contains('email not confirmed')) {
+      return 'Confirm your email address first. The link is in your inbox.';
+    }
+    if (raw.contains('already registered') || raw.contains('already been registered')) {
+      return 'An account already exists for that address. Sign in instead.';
+    }
+    return e.message;
   }
 
   @override
@@ -93,7 +155,12 @@ class SupabaseBackend implements Backend {
       return;
     }
 
-    final name = user.email?.split('@').first ?? 'You';
+    // The name the person gave when they signed up, kept on the auth user
+    // until there was a session to write it with.
+    final given = (user.userMetadata?['full_name'] as String?)?.trim();
+    final name = (given != null && given.isNotEmpty)
+        ? given
+        : user.email?.split('@').first ?? 'You';
     await _client.from('profiles').insert({
       'id': user.id,
       'email': user.email,

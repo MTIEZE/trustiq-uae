@@ -67,20 +67,29 @@ class ContractsScreen extends StatelessWidget {
             _ErrorNote(message: state.error!, onDismiss: state.clearError),
             const SizedBox(height: 14),
           ],
-          if (needsYou.isNotEmpty) ...[
-            const SectionLabel('Waiting on you'),
+          // Three states this list can be in, and they used to look the same.
+          // An empty list is not a loaded list with nothing in it, and neither
+          // is a list still loading.
+          if (state.contracts.isEmpty && state.loading)
+            const _Loading()
+          else if (state.contracts.isEmpty)
+            const _NoContractsYet()
+          else ...[
+            if (needsYou.isNotEmpty) ...[
+              const SectionLabel('Waiting on you'),
+              const SizedBox(height: 10),
+              for (final c in needsYou) ...[
+                _ContractTile(contract: c, state: state, highlight: true),
+                const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 14),
+            ],
+            SectionLabel(needsYou.isEmpty ? 'Your contracts' : 'Everything else'),
             const SizedBox(height: 10),
-            for (final c in needsYou) ...[
-              _ContractTile(contract: c, state: state, highlight: true),
+            for (final c in rest) ...[
+              _ContractTile(contract: c, state: state),
               const SizedBox(height: 10),
             ],
-            const SizedBox(height: 14),
-          ],
-          const SectionLabel('All contracts'),
-          const SizedBox(height: 10),
-          for (final c in rest) ...[
-            _ContractTile(contract: c, state: state),
-            const SizedBox(height: 10),
           ],
           const SizedBox(height: 8),
           const RuleNote(
@@ -254,6 +263,59 @@ class _ErrorNote extends StatelessWidget {
             iconSize: 18,
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.close, color: TrustIqColors.critical),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// The list while it is still being fetched.
+///
+/// Distinct from an empty list on purpose. Showing "no contracts yet" for the
+/// second it takes to load tells a returning person their contracts are gone.
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 64),
+      child: Center(
+        child: SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+    );
+  }
+}
+
+/// The first thing a new person sees, so it says what to do rather than
+/// reporting that there is nothing.
+class _NoContractsYet extends StatelessWidget {
+  const _NoContractsYet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 48, bottom: 24),
+      child: Column(
+        children: [
+          Icon(Icons.description_outlined, size: 40, color: TrustIqColors.inkFaint.withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+          const Text(
+            'No contracts yet',
+            style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Write down what was agreed, who is doing it and for how much. '
+              'Both sides sign, and from then on there is a record neither of '
+              'you can quietly change.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13.5, color: TrustIqColors.inkFaint, height: 1.5),
+            ),
           ),
         ],
       ),

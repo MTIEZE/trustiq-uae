@@ -48,9 +48,10 @@ class _TrustIqAppState extends State<TrustIqApp> {
   @override
   void initState() {
     super.initState();
-    // Demo data is already there; a live backend has nothing until someone
-    // signs in, and the sign-in screen loads it.
-    if (!widget.backend.isLive) _state.refresh();
+    // Loads whatever is already there and keeps watching. A session restored
+    // from storage arrives without anyone pressing sign in, and a screen that
+    // waits for the button shows a returning person an empty list.
+    _state.start();
   }
 
   @override

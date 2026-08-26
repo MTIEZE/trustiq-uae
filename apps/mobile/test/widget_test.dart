@@ -1,7 +1,11 @@
-import 'package:flutter/widgets.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
 import 'package:trustiq_app/data/demo_backend.dart';
+import 'package:trustiq_app/data/demo_data.dart';
+import 'package:trustiq_app/screens/contracts_screen.dart';
 import 'package:trustiq_app/main.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -11,6 +15,40 @@ import 'package:trustiq_core/trustiq_core.dart';
 /// party close a dispute alone.
 
 void main() {
+  testWidgets('an empty list invites the first contract rather than reporting nothing', (tester) async {
+    // A person who has just signed up sees this before anything else, so it
+    // says what to do rather than that there is nothing to see.
+    final state = AppState(backend: _EmptyBackend());
+    await state.refresh();
+    await tester.pumpWidget(_hosted(state));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No contracts yet'), findsOneWidget);
+    expect(find.textContaining('Both sides sign'), findsOneWidget);
+  });
+
+  testWidgets('a list still loading is not an empty list', (tester) async {
+    // The two used to render the same, which tells a returning person their
+    // contracts are gone for as long as the fetch takes. The backend here
+    // finishes exactly when this test says so, which is the only way to
+    // observe the moment in between.
+    final backend = _PausedBackend();
+    final state = AppState(backend: backend);
+    unawaited(state.refresh());
+    await tester.pumpWidget(_hosted(state));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('No contracts yet'), findsNothing);
+
+    backend.finish(const []);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('No contracts yet'), findsOneWidget);
+  });
+
   testWidgets('the contract list renders and shows state in words', (tester) async {
     await tester.pumpWidget(TrustIqApp(backend: DemoBackend()));
     await tester.pumpAndSettle();
@@ -153,4 +191,36 @@ void main() {
     expect(find.text('Accept this resolution'), findsOneWidget);
     expect(find.text('Refuse and ask for a human'), findsOneWidget);
   });
+}
+
+/// Mounts a screen the way main.dart does.
+///
+/// `ContractsScreen` reads its state at build time and is rebuilt by a
+/// ListenableBuilder above it. A test that mounts it bare gets one frame and
+/// then nothing, which looks exactly like a screen that failed to update.
+Widget _hosted(AppState state) => MaterialApp(
+      home: ListenableBuilder(
+        listenable: state,
+        builder: (_, _) => ContractsScreen(state: state),
+      ),
+    );
+
+/// A backend with nothing in it, for the empty state.
+class _EmptyBackend extends DemoBackend {
+  @override
+  Future<List<Contract>> loadContracts() async => const [];
+}
+
+/// A backend that answers only when the test tells it to.
+///
+/// A timed delay would need pumpAndSettle to wait it out, and the spinner
+/// never settles, so the test would hang rather than fail. Holding the future
+/// open makes the in-between state observable and the test deterministic.
+class _PausedBackend extends DemoBackend {
+  final _pending = Completer<List<Contract>>();
+
+  void finish(List<Contract> contracts) => _pending.complete(contracts);
+
+  @override
+  Future<List<Contract>> loadContracts() => _pending.future;
 }

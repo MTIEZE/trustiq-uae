@@ -51,8 +51,24 @@ class DemoBackend implements Backend {
   @override
   EvidenceUploader get uploader => _uploader;
 
+  // The demo is always signed in as the same person, so the session never
+  // changes and this emits nothing after the current value.
+  @override
+  Stream<BackendSession?> get sessionChanges => Stream<BackendSession?>.value(session);
+
   @override
   Future<void> signIn({required String email, required String password}) async {}
+
+  @override
+  Future<SignUpOutcome> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async =>
+      SignUpOutcome.signedIn;
+
+  @override
+  Future<void> sendPasswordReset(String email) async {}
 
   @override
   Future<void> signOut() async {}
