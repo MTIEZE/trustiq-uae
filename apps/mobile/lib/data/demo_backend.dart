@@ -205,6 +205,7 @@ class DemoBackend implements Backend {
       sellerAmount: proposal.sellerAmount,
       buyerAmount: proposal.buyerAmount,
       confidence: proposal.confidence,
+      source: proposal.source,
       acceptedBy: outcome.acceptedBy,
     );
 

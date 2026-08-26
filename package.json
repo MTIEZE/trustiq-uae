@@ -19,7 +19,8 @@
     "verify:supabase": "node scripts/verify-supabase.mjs",
     "seed:live": "node scripts/seed-live-dispute.mjs",
     "dryrun:live": "node scripts/dry-run-resolution.mjs",
-    "test:endpoint": "node scripts/test-file-evidence.mjs"
+    "test:endpoint": "node scripts/test-file-evidence.mjs",
+    "review": "node scripts/review-console.mjs"
   },
   "devDependencies": {
     "oxlint": "^1.69.0",

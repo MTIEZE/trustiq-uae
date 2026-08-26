@@ -176,7 +176,15 @@ ResolutionProposal? proposalFromRows(
       (a, b) => (a['position'] as int? ?? 0).compareTo(b['position'] as int? ?? 0),
     );
 
+  final source = readEnum(
+    (proposal['source'] as String?) ?? 'ai',
+    ProposalSource.values,
+    (s) => s.wireName,
+    'resolution_proposals.source',
+  );
+
   return ResolutionProposal(
+    source: source,
     decision: readDecision(readString(proposal, 'decision')),
     summary: readString(proposal, 'summary'),
     findings: [
@@ -188,10 +196,14 @@ ResolutionProposal? proposalFromRows(
     ],
     sellerAmount: readFils(proposal['seller_amount_fils'], 'seller_amount_fils'),
     buyerAmount: readFils(proposal['buyer_amount_fils'], 'buyer_amount_fils'),
-    // A proposal without a confidence is one the schema should have refused:
-    // proposal_ai_is_attributed requires it for anything the model produced.
-    confidence: (proposal['confidence'] as num?)?.toDouble() ??
-        _fail('resolution_proposals.confidence is missing on an AI proposal'),
+    // Required of the model and forbidden of a human, which is exactly what
+    // proposal_ai_is_attributed enforces in the schema. Reading it the same
+    // way for both would either invent a confidence a reviewer never gave or
+    // refuse every human decision outright.
+    confidence: source == ProposalSource.human
+        ? null
+        : (proposal['confidence'] as num?)?.toDouble() ??
+            _fail('resolution_proposals.confidence is missing on an AI proposal'),
     acceptedBy: {
       for (final acceptance in acceptances)
         readRole(readString(acceptance, 'role'), 'dispute_acceptances.role'),

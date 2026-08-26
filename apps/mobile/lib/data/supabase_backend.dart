@@ -163,7 +163,7 @@ class SupabaseBackend implements Backend {
       final proposals = await _select(
         () => _client
             .from('resolution_proposals')
-            .select('id, dispute_id, decision, summary, seller_amount_fils, '
+            .select('id, dispute_id, source, decision, summary, seller_amount_fils, '
                 'buyer_amount_fils, confidence, issued_at')
             .inFilter('dispute_id', disputeIds)
             .order('issued_at'),

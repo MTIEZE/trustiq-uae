@@ -346,6 +346,7 @@ class _ProposalCard extends StatelessWidget {
     final youAccepted = proposal.acceptedBy.contains(state.roleOn(contract));
     final otherAccepted = proposal.acceptedBy.contains(state.roleOn(contract).counterparty);
     final closed = dispute.state.isTerminal;
+    final byHuman = proposal.source == ProposalSource.human;
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -357,19 +358,32 @@ class _ProposalCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // A model proposal and a reviewer's decision are different things
+            // and are labelled differently. One is an offer either party may
+            // refuse; the other is what happened because somebody did. A
+            // confidence is shown only where one was actually computed.
             Row(
               children: [
-                const Icon(Icons.auto_awesome_outlined, size: 17, color: TrustIqColors.accent),
+                Icon(
+                  byHuman ? Icons.gavel_outlined : Icons.auto_awesome_outlined,
+                  size: 17,
+                  color: TrustIqColors.accent,
+                ),
                 const SizedBox(width: 8),
-                const Expanded(child: SectionLabel('Proposed resolution')),
-                Text(
-                  '${(proposal.confidence * 100).round()}% confidence',
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: TrustIqColors.inkFaint,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: SectionLabel(
+                    byHuman ? 'Decision by a TrustIQ reviewer' : 'Proposed resolution',
                   ),
                 ),
+                if (proposal.confidence != null)
+                  Text(
+                    '${(proposal.confidence! * 100).round()}% confidence',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: TrustIqColors.inkFaint,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),

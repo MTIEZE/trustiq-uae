@@ -73,7 +73,7 @@ select id, public from storage.buckets where id = 'evidence';
 These three are the ones worth checking by hand, because each is a rule the
 whole product leans on and none of them fails loudly if it is missing.
 
-`npm run test:db` runs the full suite of 99 assertions against a throwaway
+`npm run test:db` runs the full suite of 131 assertions against a throwaway
 Postgres, so a failure there means the migrations are wrong rather than the
 project being misconfigured.
 
@@ -245,20 +245,57 @@ Signing in needs an account in the project's auth. Create one from the
 dashboard, or through the seed script, which makes two verified people and a
 contract between them.
 
-## 11. What is not wired up yet
+## 11. Reviewing an escalated dispute
 
-- Deployment. Both functions are written and verified; neither is deployed.
-- Migrations 0009, 0010 and 0011 are not applied to the live project yet. They need a
-  full-access token, and the functions depend on them: `file-evidence` writes
-  the extraction columns 0010 adds, and `resolve-dispute` calls the function
-  0009 creates. 0011 is what lets the mobile app name a counterparty at all.
-  Apply the schema before deploying either function or pointing the app at the
-  project.
+One refusal from either party sends a case to a human. Making that true needs a
+reviewer account and one administrative step:
+
+```bash
+node scripts/add-reviewer.mjs review@trustiq.ae
+```
+
+The person must already have an account. `app.reviewers` has no client policy
+at all, so nobody can add themselves and no signed-in user can even read the
+list; the script uses the service role for that one write.
+
+The reviewer then works the queue as themselves:
+
+```bash
+export TRUSTIQ_REVIEWER_EMAIL=review@trustiq.ae
+export TRUSTIQ_REVIEWER_PASSWORD=...
+
+node scripts/review-console.mjs queue
+node scripts/review-console.mjs show    <disputeId>
+node scripts/review-console.mjs claim   <disputeId>
+node scripts/review-console.mjs resolve <disputeId> --seller 300 --buyer 200   --summary "..." --finding "statement|<evidenceId>"
+```
+
+The credentials come from the environment and not from `.env`, because this is
+a person signing in rather than a service credential the repository should
+carry. **The console holds no service-role key**: a reviewer sees escalated
+cases and nothing else because the database decides, and staff tooling built on
+a key that bypasses row level security would let every reviewer read every
+contract in the system.
+
+A reviewer is shown roles, claims, evidence and history, and never a party's
+name. That is a policy decision, not an oversight: a decision about 500 AED
+should not turn on whose name is on the contract.
+
+Their decision is final. `issue_human_resolution` goes straight to
+`resolved_by_human` and resolves the contract with it, because a reviewer is
+the escalation rather than another proposal to argue with.
+
+## 12. What is not wired up yet
+
+- A real model call. The pipeline has never reached Anthropic: `resolve-dispute`
+  is deployed with no `ANTHROPIC_API_KEY` secret and answers 500 until there is
+  one. Every proposal so far is stamped `stub:dry-run/...`.
+- A reviewer interface anyone but a developer can use. The console is a script.
+  It is enough for a closed beta where the founder is the reviewer, and it is
+  not enough for a second one.
 - Text extraction beyond plain text, Markdown and CSV. PDFs and images are
   filed and hashed like anything else and recorded as `unsupported`, so the
   model is told plainly that it cannot see their contents. OCR and a PDF parser
   are the next step, and both are dependencies worth choosing deliberately.
 - Anything that calls `resolve-dispute` automatically. Today it is a POST
   someone has to make.
-- A real model call. The pipeline has never run against Anthropic; that needs
-  `ANTHROPIC_API_KEY` set as a function secret, and it costs money per dispute.

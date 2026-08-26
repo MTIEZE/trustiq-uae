@@ -25,10 +25,11 @@ migrations/
   0011_counterparty_visibility.sql
                         seeing who is on the other side of your contract, and
                         addressing a contract to someone by email
+  0012_human_review.sql the reviewer a refused proposal actually goes to
 
 tests/
   00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
-  schema.test.sql        99 assertions run against a real Postgres
+  schema.test.sql        131 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -102,6 +103,15 @@ whether they are verified. Not their email, not the rest of the row. A view
 rather than a policy because a profiles policy that reads transactions would
 recurse through the transactions policy, and because a view is the only place
 in this schema where a column can be withheld.
+
+**A refused proposal reaches a real person.** 0005 wrote the states for human
+review on day one and nothing else was built, so an escalated dispute stopped
+there forever. 0012 is the rest: a reviewer identity in `app.reviewers` that
+nobody can grant themselves, read-only policies that show a reviewer a case
+only from the moment it needs them, and two functions to claim and decide one.
+A reviewer signs in as a person and holds no service-role key, so row level
+security decides what they see exactly as it does for a buyer. They are shown
+roles, claims, evidence and history, and deliberately never a party's name.
 
 **The record cannot be rewritten.** Evidence, both audit logs, proposals and
 acceptances are append-only, enforced by a trigger that fires even for roles

@@ -987,4 +987,269 @@ select pg_temp.check(
   'anon cannot read the profile view');
 
 \echo ''
+\echo '== The human a refused proposal goes to =='
+
+-- A fourth contract, walked to a dispute the model gave up on.
+insert into auth.users (id, email) values
+  ('44444444-4444-4444-4444-444444444444', 'review@trustiq.ae'),
+  ('55555555-5555-5555-5555-555555555555', 'review2@trustiq.ae');
+
+insert into public.profiles (id, full_name, email) values
+  ('44444444-4444-4444-4444-444444444444', 'Reviewer One', 'review@trustiq.ae'),
+  ('55555555-5555-5555-5555-555555555555', 'Reviewer Two', 'review2@trustiq.ae');
+
+insert into app.reviewers (user_id) values
+  ('44444444-4444-4444-4444-444444444444'),
+  ('55555555-5555-5555-5555-555555555555');
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-000000000004',
+   '11111111-1111-1111-1111-111111111111',
+   '22222222-2222-2222-2222-222222222222',
+   'Product photography',
+   'Forty retouched product photographs within ten days.',
+   80000,
+   '11111111-1111-1111-1111-111111111111');
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000004', 'submit');
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000004', 'accept');
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000004', 'mark_delivered');
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000004', 'open_dispute');
+select set_config('request.jwt.claim.sub', '', false);
+
+insert into public.evidence
+  (id, transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+   content_type, byte_size, sha256, extracted_text, extraction_status)
+values
+  ('ee000000-0000-0000-0000-000000000020',
+   'aaaaaaaa-0000-0000-0000-000000000004',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'evidence/aaa4/brief.txt', 'brief.txt', 'text/plain', 90, repeat('7', 64),
+   'Forty photographs, ten days, retouched.', 'extracted');
+
+insert into public.disputes
+  (id, transaction_id, opened_by, opened_by_role, buyer_claim, seller_claim, disputed_amount_fils)
+values
+  ('dd000000-0000-0000-0000-000000000003',
+   'aaaaaaaa-0000-0000-0000-000000000004',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'Twenty two photographs arrived, not forty.',
+   'The shoot was cut short when the client cancelled the second day.',
+   80000);
+
+-- The model gives up on it, which is one of the two ways a case reaches a human.
+select public.apply_dispute_event('dd000000-0000-0000-0000-000000000003', 'submit_for_ai');
+select public.apply_dispute_event('dd000000-0000-0000-0000-000000000003', 'escalate');
+
+select pg_temp.check(
+  (select state from public.disputes where id = 'dd000000-0000-0000-0000-000000000003') = 'escalated',
+  'a case the model gave up on lands in escalated');
+
+\echo ''
+\echo '-- who may act --'
+
+set role authenticated;
+
+-- A party is not a reviewer, however much of the case they can see.
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select pg_temp.expect_error(
+  $q$ select public.claim_dispute('dd000000-0000-0000-0000-000000000003') $q$,
+  'a party to the dispute cannot claim it as a reviewer');
+
+select pg_temp.expect_error(
+  $q$ select public.issue_human_resolution(
+        'dd000000-0000-0000-0000-000000000003', 'refund_to_buyer',
+        'I decide in my own favour.', 0, 80000) $q$,
+  'a party cannot write the resolution of their own dispute');
+
+-- Someone with no relationship to anything is likewise refused.
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+select pg_temp.expect_error(
+  $q$ select public.claim_dispute('dd000000-0000-0000-0000-000000000003') $q$,
+  'a stranger cannot claim a case');
+
+\echo ''
+\echo '-- what a reviewer sees, and what they do not --'
+
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-4444-444444444444', false);
+
+select pg_temp.check(
+  exists (select 1 from public.disputes where id = 'dd000000-0000-0000-0000-000000000003'),
+  'a reviewer sees a case that needs a human');
+
+select pg_temp.check(
+  not exists (select 1 from public.disputes where id = 'dd000000-0000-0000-0000-000000000002'),
+  'a reviewer does not see a case still between the parties');
+
+select pg_temp.check(
+  exists (select 1 from public.transactions where id = 'aaaaaaaa-0000-0000-0000-000000000004'),
+  'a reviewer sees the contract under the case');
+
+select pg_temp.check(
+  not exists (select 1 from public.transactions where id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  'a reviewer sees no contract that never reached them');
+
+select pg_temp.check(
+  exists (select 1 from public.evidence where transaction_id = 'aaaaaaaa-0000-0000-0000-000000000004'),
+  'a reviewer reads the evidence on the case');
+
+-- The other half, and the one that matters. An unqualified column in the
+-- policy's subquery makes this comparison always true, and a reviewer then
+-- reads every document in the system the moment any case is reviewable.
+select pg_temp.check(
+  not exists (select 1 from public.evidence where transaction_id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  'a reviewer reads no evidence from a contract that never reached them (saw ' ||
+  coalesce((select string_agg(filename, ', ') from public.evidence
+            where transaction_id = 'aaaaaaaa-0000-0000-0000-000000000001'), 'nothing') || ')');
+
+select pg_temp.check(
+  not exists (select 1 from public.transaction_events
+              where transaction_id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  'a reviewer reads no history from a contract that never reached them');
+
+-- The deliberate blindness: roles yes, names no.
+select pg_temp.check(
+  (select count(*) from public.visible_profiles) = 1,
+  'a reviewer sees no party name, only their own row (saw ' ||
+  coalesce((select string_agg(coalesce(full_name, id::text), ', ') from public.visible_profiles), 'nothing') || ')');
+
+select pg_temp.check(
+  (select opened_by_role from public.disputes
+   where id = 'dd000000-0000-0000-0000-000000000003') = 'buyer',
+  'a reviewer still knows which side opened the case');
+
+\echo ''
+\echo '-- claiming --'
+
+select public.claim_dispute('dd000000-0000-0000-0000-000000000003');
+
+select pg_temp.check(
+  (select state from public.disputes where id = 'dd000000-0000-0000-0000-000000000003') = 'human_review',
+  'claiming moves the case into human_review');
+
+select pg_temp.check(
+  (select reviewer_id from public.disputes
+   where id = 'dd000000-0000-0000-0000-000000000003') = '44444444-4444-4444-4444-444444444444',
+  'the case records who is holding it');
+
+-- A second reviewer arriving at the same case is refused by the transition
+-- table: assign_reviewer is legal only from escalated.
+select set_config('request.jwt.claim.sub', '55555555-5555-5555-5555-555555555555', false);
+select pg_temp.expect_error(
+  $q$ select public.claim_dispute('dd000000-0000-0000-0000-000000000003') $q$,
+  'a second reviewer cannot take a case someone already holds');
+
+select pg_temp.expect_error(
+  $q$ select public.issue_human_resolution(
+        'dd000000-0000-0000-0000-000000000003', 'refund_to_buyer',
+        'Deciding a case I never picked up.', 0, 80000) $q$,
+  'a reviewer cannot decide a case held by someone else');
+
+\echo ''
+\echo '-- the decision --'
+
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-4444-444444444444', false);
+
+-- The allocation rules apply to a human exactly as they do to the model.
+select pg_temp.expect_error(
+  $q$ select public.issue_human_resolution(
+        'dd000000-0000-0000-0000-000000000003', 'split',
+        'One fil short.', 40000, 39999) $q$,
+  'a human allocation that does not add up is refused');
+
+select pg_temp.expect_error(
+  $q$ select public.issue_human_resolution(
+        'dd000000-0000-0000-0000-000000000003', 'refund_to_buyer',
+        'A decision that contradicts its own numbers.', 40000, 40000) $q$,
+  'a human decision contradicting its own split is refused');
+
+-- A finding a human writes is grounded like any other.
+select pg_temp.expect_deferred_error(
+  $q$ select public.issue_human_resolution(
+        'dd000000-0000-0000-0000-000000000003', 'split',
+        'Partly delivered.', 40000, 40000,
+        '[{"statement":"They seemed careless.","evidenceIds":[]}]'::jsonb) $q$,
+  'a human finding citing no evidence is refused');
+
+select pg_temp.check(
+  (select count(*) from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000003') = 0,
+  'a refused decision leaves no proposal behind');
+
+-- The real one.
+do $$
+declare
+  v_id uuid;
+begin
+  v_id := public.issue_human_resolution(
+    'dd000000-0000-0000-0000-000000000003', 'split',
+    'Twenty two of forty photographs were delivered, and the shoot was cut '
+    'short by a cancellation neither side fully owns. The fee is split in '
+    'proportion to the work delivered.',
+    44000, 36000,
+    '[{"statement":"The brief specified forty photographs in ten days.",
+       "evidenceIds":["ee000000-0000-0000-0000-000000000020"]}]'::jsonb);
+  set constraints all immediate;
+  perform pg_temp.check(v_id is not null, 'issue_human_resolution returns the proposal id');
+end
+$$;
+
+reset role;
+
+select pg_temp.check(
+  (select source from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000003') = 'human',
+  'the resolution is recorded as a human one');
+
+select pg_temp.check(
+  (select model_id is null and confidence is null from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000003'),
+  'a human decision carries no model id and no confidence, so it cannot pass for the model''s');
+
+select pg_temp.check(
+  (select seller_amount_fils + buyer_amount_fils from public.resolution_proposals
+   where dispute_id = 'dd000000-0000-0000-0000-000000000003') = 80000,
+  'the human split conserves the disputed amount');
+
+select pg_temp.check(
+  (select state from public.disputes where id = 'dd000000-0000-0000-0000-000000000003') = 'resolved_by_human',
+  'the case closes without asking the parties to accept, because the reviewer is the escalation');
+
+select pg_temp.check(
+  (select state from public.transactions where id = 'aaaaaaaa-0000-0000-0000-000000000004') = 'resolved',
+  'closing the case resolves the contract with it');
+
+select pg_temp.check(
+  (select actor from public.dispute_events
+   where dispute_id = 'dd000000-0000-0000-0000-000000000003'
+   order by occurred_at desc, id desc limit 1) = 'system',
+  'the closing transition is recorded as a system action');
+
+\echo ''
+\echo '-- the reviewer list is not a client table --'
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.reviewers', 'SELECT'),
+  'a signed-in user cannot read who the reviewers are');
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.reviewers', 'INSERT'),
+  'a signed-in user cannot make themselves a reviewer');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.claim_dispute(uuid)', 'EXECUTE'),
+  'anon holds no grant on claim_dispute');
+
+select pg_temp.check(
+  not has_function_privilege('anon',
+    'public.issue_human_resolution(uuid, public.resolution_decision, text, bigint, bigint, jsonb)',
+    'EXECUTE'),
+  'anon holds no grant on issue_human_resolution');
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

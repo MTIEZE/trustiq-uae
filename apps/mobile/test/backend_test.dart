@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/data/config.dart';
+import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/data/rows.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -195,6 +196,27 @@ void main() {
 
     test('refuses an AI proposal with no confidence, which the schema forbids', () {
       final row = proposalRow()..remove('confidence');
+      expect(() => proposalFromRows(row, [], [], []), throwsA(isA<RowMappingException>()));
+    });
+
+    test('reads a reviewer decision, which has no confidence by design', () {
+      // The other half of the same schema rule. Requiring a confidence here
+      // would refuse every human decision, and inventing one would tell the
+      // parties a reviewer was 80% sure of something they never scored.
+      final row = proposalRow()
+        ..['source'] = 'human'
+        ..['confidence'] = null;
+      final proposal = proposalFromRows(row, [], [], []);
+      expect(proposal!.source, ProposalSource.human);
+      expect(proposal.confidence, isNull);
+    });
+
+    test('treats a row with no source as the model, which is what older rows are', () {
+      expect(proposalFromRows(proposalRow(), [], [], [])!.source, ProposalSource.ai);
+    });
+
+    test('refuses a source this build does not know', () {
+      final row = proposalRow()..['source'] = 'arbitration';
       expect(() => proposalFromRows(row, [], [], []), throwsA(isA<RowMappingException>()));
     });
 

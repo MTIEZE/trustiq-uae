@@ -54,6 +54,20 @@ class EvidenceItem {
   final String? note;
 }
 
+/// Who wrote a resolution.
+///
+/// Kept apart because the two are not interchangeable. A model proposal is an
+/// offer both parties may refuse; a reviewer's decision is what happens when
+/// one of them does. Showing them the same way would tell someone they can
+/// still argue when they cannot.
+enum ProposalSource {
+  ai('ai'),
+  human('human');
+
+  const ProposalSource(this.wireName);
+  final String wireName;
+}
+
 class ResolutionProposal {
   const ResolutionProposal({
     required this.decision,
@@ -63,6 +77,7 @@ class ResolutionProposal {
     required this.buyerAmount,
     required this.confidence,
     required this.acceptedBy,
+    this.source = ProposalSource.ai,
   });
 
   final ResolutionDecision decision;
@@ -70,7 +85,11 @@ class ResolutionProposal {
   final List<({String statement, List<String> evidenceIds})> findings;
   final Fils sellerAmount;
   final Fils buyerAmount;
-  final double confidence;
+  final ProposalSource source;
+
+  /// Null for a human decision, and the schema insists on that: a reviewer
+  /// never computed a confidence and must not appear to have one.
+  final double? confidence;
 
   /// Roles that have accepted. The dispute closes only when both have.
   final Set<Role> acceptedBy;
