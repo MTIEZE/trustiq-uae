@@ -29,7 +29,6 @@ class DisputeScreen extends StatelessWidget {
           appBar: AppBar(
             title: const Text(
               'Dispute',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
             ),
           ),
           body: ListView(

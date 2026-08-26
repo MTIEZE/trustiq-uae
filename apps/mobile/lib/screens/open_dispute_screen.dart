@@ -57,11 +57,10 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
       appBar: AppBar(
         title: Text(
           widget.answering ? 'Your response' : 'Open a dispute',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           InfoCard(
             child: Column(
@@ -71,9 +70,9 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                 const SizedBox(height: 8),
                 Text(
                   contract.description,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: Type.heading,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 Text(
                   contract.terms,
                   style: const TextStyle(
@@ -82,7 +81,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                     color: TrustIqColors.inkSoft,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 Row(
                   children: [
                     const Expanded(child: SectionLabel('Amount')),
@@ -97,7 +96,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
             ),
           ),
           if (widget.answering && contract.dispute != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             InfoCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,13 +107,13 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                     widget.state.roleOn(contract) == Role.buyer
                         ? (contract.dispute!.sellerClaim ?? '')
                         : contract.dispute!.buyerClaim,
-                    style: const TextStyle(fontSize: 14, height: 1.5),
+                    style: Type.body,
                   ),
                 ],
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +130,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                     color: TrustIqColors.inkSoft,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 TextField(
                   controller: _claim,
                   maxLines: 8,
@@ -140,11 +139,9 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                     hintText:
                         'Only two of the three concepts were delivered, and the '
                         'third is a colour variation of the second.',
-                    hintStyle: TextStyle(fontSize: 13.5, color: TrustIqColors.inkFaint),
-                    border: OutlineInputBorder(),
                     counterText: '',
                   ),
-                  style: const TextStyle(fontSize: 14.5, height: 1.5),
+                  style: Type.body.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -160,7 +157,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Space.xxl),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor:
@@ -169,14 +166,14 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
             onPressed: _canSubmit ? _submit : null,
             child: Text(widget.answering ? 'Submit your response' : 'Open the dispute'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           const RuleNote(
             'Both accounts and all the evidence go to the same place. An AI agent '
             'reads them and proposes a resolution, which takes effect only if you '
             'both accept it. Either of you can refuse and ask for a person.',
             icon: Icons.balance_outlined,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Space.md),
           const RuleNote(
             'What you write here is shown to the other party in full. It cannot '
             'be edited once submitted.',

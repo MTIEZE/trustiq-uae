@@ -41,7 +41,6 @@ class ContractDetailScreen extends StatelessWidget {
           appBar: AppBar(
             title: Text(
               contract.reference,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
             actions: [
               Padding(

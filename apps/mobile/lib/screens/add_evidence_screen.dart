@@ -151,9 +151,9 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
               Text(
                 '${item.filename} is on the record and can no longer be changed '
                 'or removed, by you or by the other party.',
-                style: const TextStyle(fontSize: 14, height: 1.5),
+                style: Type.body,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               const SectionLabel('Fingerprint recorded by TrustIQ'),
               const SizedBox(height: 6),
               SelectableText(
@@ -165,7 +165,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                   color: TrustIqColors.inkSoft,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
               const RuleNote(
                 'This was calculated from the bytes that were stored, not from '
                 'anything your device reported. That is what makes it worth '
@@ -177,7 +177,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
               // contents, the moment to learn that is now, while the person is
               // still holding the file and can send a readable version.
               if (!item.extractionStatus.wasRead) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 RuleNote(
                   unreadableNote(item.extractionStatus),
                   icon: Icons.visibility_off_outlined,
@@ -205,31 +205,60 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
       appBar: AppBar(
         title: const Text(
           'Add evidence',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SectionLabel('The file'),
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 if (chosen == null)
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _pick,
-                    icon: const Icon(Icons.attach_file, size: 18),
-                    label: const Text('Choose a file'),
+                  // A target rather than a button. Choosing a file is the
+                  // whole point of this screen, so it gets the space that
+                  // says so.
+                  InkWell(
+                    onTap: _busy ? null : _pick,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: Space.xxl),
+                      decoration: BoxDecoration(
+                        color: TrustIqColors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        border: Border.all(color: TrustIqColors.ruleStrong),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            _busy ? Icons.hourglass_empty : Icons.upload_file_outlined,
+                            size: 26,
+                            color: TrustIqColors.accent,
+                          ),
+                          const SizedBox(height: Space.md),
+                          Text(
+                            _busy ? 'Reading the file' : 'Choose a file',
+                            style: Type.bodyStrong.copyWith(color: TrustIqColors.accentStrong),
+                          ),
+                          const SizedBox(height: Space.xs),
+                          Text(
+                            'PDF, image, document, text or zip',
+                            style: Type.caption.copyWith(color: TrustIqColors.inkFaint),
+                          ),
+                        ],
+                      ),
+                    ),
                   )
                 else
                   _ChosenFile(chosen: chosen, onReplace: _busy ? null : _pick),
                 if (_error != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Space.md),
                   _ErrorNote(_error!),
                 ],
-                const SizedBox(height: 14),
+                const SizedBox(height: Space.lg),
                 const RuleNote(
                   'PDFs, images, documents, plain text and zip archives, up to '
                   '50 MB. The other party sees everything you file here.',
@@ -238,7 +267,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,16 +281,14 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                   enabled: !_busy,
                   decoration: const InputDecoration(
                     hintText: 'What this shows, and why it matters.',
-                    hintStyle: TextStyle(fontSize: 13.5, color: TrustIqColors.inkFaint),
-                    border: OutlineInputBorder(),
                     counterText: '',
                   ),
-                  style: const TextStyle(fontSize: 14, height: 1.45),
+                  style: Type.body,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Space.xxl),
           FilledButton(
             onPressed: (chosen == null || _busy) ? null : _upload,
             child: _busy
@@ -272,7 +299,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                   )
                 : const Text('File this evidence'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           const RuleNote(
             'Once filed, a document cannot be edited or withdrawn. A fingerprint '
             'of it is recorded so either of you can prove, later, that it is the '
@@ -324,7 +351,7 @@ class _ChosenFile extends StatelessWidget {
             children: [
               Text(
                 chosen.name,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                style: Type.bodyStrong,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),

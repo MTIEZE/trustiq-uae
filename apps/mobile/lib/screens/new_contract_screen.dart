@@ -92,19 +92,29 @@ class _NewContractScreenState extends State<NewContractScreen> {
       appBar: AppBar(
         title: const Text(
           'New contract',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
+          // A form of three questions rather than one wall of fields. The
+          // numbers are not decoration: they tell someone how much is left.
+          const _Step(
+            number: 1,
+            title: 'Who this is with',
+            blurb: 'Both of you will see the same contract, and neither can '
+                'change it once it is accepted.',
+          ),
           InfoCard(
+            padding: const EdgeInsets.all(Space.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('Your side of this deal'),
-                const SizedBox(height: 10),
                 SegmentedButton<Role>(
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
                   segments: const [
                     ButtonSegment(
                       value: Role.buyer,
@@ -121,19 +131,32 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   showSelectedIcon: false,
                   onSelectionChanged: (s) => setState(() => _youAre = s.first),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.xl),
                 _Field(
                   controller: _counterparty,
                   label: _youAre == Role.buyer
-                      ? 'Who is delivering'
-                      : 'Who is paying',
-                  hint: 'Their name as it appears on TrustIQ',
+                      ? 'Email of the person delivering'
+                      : 'Email of the person paying',
+                  hint: 'name@example.ae',
+                  keyboardType: TextInputType.emailAddress,
+                  // An email, not a name. The contract is addressed to an
+                  // account, and the server resolves the address to one.
+                  helper: 'They need a TrustIQ account already. Inviting '
+                      'someone who has none is not supported yet.',
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: Space.xxl),
+          const _Step(
+            number: 2,
+            title: 'What was agreed',
+            blurb: 'This is the text a dispute would be judged against, so be '
+                'specific about what counts as delivered.',
+          ),
           InfoCard(
+            padding: const EdgeInsets.all(Space.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -143,26 +166,30 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   hint: 'Logo design for a startup',
                   maxLength: 120,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.xl),
                 _Field(
                   controller: _terms,
                   label: 'Agreed terms',
-                  hint:
-                      'Be specific about what counts as delivered. This is what '
-                      'a dispute would be judged against.',
+                  hint: 'Deliver three distinct concepts within seven days. '
+                      'Two rounds of revision. Final files as SVG and PNG.',
                   maxLines: 5,
                   maxLength: 1000,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: Space.xxl),
+          const _Step(
+            number: 3,
+            title: 'How much',
+            blurb: 'Recorded to the fil. Nothing here rounds.',
+          ),
           InfoCard(
+            padding: const EdgeInsets.all(Space.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('Amount'),
-                const SizedBox(height: 8),
                 TextField(
                   controller: _amount,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -175,34 +202,30 @@ class _NewContractScreenState extends State<NewContractScreen> {
                     prefixStyle: const TextStyle(
                       color: TrustIqColors.inkFaint,
                       fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                     errorText: _amountError,
-                    border: const OutlineInputBorder(),
                   ),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
+                  style: Type.amount.copyWith(fontSize: 22),
                 ),
                 if (_parsedAmount != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: Space.md),
                   Row(
                     children: [
-                      const Icon(Icons.check, size: 15, color: TrustIqColors.ok),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.check_circle_outline, size: 15, color: TrustIqColors.ok),
+                      const SizedBox(width: Space.sm),
                       Text(
                         'Recorded as ${formatAed(_parsedAmount!)}',
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: Type.caption.copyWith(
                           color: TrustIqColors.ok,
                           fontWeight: FontWeight.w600,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
                   ),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.lg),
                 const RuleNote(
                   'TrustIQ does not take this money. It records what you agreed '
                   'so there is something to point at later; you pay each other '
@@ -212,12 +235,13 @@ class _NewContractScreenState extends State<NewContractScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+
+          const SizedBox(height: Space.xxl),
           FilledButton(
             onPressed: _canSubmit ? _create : null,
             child: const Text('Create as a draft'),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Space.md),
           const RuleNote(
             'A draft is yours alone until you send it. Once the other party '
             'accepts, neither of you can change the terms.',
@@ -266,6 +290,58 @@ class _NewContractScreenState extends State<NewContractScreen> {
   }
 }
 
+/// A numbered step, with a sentence saying why the step exists.
+///
+/// The numbers are not decoration. A form of three named steps tells someone
+/// how much is left; the same fields in one column do not.
+class _Step extends StatelessWidget {
+  const _Step({required this.number, required this.title, required this.blurb});
+
+  final int number;
+  final String title;
+  final String blurb;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Space.md, left: Space.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: TrustIqColors.accentSoft,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$number',
+              style: Type.caption.copyWith(
+                color: TrustIqColors.accentStrong,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(width: Space.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Type.heading.copyWith(fontSize: 15.5)),
+                const SizedBox(height: 3),
+                Text(blurb, style: Type.small.copyWith(color: TrustIqColors.inkFaint)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Field extends StatelessWidget {
   const _Field({
     required this.controller,
@@ -273,6 +349,8 @@ class _Field extends StatelessWidget {
     required this.hint,
     this.maxLines = 1,
     this.maxLength,
+    this.keyboardType,
+    this.helper,
   });
 
   final TextEditingController controller;
@@ -280,6 +358,10 @@ class _Field extends StatelessWidget {
   final String hint;
   final int maxLines;
   final int? maxLength;
+  final TextInputType? keyboardType;
+
+  /// A line under the field for a rule the person cannot otherwise know.
+  final String? helper;
 
   @override
   Widget build(BuildContext context) {
@@ -287,18 +369,20 @@ class _Field extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionLabel(label),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         TextField(
           controller: controller,
           maxLines: maxLines,
           maxLength: maxLength,
+          keyboardType: keyboardType,
+          autocorrect: keyboardType != TextInputType.emailAddress,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(fontSize: 13.5, color: TrustIqColors.inkFaint),
-            border: const OutlineInputBorder(),
+            helperText: helper,
+            helperMaxLines: 3,
             counterText: '',
           ),
-          style: const TextStyle(fontSize: 14.5, height: 1.4),
+          style: Type.body.copyWith(fontSize: 14.5),
         ),
       ],
     );

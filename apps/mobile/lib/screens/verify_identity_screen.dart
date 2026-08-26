@@ -54,11 +54,10 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
       appBar: AppBar(
         title: const Text(
           'Verify your identity',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           InfoCard(
             child: Column(
@@ -68,7 +67,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
                   'A contract only becomes binding between verified identities.',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, height: 1.35),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 const Text(
                   'You can draft a contract, send it, and file evidence without '
                   'verifying. What you cannot do is accept one, because the other '
@@ -78,25 +77,25 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SectionLabel('What TrustIQ keeps'),
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 const _KeptRow(
                   kept: true,
                   label: 'Your name',
                   detail: 'Shown to the other party on contracts you are on.',
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 const _KeptRow(
                   kept: true,
                   label: 'A reference from UAE Pass',
                   detail: 'An identifier that means nothing outside TrustIQ.',
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 const _KeptRow(
                   kept: false,
                   label: 'Your Emirates ID number',
@@ -106,7 +105,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
                       'keeping it would make this database worth attacking for '
                       'reasons that have nothing to do with TrustIQ.',
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: Space.md),
                 const _KeptRow(
                   kept: false,
                   label: 'Your address, nationality and date of birth',
@@ -116,7 +115,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
             ),
           ),
           if (_error != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             InfoCard(
               child: Text(
                 _error!,
@@ -128,7 +127,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: Space.xxl),
           FilledButton(
             onPressed: _busy ? null : _verify,
             child: _busy
@@ -139,7 +138,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
                   )
                 : Text('Continue with ${widget.state.identityProviderName}'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           if (!connected)
             const RuleNote(
               'UAE Pass is not connected in this build. TrustIQ has to be '
@@ -247,7 +246,7 @@ class IdentityGateNotice extends StatelessWidget {
                 const SectionLabel('Cannot be accepted yet'),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: Space.md),
             Text(
               youAreVerified
                   ? '$counterpartyName has not verified their identity yet. A '
@@ -258,7 +257,7 @@ class IdentityGateNotice extends StatelessWidget {
               style: const TextStyle(fontSize: 14, height: 1.55),
             ),
             if (!youAreVerified) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: Space.lg),
               FilledButton(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<bool>(
