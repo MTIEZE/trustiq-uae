@@ -113,8 +113,9 @@ verified even with a valid session.
 
 ## 7. Deploying the Edge Function
 
-`resolve-dispute` runs one dispute through the resolution pipeline. It needs the
-Supabase CLI and a **personal access token with full access**.
+Two functions: `file-evidence` files a document against a contract, and
+`resolve-dispute` runs one dispute through the resolution pipeline. Both need
+the Supabase CLI and a **personal access token with full access**.
 
 Read-only tokens are the trap here. They pass `supabase projects list` and every
 other read, then fail the deploy with a 403 that talks about privileges rather
@@ -132,6 +133,7 @@ space after the `=`.
 ```bash
 export SUPABASE_ACCESS_TOKEN=...            # or read it from .env
 ./scripts/vendor-shared.sh                  # builds and copies the packages the function imports
+npx supabase functions deploy file-evidence   --project-ref your-project-ref
 npx supabase functions deploy resolve-dispute --project-ref your-project-ref
 ```
 
@@ -140,7 +142,10 @@ directory and cannot reach into the npm workspace, so the compiled packages are
 copied next to the function. Skip it and the function deploys against whatever
 the last build left behind.
 
-Then set the secret the function reads. `SUPABASE_URL`,
+`file-evidence` needs no secret beyond what the platform injects.
+`resolve-dispute` needs one more.
+
+Then set the secret it reads. `SUPABASE_URL`,
 `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` are injected by the
 platform; the model key is not:
 
@@ -173,6 +178,29 @@ written this way is never mistaken for a real one.
 `--refuse`, `--invent-evidence` and `--unsure` exercise the escalation branches.
 A dispute resolves once, so re-seed between runs.
 
+The third script drives `file-evidence` over real HTTP:
+
+```bash
+npx deno run -A --env-file=.env --config supabase/functions/deno.json   supabase/functions/file-evidence/index.ts     # in one terminal
+node scripts/test-file-evidence.mjs http://127.0.0.1:8000
+```
+
+Running the function directly under Deno is deliberate. `supabase functions
+serve` needs the whole local stack, which would point the function at a local
+database and prove nothing about the real one. Run this way it talks to the
+live project with real sessions, so the 26 checks cover what no unit test can:
+multipart parsing, the caller's identity coming from their verified token
+rather than the request body, the status code behind each refusal, and the
+bytes in the bucket hashing to the digest in the row.
+
+Pass the deployed URL instead of the localhost one to run the same checks
+against production.
+
+The one thing this cannot cover locally is the platform's own JWT gate. The
+function verifies the token itself with `auth.getUser()`, so the check is real
+either way, but the gateway rejecting an unauthenticated request before the
+function runs is only observable once deployed.
+
 **This pair is what found the bug that migration 0009 fixes.** Everything passed
 in memory and in the SQL suite; the proposal write failed the first time it met
 a real PostgREST connection, because each request is its own transaction and the
@@ -195,9 +223,7 @@ rather than after the first request arrives.
 
 ## 10. What is not wired up yet
 
-- The evidence upload endpoint. `packages/server` has the logic and the
-  adapters, and `scripts/seed-live-dispute.mjs` drives them against the live
-  project; there is no Edge Function in front of it yet.
+- Deployment. Both functions are written and verified; neither is deployed.
 - Text extraction from uploaded evidence. `extractedText` is null everywhere,
   so the model sees filenames and notes rather than contents.
 - Anything that calls `resolve-dispute` automatically. Today it is a POST

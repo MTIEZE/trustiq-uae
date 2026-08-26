@@ -1,0 +1,14 @@
+# Supabase CLI project file.
+#
+# Only what the CLI needs to identify the project and serve the functions
+# locally. The hosted project's own settings are not managed from here: this
+# repo does not run `supabase start`, and the local stack is not used. The
+# schema is applied from supabase/migrations and the functions are deployed
+# with an explicit --project-ref.
+project_id = "trustiq-uae"
+
+[functions.resolve-dispute]
+verify_jwt = true
+
+[functions.file-evidence]
+verify_jwt = true

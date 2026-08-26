@@ -18,7 +18,8 @@
     "typecheck": "npm run build:packages && npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server",
     "verify:supabase": "node scripts/verify-supabase.mjs",
     "seed:live": "node scripts/seed-live-dispute.mjs",
-    "dryrun:live": "node scripts/dry-run-resolution.mjs"
+    "dryrun:live": "node scripts/dry-run-resolution.mjs",
+    "test:endpoint": "node scripts/test-file-evidence.mjs"
   },
   "devDependencies": {
     "oxlint": "^1.69.0",
