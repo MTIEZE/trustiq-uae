@@ -35,27 +35,53 @@ class DisputeScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
+              // The two facts that frame everything below: where the case
+              // stands, and how much is riding on it.
               InfoCard(
+                padding: const EdgeInsets.all(Space.xl),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
-                      child: LabelledValue(
-                        label: 'Status',
-                        child: Text(
-                          disputeStateLabel(dispute.state),
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SectionLabel('Status'),
+                          const SizedBox(height: Space.sm),
+                          Row(
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                margin: const EdgeInsets.only(right: Space.sm),
+                                decoration: BoxDecoration(
+                                  color: _statusColour(dispute.state),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Flexible(
+                                child: Text(
+                                  disputeStateLabel(dispute.state),
+                                  style: Type.heading.copyWith(fontSize: 15.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    Expanded(
-                      child: LabelledValue(
-                        label: 'Amount in dispute',
-                        child: MoneyText(
+                    const SizedBox(width: Space.lg),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const SectionLabel('In dispute'),
+                        const SizedBox(height: Space.xs),
+                        MoneyText(
                           contract.totalAmount,
-                          style: const TextStyle(fontSize: 16),
+                          style: Type.amount.copyWith(fontSize: 21),
                           emphasis: true,
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -178,6 +204,19 @@ bool _awaitingYourAccount(Dispute dispute, Role you) {
   return yours == null || yours.trim().isEmpty;
 }
 
+/// How far along a case is, as a colour.
+///
+/// Deliberately dull. A dispute is somebody's bad week, and a bright status
+/// light would read as a game.
+Color _statusColour(DisputeState state) => switch (state) {
+      DisputeState.open => TrustIqColors.caution,
+      DisputeState.aiReview => TrustIqColors.accent,
+      DisputeState.proposalIssued => TrustIqColors.accent,
+      DisputeState.escalated || DisputeState.humanReview => TrustIqColors.critical,
+      DisputeState.accepted || DisputeState.resolvedByHuman => TrustIqColors.ok,
+      DisputeState.withdrawn => TrustIqColors.inkFaint,
+    };
+
 class _ClaimCard extends StatelessWidget {
   const _ClaimCard({
     required this.label,
@@ -193,48 +232,57 @@ class _ClaimCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final answered = claim != null && claim!.trim().isNotEmpty;
+
     return InfoCard(
+      padding: const EdgeInsets.all(Space.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              SectionLabel(label),
-              if (isYou) ...[
-                const SizedBox(width: 8),
+              Expanded(child: SectionLabel(label)),
+              if (isYou)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: TrustIqColors.accentSoft,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(Radii.sm - 2),
                   ),
-                  child: const Text(
+                  child: Text(
                     'YOU',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                      color: TrustIqColors.accent,
-                    ),
+                    style: Type.label.copyWith(fontSize: 9.5, color: TrustIqColors.accentStrong),
                   ),
                 ),
-              ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.md),
+          // The claim is the one thing on this screen a person came to read,
+          // so it is set at reading size with reading leading, not at the size
+          // of a caption.
           Text(
-            claim ?? 'No response submitted.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              fontStyle: claim == null ? FontStyle.italic : FontStyle.normal,
-              color: claim == null ? TrustIqColors.inkFaint : TrustIqColors.ink,
-            ),
+            answered ? claim! : 'No account given yet.',
+            style: answered
+                ? Type.body.copyWith(fontSize: 15)
+                : Type.body.copyWith(
+                    fontSize: 15,
+                    fontStyle: FontStyle.italic,
+                    color: TrustIqColors.inkFaint,
+                  ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            who,
-            style: const TextStyle(fontSize: 12, color: TrustIqColors.inkFaint),
+          const SizedBox(height: Space.md),
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 13, color: TrustIqColors.inkFaint),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  who,
+                  style: Type.caption.copyWith(color: TrustIqColors.inkFaint),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -392,13 +440,18 @@ class _ProposalCard extends StatelessWidget {
     final closed = dispute.state.isTerminal;
     final byHuman = proposal.source == ProposalSource.human;
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: TrustIqColors.accent, width: 1.5),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        boxShadow: kSoftLift,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+          side: const BorderSide(color: TrustIqColors.accent, width: 1.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(Space.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -532,6 +585,7 @@ class _ProposalCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -589,18 +643,34 @@ class _AllocationBar extends StatelessWidget {
 
     return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: SizedBox(
-            height: 8,
-            child: Row(
-              children: [
-                if (seller > 0)
-                  Expanded(flex: seller, child: Container(color: TrustIqColors.accent)),
-                if (buyer > 0)
-                  Expanded(flex: buyer, child: Container(color: TrustIqColors.caution)),
-              ],
-            ),
+        SizedBox(
+          height: 10,
+          child: Row(
+            children: [
+              if (seller > 0)
+                Expanded(
+                  flex: seller,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: TrustIqColors.accent,
+                      borderRadius: BorderRadius.circular(Radii.pill),
+                    ),
+                  ),
+                ),
+              // A gap, so two shares read as two shares rather than as one bar
+              // that changes colour partway along.
+              if (seller > 0 && buyer > 0) const SizedBox(width: 3),
+              if (buyer > 0)
+                Expanded(
+                  flex: buyer,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: TrustIqColors.caution,
+                      borderRadius: BorderRadius.circular(Radii.pill),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 10),

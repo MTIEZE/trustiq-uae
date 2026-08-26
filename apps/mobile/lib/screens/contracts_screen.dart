@@ -151,84 +151,113 @@ class _ContractTile extends StatelessWidget {
 
   final Contract contract;
   final AppState state;
+
+  /// This contract is waiting on the person reading the screen.
   final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     final counterparty = contract.counterpartyFor(state.roleOn(contract));
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: highlight ? TrustIqColors.accent : TrustIqColors.rule,
-          width: highlight ? 1.5 : 1,
-        ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        boxShadow: kSoftLift,
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ContractDetailScreen(
-              contractId: contract.id,
-              state: state,
+      child: Material(
+        color: TrustIqColors.surface,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Radii.lg),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => ContractDetailScreen(contractId: contract.id, state: state),
             ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      contract.description,
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
-                        height: 1.25,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(Radii.lg),
+              border: Border.all(color: TrustIqColors.rule),
+            ),
+            // A Stack, not a Row with a stretched rail. A Row that stretches
+            // inside a list has no height to stretch to, and asking for one is
+            // how you get an infinite constraint.
+            child: Stack(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    highlight ? Space.xl : Space.lg,
+                    Space.lg,
+                    Space.lg,
+                    Space.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              contract.description,
+                              style: Type.bodyStrong.copyWith(fontSize: 15.5, height: 1.3),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: Space.md),
+                          // The amount leads the right-hand column: it is the
+                          // first thing anyone looks for in a list of deals.
+                          MoneyText(contract.totalAmount, emphasis: true),
+                        ],
+                      ),
+                      const SizedBox(height: Space.md),
+                      Row(
+                        children: [
+                          const Icon(Icons.person_outline, size: 14, color: TrustIqColors.inkFaint),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              counterparty.name,
+                              style: Type.small.copyWith(color: TrustIqColors.inkSoft),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (counterparty.verified) ...[
+                            const SizedBox(width: 5),
+                            const Icon(Icons.verified, size: 13, color: TrustIqColors.accent),
+                          ],
+                          const Spacer(),
+                          const SizedBox(width: Space.sm),
+                          StateChip(contract.state, compact: true),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Marks the row without turning the whole card into a warning,
+                // which a coloured border all the way round does.
+                if (highlight)
+                  const Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 3,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: TrustIqColors.accent,
+                        borderRadius: BorderRadius.horizontal(left: Radius.circular(Radii.lg)),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  StateChip(contract.state),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'with ${counterparty.name}',
-                      style: const TextStyle(fontSize: 13, color: TrustIqColors.inkSoft),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  MoneyText(
-                    contract.totalAmount,
-                    style: const TextStyle(fontSize: 15),
-                    emphasis: true,
-                  ),
-                ],
-              ),
-              Text(
-                contract.reference,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: TrustIqColors.inkFaint,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-
 
 /// Something the backend refused, shown where it happened rather than as a
 /// snackbar that has already gone by the time anyone looks up.

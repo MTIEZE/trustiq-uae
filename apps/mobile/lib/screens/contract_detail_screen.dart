@@ -53,51 +53,58 @@ class ContractDetailScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
+              // The hero. What was agreed, for how much, and who with, in the
+              // order somebody actually asks those questions.
               InfoCard(
+                padding: const EdgeInsets.all(Space.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      contract.description,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        height: 1.25,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    Text(contract.description, style: Type.title),
+                    const SizedBox(height: Space.xl),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Expanded(
-                          child: LabelledValue(
-                            label: 'Amount agreed',
-                            child: MoneyText(
-                              contract.totalAmount,
-                              style: const TextStyle(fontSize: 20),
-                              emphasis: true,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SectionLabel('Amount agreed'),
+                              const SizedBox(height: Space.xs),
+                              MoneyText(
+                                contract.totalAmount,
+                                style: Type.amountLarge,
+                                emphasis: true,
+                              ),
+                            ],
                           ),
                         ),
-                        Expanded(
-                          child: LabelledValue(
-                            label: 'You are the',
-                            child: Text(
-                              state.roleOn(contract) == Role.buyer ? 'Buyer' : 'Seller',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                        // Which side you are on, as a quiet badge rather than
+                        // another labelled field. It is context, not data.
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Space.md,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: TrustIqColors.surfaceSunken,
+                            borderRadius: BorderRadius.circular(Radii.pill),
+                            border: Border.all(color: TrustIqColors.rule),
+                          ),
+                          child: Text(
+                            state.roleOn(contract) == Role.buyer
+                                ? 'You are the buyer'
+                                : 'You are the seller',
+                            style: Type.caption.copyWith(color: TrustIqColors.inkSoft),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Space.xl),
                     const Divider(),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Space.lg),
                     _PartyRow(label: 'You', party: me),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: Space.md),
                     _PartyRow(label: 'Other party', party: other),
                   ],
                 ),
@@ -224,50 +231,76 @@ class _PartyRow extends StatelessWidget {
   final String label;
   final Party party;
 
+  /// Initials, so a row of people reads as people rather than as two more
+  /// lines of text. Two letters at most: three starts looking like a code.
+  String get _initials {
+    final words = party.name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.isEmpty) return '?';
+    if (words.length == 1) return words.first.characters.first.toUpperCase();
+    return (words.first.characters.first + words.last.characters.first).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final verified = party.verified;
     return Row(
       children: [
-        SizedBox(
-          width: 92,
-          child: SectionLabel(label),
-        ),
-        Expanded(
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: TrustIqColors.accentSoft,
+            shape: BoxShape.circle,
+          ),
           child: Text(
-            party.name,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            _initials,
+            style: Type.caption.copyWith(
+              color: TrustIqColors.accentStrong,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+            ),
           ),
         ),
-        if (party.verified)
-          const Row(
+        const SizedBox(width: Space.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.verified_user_outlined, size: 15, color: TrustIqColors.ok),
-              SizedBox(width: 4),
-              Text(
-                'Verified',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: TrustIqColors.ok,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(party.name, style: Type.bodyStrong, overflow: TextOverflow.ellipsis),
+              Text(label, style: Type.caption.copyWith(color: TrustIqColors.inkFaint)),
             ],
-          )
-        else
-          const Row(
+          ),
+        ),
+        // Verification is the gate on this whole contract becoming active, so
+        // it is stated in words rather than left to an icon somebody has to
+        // interpret.
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: Space.sm + 2, vertical: 4),
+          decoration: BoxDecoration(
+            color: verified ? TrustIqColors.okSoft : TrustIqColors.cautionSoft,
+            borderRadius: BorderRadius.circular(Radii.pill),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.gpp_maybe_outlined, size: 15, color: TrustIqColors.caution),
-              SizedBox(width: 4),
+              Icon(
+                verified ? Icons.verified_user_outlined : Icons.gpp_maybe_outlined,
+                size: 13,
+                color: verified ? TrustIqColors.ok : TrustIqColors.caution,
+              ),
+              const SizedBox(width: 5),
               Text(
-                'Unverified',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: TrustIqColors.caution,
-                  fontWeight: FontWeight.w600,
+                verified ? 'Verified' : 'Unverified',
+                style: Type.caption.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: verified ? TrustIqColors.ok : TrustIqColors.caution,
                 ),
               ),
             ],
           ),
+        ),
       ],
     );
   }

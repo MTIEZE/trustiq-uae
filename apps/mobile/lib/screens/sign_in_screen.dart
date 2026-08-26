@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../data/backend.dart';
 import '../theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/common.dart';
 
 /// Getting into a real project: signing in, signing up, and getting back in
@@ -53,11 +54,9 @@ class _SignInScreenState extends State<SignInScreen> {
   /// saying so here means they find out while typing rather than after a round
   /// trip that reads like a failure.
   String? get _passwordComplaint {
-    if (_mode == _Mode.reset) return null;
+    if (_mode != _Mode.signUp) return null;
     if (_password.text.isEmpty) return null;
-    if (_mode == _Mode.signUp && _password.text.length < 8) {
-      return 'At least 8 characters.';
-    }
+    if (_password.text.length < 8) return 'At least 8 characters.';
     return null;
   }
 
@@ -139,119 +138,160 @@ class _SignInScreenState extends State<SignInScreen> {
         _Mode.reset => 'Send the link',
       };
 
+  String get _subtitle => switch (_mode) {
+        _Mode.signIn => 'Your contracts and disputes, where you left them.',
+        _Mode.signUp => 'Two minutes, and the next handshake is on the record.',
+        _Mode.reset => 'We will send a link to set a new one.',
+      };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'TrustIQ',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.6),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.state.backendLabel,
-                    style: const TextStyle(fontSize: 12.5, color: TrustIqColors.inkFaint),
-                  ),
-                  const SizedBox(height: 30),
-                  Text(
-                    _title,
-                    style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 18),
-
-                  if (_notice != null) ...[
-                    _Notice(_notice!),
-                    const SizedBox(height: 16),
-                  ],
-
-                  if (_mode == _Mode.signUp) ...[
-                    TextField(
-                      controller: _name,
-                      textCapitalization: TextCapitalization.words,
-                      autofillHints: const [AutofillHints.name],
-                      decoration: const InputDecoration(
-                        labelText: 'Your name',
-                        helperText: 'What the other party sees on a contract.',
-                      ),
-                      onChanged: (_) => setState(() {}),
+      // A quiet wash behind the card rather than flat grey. It gives the form
+      // somewhere to sit on a wide screen, where a bare column just floats.
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [TrustIqColors.accentGlow, TrustIqColors.ground],
+            stops: [0, 0.55],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.xl,
+                vertical: Space.section,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const TrustIqLockup(
+                      subtitle: 'The record two people can both rely on.',
                     ),
-                    const SizedBox(height: 14),
-                  ],
-
-                  TextField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  if (_mode != _Mode.reset) ...[
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _password,
-                      obscureText: !_showPassword,
-                      autofillHints: [
-                        _mode == _Mode.signUp
-                            ? AutofillHints.newPassword
-                            : AutofillHints.password,
-                      ],
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        errorText: _passwordComplaint,
-                        suffixIcon: IconButton(
-                          tooltip: _showPassword ? 'Hide password' : 'Show password',
-                          icon: Icon(
-                            _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            size: 19,
-                          ),
-                          onPressed: () => setState(() => _showPassword = !_showPassword),
-                        ),
-                      ),
-                      onChanged: (_) => setState(() {}),
-                      onSubmitted: (_) => _canSubmit ? _submit() : null,
+                    const SizedBox(height: Space.xxl),
+                    _card(),
+                    const SizedBox(height: Space.xl),
+                    const RuleNote(
+                      'Your contracts are visible to you and to the other party, '
+                      'and to nobody else. That is enforced by the database, not '
+                      'by this app.',
+                      icon: Icons.lock_outline,
+                    ),
+                    const SizedBox(height: Space.lg),
+                    Text(
+                      widget.state.backendLabel,
+                      textAlign: TextAlign.center,
+                      style: Type.caption.copyWith(color: TrustIqColors.inkFaint),
                     ),
                   ],
-
-                  const SizedBox(height: 22),
-                  FilledButton(
-                    onPressed: _canSubmit ? _submit : null,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : Text(_action),
-                  ),
-                  const SizedBox(height: 14),
-
-                  if (_mode == _Mode.signIn) ...[
-                    _Link('Create an account', () => _switchTo(_Mode.signUp)),
-                    _Link('I forgot my password', () => _switchTo(_Mode.reset)),
-                  ] else
-                    _Link('Back to signing in', () => _switchTo(_Mode.signIn)),
-
-                  const SizedBox(height: 24),
-                  const RuleNote(
-                    'Your contracts are visible to you and to the other party, '
-                    'and to nobody else. That is enforced by the database, not '
-                    'by this app.',
-                  ),
-                ],
+                ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _card() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        boxShadow: kSoftLift,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: TrustIqColors.surface,
+          borderRadius: BorderRadius.circular(Radii.lg),
+          border: Border.all(color: TrustIqColors.rule),
+        ),
+        padding: const EdgeInsets.all(Space.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_title, style: Type.heading),
+            const SizedBox(height: Space.xs),
+            Text(_subtitle, style: Type.small.copyWith(color: TrustIqColors.inkFaint)),
+            const SizedBox(height: Space.xl),
+            if (_notice != null) ...[
+              _Notice(_notice!),
+              const SizedBox(height: Space.lg),
+            ],
+            if (_mode == _Mode.signUp) ...[
+              TextField(
+                controller: _name,
+                textCapitalization: TextCapitalization.words,
+                autofillHints: const [AutofillHints.name],
+                decoration: const InputDecoration(
+                  labelText: 'Your name',
+                  helperText: 'What the other party sees on a contract.',
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: Space.lg),
+            ],
+            TextField(
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              autofillHints: const [AutofillHints.email],
+              decoration: const InputDecoration(labelText: 'Email'),
+              onChanged: (_) => setState(() {}),
+            ),
+            if (_mode != _Mode.reset) ...[
+              const SizedBox(height: Space.lg),
+              TextField(
+                controller: _password,
+                obscureText: !_showPassword,
+                autofillHints: [
+                  _mode == _Mode.signUp ? AutofillHints.newPassword : AutofillHints.password,
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  errorText: _passwordComplaint,
+                  suffixIcon: IconButton(
+                    tooltip: _showPassword ? 'Hide password' : 'Show password',
+                    icon: Icon(
+                      _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      size: 19,
+                      color: TrustIqColors.inkFaint,
+                    ),
+                    onPressed: () => setState(() => _showPassword = !_showPassword),
+                  ),
+                ),
+                onChanged: (_) => setState(() {}),
+                onSubmitted: (_) => _canSubmit ? _submit() : null,
+              ),
+            ],
+            const SizedBox(height: Space.xl),
+            FilledButton(
+              onPressed: _canSubmit ? _submit : null,
+              child: _busy
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(_action),
+            ),
+            const SizedBox(height: Space.sm),
+            if (_mode == _Mode.signIn)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _Link('Create an account', () => _switchTo(_Mode.signUp)),
+                  _Link('Forgot password', () => _switchTo(_Mode.reset)),
+                ],
+              )
+            else
+              Center(child: _Link('Back to signing in', () => _switchTo(_Mode.signIn))),
+          ],
         ),
       ),
     );
@@ -269,6 +309,7 @@ class _Link extends StatelessWidget {
       onPressed: onTap,
       style: TextButton.styleFrom(
         visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: Space.sm, vertical: Space.xs),
         foregroundColor: TrustIqColors.accent,
         textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
       ),
@@ -285,19 +326,21 @@ class _Notice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(Space.md),
       decoration: BoxDecoration(
-        color: TrustIqColors.accent.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: TrustIqColors.accent.withValues(alpha: 0.25)),
+        color: TrustIqColors.accentSoft,
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.mark_email_unread_outlined, size: 18, color: TrustIqColors.accent),
-          const SizedBox(width: 10),
+          const SizedBox(width: Space.md),
           Expanded(
-            child: Text(message, style: const TextStyle(fontSize: 13, height: 1.4)),
+            child: Text(
+              message,
+              style: Type.small.copyWith(fontSize: 12.5, color: TrustIqColors.accentStrong),
+            ),
           ),
         ],
       ),

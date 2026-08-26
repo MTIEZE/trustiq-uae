@@ -6,29 +6,42 @@ import '../theme.dart';
 /// A state, shown as both a colour and a word.
 ///
 /// Colour alone is not a label: it fails for anyone who cannot distinguish the
-/// hues, and it fails in a screenshot pasted into a support thread.
+/// hues, and it fails in a screenshot pasted into a support thread. The dot
+/// carries the colour so the text can stay dark enough to read, which a tinted
+/// label on a tinted ground never quite is.
 class StateChip extends StatelessWidget {
-  const StateChip(this.state, {super.key});
+  const StateChip(this.state, {super.key, this.compact = false});
   final TransactionState state;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final style = transactionStateStyle(state);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10, vertical: compact ? 3 : 5),
       decoration: BoxDecoration(
         color: style.bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: style.fg.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
-      child: Text(
-        style.label,
-        style: TextStyle(
-          color: style.fg,
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            margin: const EdgeInsets.only(right: 6),
+            decoration: BoxDecoration(color: style.fg, shape: BoxShape.circle),
+          ),
+          Text(
+            style.label,
+            style: TextStyle(
+              color: style.fg,
+              fontSize: compact ? 11 : 11.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -37,7 +50,8 @@ class StateChip extends StatelessWidget {
 /// An amount, always rendered from fils through the domain formatter.
 ///
 /// The screens never do their own currency arithmetic or string building; that
-/// is how a rounding bug reaches a user.
+/// is how a rounding bug reaches a user. The currency is set a size down and
+/// in a lighter weight so a column of amounts reads as numbers first.
 class MoneyText extends StatelessWidget {
   const MoneyText(this.amount, {super.key, this.style, this.emphasis = false});
   final Fils amount;
@@ -46,46 +60,69 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      formatAed(amount),
-      style: (style ?? const TextStyle()).copyWith(
-        fontFeatures: const [FontFeature.tabularFigures()],
-        fontWeight: emphasis ? FontWeight.w700 : FontWeight.w600,
-        color: emphasis ? TrustIqColors.ink : null,
+    final base = (style ?? Type.amount).copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+      color: emphasis ? TrustIqColors.ink : (style?.color ?? TrustIqColors.ink),
+    );
+    final text = formatAed(amount);
+    final split = text.lastIndexOf(' ');
+    if (split == -1) return Text(text, style: base);
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: text.substring(0, split)),
+          TextSpan(
+            text: text.substring(split),
+            style: base.copyWith(
+              fontSize: (base.fontSize ?? 15) * 0.68,
+              fontWeight: FontWeight.w600,
+              color: TrustIqColors.inkFaint,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
       ),
+      style: base,
     );
   }
 }
 
 class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key});
+  const SectionLabel(this.text, {super.key, this.color});
   final String text;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.9,
-        color: TrustIqColors.inkFaint,
-      ),
+      style: Type.label.copyWith(color: color ?? TrustIqColors.inkFaint),
     );
   }
 }
 
 class InfoCard extends StatelessWidget {
-  const InfoCard({super.key, required this.child, this.padding});
+  const InfoCard({super.key, required this.child, this.padding, this.lift = true});
   final Widget child;
   final EdgeInsets? padding;
 
+  /// Off for a card sitting inside another surface, where a shadow would read
+  /// as a second layer that is not there.
+  final bool lift;
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(16),
-        child: child,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        boxShadow: lift ? kSoftLift : null,
+      ),
+      child: Card(
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(Space.lg),
+          child: child,
+        ),
       ),
     );
   }
@@ -102,7 +139,7 @@ class LabelledValue extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionLabel(label),
-        const SizedBox(height: 6),
+        const SizedBox(height: Space.sm),
         child,
       ],
     );
@@ -112,34 +149,56 @@ class LabelledValue extends StatelessWidget {
 /// A short, quiet note explaining a rule the person would otherwise have to
 /// guess at. Used where the product does something unusual on purpose.
 class RuleNote extends StatelessWidget {
-  const RuleNote(this.text, {super.key, this.icon = Icons.info_outline});
+  const RuleNote(this.text, {super.key, this.icon = Icons.info_outline, this.tone});
   final String text;
   final IconData icon;
 
+  /// Overrides the accent, for a note that is a warning rather than an
+  /// explanation. Rare on purpose: most of these are the product being
+  /// deliberately unusual, not something going wrong.
+  final Color? tone;
+
   @override
   Widget build(BuildContext context) {
+    final colour = tone ?? TrustIqColors.accent;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(Space.md, Space.md, Space.md, Space.md),
       decoration: BoxDecoration(
-        color: TrustIqColors.ground,
-        borderRadius: BorderRadius.circular(8),
-        border: const Border(left: BorderSide(color: TrustIqColors.accent, width: 2.5)),
+        color: colour.withValues(alpha: 0.045),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: TrustIqColors.accent),
-          const SizedBox(width: 10),
+          Icon(icon, size: 16, color: colour),
+          const SizedBox(width: Space.md),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 12.5,
-                height: 1.45,
-                color: TrustIqColors.inkSoft,
-              ),
+              style: Type.small.copyWith(fontSize: 12.5, color: TrustIqColors.inkSoft),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A heading with room around it, so a long screen has a rhythm rather than a
+/// single unbroken column of cards.
+class SectionHeader extends StatelessWidget {
+  const SectionHeader(this.label, {super.key, this.trailing});
+  final String label;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Space.md, left: Space.xs),
+      child: Row(
+        children: [
+          Expanded(child: SectionLabel(label)),
+          ?trailing,
         ],
       ),
     );

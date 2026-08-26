@@ -169,6 +169,12 @@ void main() {
 
     await tester.tap(find.text('Logo design for a startup'));
     await tester.pumpAndSettle();
+
+    // The dispute banner sits below the fold on a small surface, so scroll to
+    // it before tapping. Tapping a widget that is off screen silently hits
+    // whatever is in front of it.
+    await tester.ensureVisible(find.text('Proposal issued'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Proposal issued'));
     await tester.pumpAndSettle();
 
