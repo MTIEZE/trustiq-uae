@@ -28,6 +28,7 @@ function caseFile(over: Partial<DisputeCase> = {}): DisputeCase {
         contentType: 'application/pdf',
         uploadedAt: '2026-06-01T09:00:00.000Z',
         sha256: 'a'.repeat(64),
+        extractionStatus: 'unsupported' as const,
         note: null,
         extractedText: 'Three concepts in seven days.',
       },

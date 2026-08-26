@@ -16,6 +16,7 @@
 import { createHash } from 'node:crypto'
 import { err, ok, type EvidenceId, type Result, type Role } from '@trustiq/core'
 import type { Clock, EvidenceRepository, ObjectStorage } from './ports.js'
+import { extractText, type ExtractionStatus } from './text-extraction.js'
 
 export const MAX_EVIDENCE_BYTES = 52_428_800 // 50 MiB, matching the DB check
 
@@ -72,6 +73,14 @@ export interface UploadedEvidence {
   readonly sha256: string
   readonly byteSize: number
   readonly role: Role
+  /**
+   * Whether the document's text was read, and if not, why not.
+   *
+   * Returned to the uploader so a client can say "we could not read this
+   * file" at the moment it is filed, rather than leaving them to discover it
+   * when a resolution turns out to have been made without it.
+   */
+  readonly extractionStatus: ExtractionStatus
 }
 
 export interface UploadDeps {
@@ -137,6 +146,13 @@ export async function uploadEvidence(
     return err({ code: 'STORAGE_FAILED', message: describe(error) })
   }
 
+  // Read from the same bytes the digest covers, so the text on the row and the
+  // file it describes can never be about two different documents. It happens
+  // after the object is stored and before the row is written, and it cannot
+  // fail the upload: a document nobody can read is still evidence, still
+  // hashed, still citable, and the other party can still see it exists.
+  const extraction = extractText(input.bytes, input.contentType)
+
   try {
     const evidenceId = await deps.repository.insert({
       transactionId: input.transactionId,
@@ -148,8 +164,17 @@ export async function uploadEvidence(
       byteSize: input.bytes.byteLength,
       sha256,
       note: input.note,
+      extractedText: extraction.text,
+      extractionStatus: extraction.status,
     })
-    return ok({ evidenceId, storagePath, sha256, byteSize: input.bytes.byteLength, role })
+    return ok({
+      evidenceId,
+      storagePath,
+      sha256,
+      byteSize: input.bytes.byteLength,
+      role,
+      extractionStatus: extraction.status,
+    })
   } catch (error) {
     // The object is written but has no row, so nothing can reference it.
     // Remove it rather than leaving an unreachable file in the bucket. If the

@@ -73,7 +73,7 @@ select id, public from storage.buckets where id = 'evidence';
 These three are the ones worth checking by hand, because each is a rule the
 whole product leans on and none of them fails loudly if it is missing.
 
-`npm run test:db` runs the full suite of 75 assertions against a throwaway
+`npm run test:db` runs the full suite of 85 assertions against a throwaway
 Postgres, so a failure there means the migrations are wrong rather than the
 project being misconfigured.
 
@@ -224,8 +224,14 @@ rather than after the first request arrives.
 ## 10. What is not wired up yet
 
 - Deployment. Both functions are written and verified; neither is deployed.
-- Text extraction from uploaded evidence. `extractedText` is null everywhere,
-  so the model sees filenames and notes rather than contents.
+- Migrations 0009 and 0010 are not applied to the live project yet. They need a
+  full-access token, and the functions depend on them: `file-evidence` writes
+  the extraction columns 0010 adds, and `resolve-dispute` calls the function
+  0009 creates. Apply the schema before deploying either.
+- Text extraction beyond plain text, Markdown and CSV. PDFs and images are
+  filed and hashed like anything else and recorded as `unsupported`, so the
+  model is told plainly that it cannot see their contents. OCR and a PDF parser
+  are the next step, and both are dependencies worth choosing deliberately.
 - Anything that calls `resolve-dispute` automatically. Today it is a POST
   someone has to make.
 - A real model call. The pipeline has never run against Anthropic; that needs

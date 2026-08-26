@@ -19,10 +19,13 @@ migrations/
   0009_issue_ai_proposal.sql
                         one call that writes a proposal, its findings and their
                         citations in a single transaction
+  0010_evidence_extracted_text.sql
+                        what each document actually says, and why it says
+                        nothing when it does not
 
 tests/
   00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
-  schema.test.sql        75 assertions run against a real Postgres
+  schema.test.sql        85 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -81,6 +84,14 @@ one from the client side: `issue_ai_proposal()` does the whole write inside the
 database instead. The function is granted to `service_role` only and refuses any
 caller holding a user session, so a party can never author the proposal that
 decides their own dispute.
+
+**An absent document text says why it is absent.** `evidence.extraction_status`
+separates a file type that is never read from one that should have been
+readable and was not. The second means the model is missing content, which is a
+reason for it to be less confident rather than a neutral blank, and a CHECK
+keeps the status and the text from contradicting each other. Truncation is
+recorded in the status rather than marked inside the text, because the text is
+written by a party and anyone can type "[truncated]".
 
 **The record cannot be rewritten.** Evidence, both audit logs, proposals and
 acceptances are append-only, enforced by a trigger that fires even for roles

@@ -117,6 +117,8 @@ export class SupabaseEvidenceRepository implements EvidenceRepository {
         byte_size: row.byteSize,
         sha256: row.sha256,
         note: row.note,
+        extracted_text: row.extractedText,
+        extraction_status: row.extractionStatus,
       })
       .select('id')
       .single<{ id: string }>()
@@ -156,7 +158,7 @@ export class SupabaseDisputeRepository implements DisputeRepository {
 
     const { data: evidence, error: evidenceError } = await this.client
       .from('evidence')
-      .select('id, transaction_id, uploaded_by, uploaded_by_role, storage_path, filename, content_type, byte_size, sha256, note, uploaded_at')
+      .select('id, transaction_id, uploaded_by, uploaded_by_role, storage_path, filename, content_type, byte_size, sha256, note, uploaded_at, extracted_text, extraction_status')
       .eq('transaction_id', dispute.transaction_id)
       .order('uploaded_at', { ascending: true })
       .returns<EvidenceRow[]>()

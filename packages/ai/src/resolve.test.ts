@@ -33,6 +33,7 @@ function evidence(over: Partial<EvidenceSummary> = {}): EvidenceSummary {
     sha256: 'a'.repeat(64),
     note: null,
     extractedText: 'Deliver 3 logo concepts within 7 days.',
+    extractionStatus: 'extracted',
     ...over,
   }
 }
@@ -417,11 +418,48 @@ describe('prompt construction', () => {
     expect(content).toContain(`<note>\n${injected}\n</note>`)
   })
 
-  it('says so when a file yielded no readable text', () => {
-    const content = buildUserContent(
-      disputeCase({ evidence: [evidence({ extractedText: null })] }),
+  it('tells a file type it cannot read apart from a file it failed to read', () => {
+    // These are different facts about a case. A photograph has nothing to
+    // read; a file that failed extraction holds content the model is not
+    // seeing, which is a reason for it to be less confident. Collapsing them
+    // into one message would flatter the evidence.
+    const unsupported = buildUserContent(
+      disputeCase({ evidence: [evidence({ extractedText: null, extractionStatus: 'unsupported' })] }),
     )
-    expect(content).toContain('binary or unreadable file')
+    const failed = buildUserContent(
+      disputeCase({ evidence: [evidence({ extractedText: null, extractionStatus: 'failed' })] }),
+    )
+
+    expect(unsupported).toContain('not read as text')
+    expect(failed).toContain('content you cannot see')
+    expect(failed).toContain('confidence')
+    expect(unsupported).not.toBe(failed)
+  })
+
+  it('says when a document was filed before extraction existed', () => {
+    const content = buildUserContent(
+      disputeCase({ evidence: [evidence({ extractedText: null, extractionStatus: 'not_attempted' })] }),
+    )
+    expect(content).toContain('never been read')
+  })
+
+  it('marks truncated content outside the quoted block, where a party cannot forge it', () => {
+    const content = buildUserContent(
+      disputeCase({
+        evidence: [evidence({ extractedText: 'The first half of a long brief.', extractionStatus: 'truncated' })],
+      }),
+    )
+    expect(content).toContain('TRUNCATED')
+    // The warning must sit before <content>, not inside it: anything inside is
+    // text a party wrote and could have written themselves.
+    expect(content.indexOf('TRUNCATED')).toBeLessThan(content.indexOf('<content>'))
+  })
+
+  it('does not call whole content truncated', () => {
+    const content = buildUserContent(
+      disputeCase({ evidence: [evidence({ extractionStatus: 'extracted' })] }),
+    )
+    expect(content).not.toContain('TRUNCATED')
   })
 
   it('shows the disputed amount in AED for the model to reason about', () => {

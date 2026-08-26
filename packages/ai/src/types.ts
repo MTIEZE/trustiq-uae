@@ -26,6 +26,17 @@ export interface EvidenceSummary {
    * system prompt tells the model to treat it as material under dispute.
    */
   readonly extractedText: string | null
+  /**
+   * Why `extractedText` is present or absent.
+   *
+   * Carried separately because the reasons are not equivalent. A photograph
+   * has no text to read; a file that failed extraction has content the model
+   * is not seeing, and that is a reason to be less confident rather than a
+   * neutral absence. `truncated` says the text is the start of the document
+   * and not the whole of it, and it lives here rather than as a marker inside
+   * the text because a party could type that marker themselves.
+   */
+  readonly extractionStatus: 'not_attempted' | 'unsupported' | 'failed' | 'extracted' | 'truncated'
 }
 
 export interface DisputeCase {

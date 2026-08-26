@@ -793,4 +793,105 @@ select pg_temp.check(
   'the publish is recorded as a system action, not a party''s');
 
 \echo ''
+\echo '== Extracted text says which kind of nothing it is =='
+
+-- Rows filed before 0010 keep a status that is not a judgement about the file.
+select pg_temp.check(
+  (select extraction_status from public.evidence
+   where id = 'ee000000-0000-0000-0000-000000000001') = 'not_attempted',
+  'a row inserted without a status defaults to not_attempted, not to unsupported');
+
+select pg_temp.check(
+  (select extracted_text from public.evidence
+   where id = 'ee000000-0000-0000-0000-000000000001') is null,
+  'a not_attempted row carries no text');
+
+-- The pair the server actually writes.
+insert into public.evidence
+  (id, transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+   content_type, byte_size, sha256, extracted_text, extraction_status)
+values
+  ('ee000000-0000-0000-0000-000000000010',
+   'aaaaaaaa-0000-0000-0000-000000000003',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'evidence/aaa3/notes.txt', 'notes.txt', 'text/plain', 64, repeat('e', 64),
+   'The brief asked for 800 words of landing page copy.', 'extracted');
+
+select pg_temp.check(true, 'a row with text and status extracted is accepted');
+
+insert into public.evidence
+  (id, transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+   content_type, byte_size, sha256, extraction_status)
+values
+  ('ee000000-0000-0000-0000-000000000011',
+   'aaaaaaaa-0000-0000-0000-000000000003',
+   '22222222-2222-2222-2222-222222222222', 'seller',
+   'evidence/aaa3/shot.png', 'shot.png', 'image/png', 8000, repeat('f', 64),
+   'unsupported');
+
+select pg_temp.check(true, 'a row with no text and status unsupported is accepted');
+
+-- Status and text must agree. Either half alone is a row that lies about
+-- itself: a proposal could be built from a document the model never saw, or a
+-- reader could skip text that is really there.
+select pg_temp.expect_error(
+  $q$ insert into public.evidence
+        (transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+         content_type, byte_size, sha256, extraction_status)
+      values ('aaaaaaaa-0000-0000-0000-000000000003',
+              '11111111-1111-1111-1111-111111111111', 'buyer',
+              'evidence/aaa3/a.txt', 'a.txt', 'text/plain', 10, repeat('1', 64),
+              'extracted') $q$,
+  'status extracted with no text is refused');
+
+select pg_temp.expect_error(
+  $q$ insert into public.evidence
+        (transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+         content_type, byte_size, sha256, extracted_text, extraction_status)
+      values ('aaaaaaaa-0000-0000-0000-000000000003',
+              '11111111-1111-1111-1111-111111111111', 'buyer',
+              'evidence/aaa3/b.txt', 'b.txt', 'text/plain', 10, repeat('2', 64),
+              'text nobody will read', 'failed') $q$,
+  'status failed carrying text is refused');
+
+select pg_temp.expect_error(
+  $q$ insert into public.evidence
+        (transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+         content_type, byte_size, sha256, extracted_text, extraction_status)
+      values ('aaaaaaaa-0000-0000-0000-000000000003',
+              '11111111-1111-1111-1111-111111111111', 'buyer',
+              'evidence/aaa3/c.txt', 'c.txt', 'text/plain', 10, repeat('3', 64),
+              '   ', 'extracted') $q$,
+  'status extracted with nothing but whitespace is refused');
+
+select pg_temp.expect_error(
+  $q$ insert into public.evidence
+        (transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+         content_type, byte_size, sha256, extraction_status)
+      values ('aaaaaaaa-0000-0000-0000-000000000003',
+              '11111111-1111-1111-1111-111111111111', 'buyer',
+              'evidence/aaa3/d.txt', 'd.txt', 'text/plain', 10, repeat('4', 64),
+              'partially_read') $q$,
+  'a status the code never produces is refused');
+
+-- The ceiling exists so one document cannot swallow the prompt.
+select pg_temp.expect_error(
+  $q$ insert into public.evidence
+        (transaction_id, uploaded_by, uploaded_by_role, storage_path, filename,
+         content_type, byte_size, sha256, extracted_text, extraction_status)
+      values ('aaaaaaaa-0000-0000-0000-000000000003',
+              '11111111-1111-1111-1111-111111111111', 'buyer',
+              'evidence/aaa3/e.txt', 'e.txt', 'text/plain', 10, repeat('5', 64),
+              repeat('x', 20001), 'truncated') $q$,
+  'extracted text above the ceiling is refused');
+
+-- Append-only covers the new columns too: the text is part of the record, not
+-- a cache that can be refreshed later.
+select pg_temp.expect_error(
+  $q$ update public.evidence
+      set extracted_text = 'something else'
+      where id = 'ee000000-0000-0000-0000-000000000010' $q$,
+  'extracted text cannot be rewritten after the fact');
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

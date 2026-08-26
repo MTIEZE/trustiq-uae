@@ -25,6 +25,8 @@ export interface EvidenceRow {
   sha256: string
   note: string | null
   uploaded_at: string
+  extracted_text: string | null
+  extraction_status: string
 }
 
 export interface TransactionRow {
@@ -125,8 +127,31 @@ export function toEvidenceSummary(row: EvidenceRow): EvidenceSummary {
     uploadedAt: row.uploaded_at,
     sha256: row.sha256,
     note: row.note,
-    extractedText: null,
+    extractedText: row.extracted_text,
+    extractionStatus: readExtractionStatus(row.extraction_status),
   }
+}
+
+const EXTRACTION_STATUSES = [
+  'not_attempted',
+  'unsupported',
+  'failed',
+  'extracted',
+  'truncated',
+] as const
+
+/**
+ * Reads the stored status, refusing anything the schema should not have let in.
+ *
+ * Defaulting an unrecognised value to something harmless would hide a schema
+ * change from whoever made it, and the prompt would quietly describe a
+ * document wrongly. A mapping error is the better outcome.
+ */
+export function readExtractionStatus(value: string): EvidenceSummary['extractionStatus'] {
+  if ((EXTRACTION_STATUSES as readonly string[]).includes(value)) {
+    return value as EvidenceSummary['extractionStatus']
+  }
+  throw new RowMappingError(`evidence.extraction_status holds an unknown value: ${value}`)
 }
 
 /* ------------------------------------------------------------------ *

@@ -21,6 +21,14 @@ export {
   type UploadedEvidence,
 } from './evidence.js'
 
+export {
+  EXTRACTABLE_CONTENT_TYPES,
+  MAX_EXTRACTED_CHARS,
+  extractText,
+  type Extraction,
+  type ExtractionStatus,
+} from './text-extraction.js'
+
 export { describeCause, runResolution, type RunDeps, type RunResult } from './resolution-run.js'
 
 export type {
@@ -48,6 +56,7 @@ export {
 
 export {
   RowMappingError,
+  readExtractionStatus,
   readFils,
   readMilestoneTimes,
   readRole,

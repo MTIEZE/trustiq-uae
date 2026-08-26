@@ -172,6 +172,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
       byteSize: result.value.byteSize,
       role: result.value.role,
       storagePath: result.value.storagePath,
+      // Returned so a client can tell the uploader now that this document's
+      // text could not be read, rather than leaving them to find out when a
+      // resolution turns out to have been reached without it.
+      extractionStatus: result.value.extractionStatus,
     },
     201,
   )

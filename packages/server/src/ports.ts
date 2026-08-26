@@ -8,6 +8,7 @@
 
 import type { EvidenceId, Fils, ResolutionProposal, Role } from '@trustiq/core'
 import type { AuditRecord, DisputeCase } from '@trustiq/ai'
+import type { ExtractionStatus } from './text-extraction.js'
 
 export interface NewEvidenceRow {
   readonly transactionId: string
@@ -20,6 +21,12 @@ export interface NewEvidenceRow {
   /** Always the digest the server computed. Never a value a client sent. */
   readonly sha256: string
   readonly note: string | null
+  /**
+   * Readable content, taken from the same bytes the digest covers. Null when
+   * there is none, and `extractionStatus` says which kind of none.
+   */
+  readonly extractedText: string | null
+  readonly extractionStatus: ExtractionStatus
 }
 
 export interface ObjectStorage {

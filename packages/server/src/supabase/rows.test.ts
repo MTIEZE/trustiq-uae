@@ -89,6 +89,8 @@ describe('mapping an evidence row', () => {
     sha256: 'a'.repeat(64),
     note: 'The brief we agreed on.',
     uploaded_at: '2026-08-19T10:00:00.000Z',
+    extracted_text: null,
+    extraction_status: 'unsupported',
   }
 
   it('carries the digest through untouched', () => {

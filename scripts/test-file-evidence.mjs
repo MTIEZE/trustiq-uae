@@ -313,13 +313,17 @@ check(filed.body?.sha256 === expected, 'the digest the server computed matches t
 check(filed.body?.byteSize === bytes.byteLength, `the byte size is reported correctly (${filed.body?.byteSize})`)
 check(filed.body?.role === 'buyer', `the role was derived from the token, not sent (${filed.body?.role})`)
 check(typeof filed.body?.evidenceId === 'string', 'an evidence id came back')
+check(
+  filed.body?.extractionStatus === 'extracted',
+  `the text was read at upload (${filed.body?.extractionStatus})`,
+)
 
 step('Reading the row back')
 
 if (filed.body?.evidenceId) {
   const { data: row } = await db
     .from('evidence')
-    .select('transaction_id, uploaded_by, uploaded_by_role, sha256, byte_size, filename, content_type, note, storage_path')
+    .select('transaction_id, uploaded_by, uploaded_by_role, sha256, byte_size, filename, content_type, note, storage_path, extracted_text, extraction_status')
     .eq('id', filed.body.evidenceId)
     .maybeSingle()
 
@@ -330,6 +334,11 @@ if (filed.body?.evidenceId) {
     check(row.uploaded_by_role === 'buyer', 'the stored role matches the side of the contract')
     check(Number(row.byte_size) === bytes.byteLength, 'the stored byte size is right')
     check(row.filename === 'endpoint-probe.txt', 'the filename was kept as metadata')
+    check(row.extraction_status === 'extracted', `the row records that the text was read (${row.extraction_status})`)
+    check(
+      row.extracted_text === content,
+      'the stored text is what the file actually said, so the model reads the document rather than its name',
+    )
 
     const { data: object, error: objectError } = await db.storage
       .from('evidence')
