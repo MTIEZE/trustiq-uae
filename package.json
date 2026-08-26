@@ -8,13 +8,14 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @trustiq/web",
-    "build": "npm run build -w @trustiq/core && npm run build -w @trustiq/ai && npm run build -w @trustiq/server && npm run build -w @trustiq/web",
+    "build:packages": "npm run build -w @trustiq/core && npm run build -w @trustiq/ai && npm run build -w @trustiq/server",
+    "build": "npm run build:packages && npm run build -w @trustiq/web",
     "preview": "npm run preview -w @trustiq/web",
     "lint": "oxlint",
-    "test": "npm run test -w @trustiq/core && npm run test -w @trustiq/ai && npm run test -w @trustiq/server",
+    "test": "npm run build:packages && npm run test -w @trustiq/core && npm run test -w @trustiq/ai && npm run test -w @trustiq/server",
     "test:db": "bash scripts/db-test.sh",
     "test:dart": "cd packages/core-dart && dart test",
-    "typecheck": "npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server",
+    "typecheck": "npm run build:packages && npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server",
     "verify:supabase": "node scripts/verify-supabase.mjs",
     "seed:live": "node scripts/seed-live-dispute.mjs",
     "dryrun:live": "node scripts/dry-run-resolution.mjs"
