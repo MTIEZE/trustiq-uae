@@ -894,4 +894,97 @@ select pg_temp.expect_error(
   'extracted text cannot be rewritten after the fact');
 
 \echo ''
+\echo '== You can see who is on the other side, and nobody else =='
+
+set role authenticated;
+
+-- 1111 is party to contracts with both 2222 and 3333, so all three are
+-- visible. The fixtures decide that, not this assertion.
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+select pg_temp.check(
+  (select count(*) from public.visible_profiles) = 3,
+  'a party sees themselves and everyone they share a contract with (saw ' ||
+  (select string_agg(coalesce(full_name, id::text), ', ' order by id) from public.visible_profiles) || ')');
+
+select pg_temp.check(
+  (select full_name from public.visible_profiles
+   where id = '22222222-2222-2222-2222-222222222222') = 'Sara Design Studio',
+  'the counterparty is named, so a contract screen can render both sides');
+
+select pg_temp.check(
+  (select identity_verified_at is not null from public.visible_profiles
+   where id = '22222222-2222-2222-2222-222222222222'),
+  'a verified counterparty reads as verified, so the identity gate can be explained');
+
+select pg_temp.check(
+  (select identity_verified_at is null from public.visible_profiles
+   where id = '33333333-3333-3333-3333-333333333333'),
+  'an unverified counterparty reads as unverified, which is what blocks the gate');
+
+-- The isolation test, from the side that can actually show it. 3333 is party
+-- to one contract, with 1111, and has never met 2222.
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+
+select pg_temp.check(
+  (select count(*) from public.visible_profiles) = 2,
+  'someone on one contract sees only themselves and that counterparty (saw ' ||
+  (select string_agg(coalesce(full_name, id::text), ', ' order by id) from public.visible_profiles) || ')');
+
+select pg_temp.check(
+  not exists (select 1 from public.visible_profiles
+              where id = '22222222-2222-2222-2222-222222222222'),
+  'a stranger you share no contract with stays invisible');
+
+-- The view withholds columns the table has. This is the only place in the
+-- schema where that is possible, so it is worth asserting rather than assuming.
+select pg_temp.check(
+  not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'visible_profiles'
+      and column_name in ('email', 'phone', 'identity_provider')
+  ),
+  'the view exposes no contact details, only name and verification');
+
+reset role;
+
+\echo ''
+\echo '== Addressing a contract to someone =='
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+select pg_temp.check(
+  public.find_counterparty('sara@design.ae') = '22222222-2222-2222-2222-222222222222',
+  'an email resolves to the person who holds it');
+
+select pg_temp.check(
+  public.find_counterparty('  SARA@Design.AE  ') = '22222222-2222-2222-2222-222222222222',
+  'the lookup ignores case and surrounding space, because people type addresses');
+
+select pg_temp.check(
+  public.find_counterparty('nobody@nowhere.ae') is null,
+  'an address nobody holds returns null rather than raising');
+
+select pg_temp.expect_error(
+  $q$ select public.find_counterparty('ahmed@startup.ae') $q$,
+  'addressing a contract to yourself is refused');
+
+reset role;
+
+-- Signed out, the lookup is not an open directory.
+select set_config('request.jwt.claim.sub', '', false);
+select pg_temp.expect_error(
+  $q$ select public.find_counterparty('sara@design.ae') $q$,
+  'the lookup refuses a caller with no session');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.find_counterparty(text)', 'EXECUTE'),
+  'anon holds no grant on the lookup');
+
+select pg_temp.check(
+  not has_table_privilege('anon', 'public.visible_profiles', 'SELECT'),
+  'anon cannot read the profile view');
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

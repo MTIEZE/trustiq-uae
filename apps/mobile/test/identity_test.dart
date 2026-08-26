@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
+import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/data/identity_provider.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -25,8 +26,10 @@ class _CancellingProvider implements IdentityProvider {
 
 void main() {
   /// The seeded contract whose seller has not verified.
-  ({AppState state, String id}) withUnverifiedParty() {
-    final state = AppState();
+  Future<({AppState state, String id})> withUnverifiedParty() async {
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     final contract = state.contracts.firstWhere(
       (c) => !c.buyer.verified || !c.seller.verified,
     );
@@ -34,8 +37,8 @@ void main() {
   }
 
   group('the gate blocks accepting, and only accepting', () {
-    test('an unverified party cannot accept', () {
-      final (:state, :id) = withUnverifiedParty();
+    test('an unverified party cannot accept', () async {
+      final (:state, :id) = await withUnverifiedParty();
       final contract = state.contractById(id);
 
       final blocked = state.guardFor(contract, TransactionEvent.accept);
@@ -43,8 +46,8 @@ void main() {
       expect(blocked!.code, TransitionErrorCode.guardFailed);
     });
 
-    test('everything else stays open to them', () {
-      final (:state, :id) = withUnverifiedParty();
+    test('everything else stays open to them', () async {
+      final (:state, :id) = await withUnverifiedParty();
       final contract = state.contractById(id);
 
       for (final event in TransactionEvent.values) {
@@ -53,8 +56,10 @@ void main() {
       }
     });
 
-    test('a contract between two verified parties is not gated', () {
-      final state = AppState();
+    test('a contract between two verified parties is not gated', () async {
+      final state = AppState(backend: DemoBackend());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final contract = state.contracts.firstWhere(
         (c) => c.buyer.verified && c.seller.verified,
       );
@@ -63,8 +68,8 @@ void main() {
       }
     });
 
-    test('the reason names who is missing', () {
-      final (:state, :id) = withUnverifiedParty();
+    test('the reason names who is missing', () async {
+      final (:state, :id) = await withUnverifiedParty();
       final contract = state.contractById(id);
       final unverified = contract.buyer.verified ? 'seller' : 'buyer';
 
@@ -75,7 +80,7 @@ void main() {
 
   group('verifying', () {
     test('marks you verified and lifts the gate', () async {
-      final (:state, :id) = withUnverifiedParty();
+      final (:state, :id) = await withUnverifiedParty();
       final contract = state.contractById(id);
       final unverifiedRole =
           contract.buyer.verified ? Role.seller : Role.buyer;
@@ -89,9 +94,11 @@ void main() {
       expect(state.guardFor(after, TransactionEvent.accept), isNull);
     });
 
-    test('applies to every contract that person is on, not just this one', () {
+    test('applies to every contract that person is on, not just this one', () async {
       // Verification belongs to a person, not to one agreement.
-      final state = AppState();
+      final state = AppState(backend: DemoBackend());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final beforeUnverified = state.contracts
           .where((c) => !c.seller.verified)
           .length;
@@ -99,7 +106,9 @@ void main() {
     });
 
     test('a failure leaves you unverified and says why', () async {
-      final state = AppState(identityProvider: _RefusingProvider());
+      final state = AppState(backend: DemoBackend(), identityProvider: _RefusingProvider());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final contract = state.contracts.firstWhere((c) => !c.seller.verified);
       state.viewAs(Role.seller);
 
@@ -111,7 +120,9 @@ void main() {
     });
 
     test('cancelling changes nothing', () async {
-      final state = AppState(identityProvider: _CancellingProvider());
+      final state = AppState(backend: DemoBackend(), identityProvider: _CancellingProvider());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final contract = state.contracts.firstWhere((c) => !c.seller.verified);
       state.viewAs(Role.seller);
 
@@ -123,20 +134,24 @@ void main() {
   });
 
   group('the app is honest about not being connected', () {
-    test('reports that the provider is a stand-in', () {
-      final state = AppState();
+    test('reports that the provider is a stand-in', () async {
+      final state = AppState(backend: DemoBackend());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       expect(state.identityProviderConnected, isFalse);
       expect(state.identityProviderName, contains('not connected'));
     });
 
-    test('a real provider would report as connected', () {
-      final state = AppState(identityProvider: _RefusingProvider());
+    test('a real provider would report as connected', () async {
+      final state = AppState(backend: DemoBackend(), identityProvider: _RefusingProvider());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       expect(state.identityProviderConnected, isTrue);
     });
   });
 
   group('the UAE Pass configuration is the documented one', () {
-    test('staging and production are distinct hosts and schemes', () {
+    test('staging and production are distinct hosts and schemes', () async {
       // A staging build must not be able to hand off to the production app.
       expect(UaePassEnvironment.staging.authorize, contains('stg-id.uaepass.ae'));
       expect(UaePassEnvironment.production.authorize, contains('id.uaepass.ae'));
@@ -148,7 +163,7 @@ void main() {
       );
     });
 
-    test('builds an authorize URL with the parameters UAE Pass expects', () {
+    test('builds an authorize URL with the parameters UAE Pass expects', () async {
       const config = UaePassConfig(
         environment: UaePassEnvironment.staging,
         clientId: 'test-client',
@@ -166,7 +181,7 @@ void main() {
       expect(q['acr_values'], UaePassConfig.acrMobileOnDevice);
     });
 
-    test('falls back to the web ACR when the UAE Pass app is absent', () {
+    test('falls back to the web ACR when the UAE Pass app is absent', () async {
       const config = UaePassConfig(
         environment: UaePassEnvironment.staging,
         clientId: 'test-client',
@@ -177,7 +192,7 @@ void main() {
       expect(uri.queryParameters['acr_values'], UaePassConfig.acrWebFallback);
     });
 
-    test('the real provider refuses to pretend it works', () {
+    test('the real provider refuses to pretend it works', () async {
       // It must not return a plausible success. An unimplemented integration
       // that compiles and silently "verifies" people is worse than none.
       const provider = UaePassIdentityProvider(

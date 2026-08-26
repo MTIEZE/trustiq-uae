@@ -73,7 +73,7 @@ select id, public from storage.buckets where id = 'evidence';
 These three are the ones worth checking by hand, because each is a rule the
 whole product leans on and none of them fails loudly if it is missing.
 
-`npm run test:db` runs the full suite of 85 assertions against a throwaway
+`npm run test:db` runs the full suite of 99 assertions against a throwaway
 Postgres, so a failure there means the migrations are wrong rather than the
 project being misconfigured.
 
@@ -221,13 +221,39 @@ protection law meets a schema that is deliberately unable to erase. The answer
 is probably redaction rather than deletion, but it needs deciding before launch
 rather than after the first request arrives.
 
-## 10. What is not wired up yet
+## 10. Running the mobile app against the project
+
+The app is bound to a project at build time, not at runtime:
+
+```bash
+cd apps/mobile
+flutter run   --dart-define=SUPABASE_URL=https://your-project-ref.supabase.co   --dart-define=SUPABASE_ANON_KEY=sb_publishable_...
+```
+
+With neither define set it runs on demo data and says so on the first screen.
+That is the default so a build with no configuration is obviously a demo rather
+than an app pointed at nothing.
+
+**The app refuses to start with a service-role key.** `TrustIqConfig` checks
+both formats, the `sb_secret_` prefix and a JWT whose payload names the
+`service_role`, and throws with an explanation rather than falling back to demo
+mode. Quietly ignoring the key would leave it in the binary anyway. If one has
+ever been in a build, rotate it: an app carrying that key works perfectly until
+somebody opens the bundle, and then every contract in the system is readable.
+
+Signing in needs an account in the project's auth. Create one from the
+dashboard, or through the seed script, which makes two verified people and a
+contract between them.
+
+## 11. What is not wired up yet
 
 - Deployment. Both functions are written and verified; neither is deployed.
-- Migrations 0009 and 0010 are not applied to the live project yet. They need a
+- Migrations 0009, 0010 and 0011 are not applied to the live project yet. They need a
   full-access token, and the functions depend on them: `file-evidence` writes
   the extraction columns 0010 adds, and `resolve-dispute` calls the function
-  0009 creates. Apply the schema before deploying either.
+  0009 creates. 0011 is what lets the mobile app name a counterparty at all.
+  Apply the schema before deploying either function or pointing the app at the
+  project.
 - Text extraction beyond plain text, Markdown and CSV. PDFs and images are
   filed and hashed like anything else and recorded as `unsupported`, so the
   model is told plainly that it cannot see their contents. OCR and a PDF parser

@@ -1,27 +1,62 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
+import 'data/backend.dart';
+import 'data/demo_backend.dart';
 import 'data/demo_data.dart';
 import 'data/evidence_service.dart';
 import 'data/identity_provider.dart';
 
-/// App state over the in-memory demo data.
+/// App state over a [Backend].
 ///
 /// Every state change goes through `applyEvent` from the domain package, the
 /// same table the server and the database enforce. Nothing here decides for
-/// itself whether a move is legal, so the app cannot offer a button the rest of
-/// the system would refuse.
+/// itself whether a move is legal, so the app cannot offer a button the rest
+/// of the system would refuse.
+///
+/// Against the live backend that check is a courtesy, not a control. The
+/// database re-decides every move from `auth.uid()`, and when the two answers
+/// differ it is because the counterparty moved first and this screen is stale.
+/// The database's answer is the one shown.
 class AppState extends ChangeNotifier {
-  AppState({EvidenceUploader? uploader, IdentityProvider? identityProvider})
-      : _contracts = seedContracts() {
-    _uploader = uploader ?? InMemoryEvidenceUploader(() => _contracts);
-    _identity = identityProvider ?? const DemoIdentityProvider();
-  }
+  // The lint wants an initializing formal here. Dart does not allow a private
+  // named parameter, so `this._backend` is not available and this is the form
+  // that compiles.
+  AppState({required Backend backend, IdentityProvider? identityProvider})
+      // ignore: prefer_initializing_formals
+      : _backend = backend,
+        _identity = identityProvider ?? const DemoIdentityProvider();
 
-  List<Contract> _contracts;
-  late final EvidenceUploader _uploader;
-  late final IdentityProvider _identity;
+  final Backend _backend;
+  final IdentityProvider _identity;
+
+  List<Contract> _contracts = const [];
+  bool _loading = false;
+  String? _error;
+
+  /// Which side the demo is acting as.
+  ///
+  /// A demo affordance, and the default side for a new contract. It earns its
+  /// place because switching it shows, immediately, that the available actions
+  /// belong to a role rather than to a screen. Against the live backend it
+  /// decides nothing: [roleOn] reads the session against the contract, because
+  /// you can be the buyer on one contract and the seller on the next.
+  Role _viewingAs = Role.buyer;
+
+  bool get isLive => _backend.isLive;
+  String get backendLabel => _backend.label;
+  BackendSession? get session => _backend.session;
+  bool get signedIn => _backend.session != null;
+
+  bool get loading => _loading;
+
+  /// The last thing that went wrong, for a screen to show and dismiss.
+  String? get error => _error;
+  void clearError() {
+    if (_error == null) return;
+    _error = null;
+    notifyListeners();
+  }
 
   /// Names the provider so a screen can say what it is sending someone to.
   String get identityProviderName => _identity.displayName;
@@ -30,28 +65,47 @@ class AppState extends ChangeNotifier {
   /// this to be honest about what verifying does and does not prove today.
   bool get identityProviderConnected => _identity is! DemoIdentityProvider;
 
-  /// Which side of the contracts you are looking at.
-  ///
-  /// A demo affordance: the real app knows who you are from your session. It
-  /// earns its place here because switching it shows, immediately, that the
-  /// available actions belong to a role rather than to a screen.
-  Role _viewingAs = Role.buyer;
-
   List<Contract> get contracts => List.unmodifiable(_contracts);
   Role get viewingAs => _viewingAs;
-  Actor get actor => Actor.ofRole(_viewingAs);
 
   Contract contractById(String id) => _contracts.firstWhere((c) => c.id == id);
 
+  /// Which side of this contract you are on.
+  ///
+  /// Derived from the session against the contract's parties on the live
+  /// backend, so it cannot be chosen. A person who is on neither side would
+  /// not have been shown the contract at all: row level security decides that
+  /// before this is ever asked.
+  Role roleOn(Contract contract) {
+    if (!_backend.isLive) return _viewingAs;
+    final me = _backend.session?.userId;
+    return contract.buyer.id == me ? Role.buyer : Role.seller;
+  }
+
+  Actor actorOn(Contract contract) => Actor.ofRole(roleOn(contract));
+
   void viewAs(Role role) {
     if (_viewingAs == role) return;
-    _viewingAs = role;
+    _setViewingAs(role);
     notifyListeners();
+  }
+
+  /// Keeps the demo backend's idea of who is acting in step with this one.
+  ///
+  /// A type check rather than a method on [Backend], deliberately. Choosing a
+  /// side is a demo affordance and nothing else: the live backend derives the
+  /// actor from the session and could not honour this if it were asked to. An
+  /// interface method that one implementation is required to ignore would read
+  /// as though the choice meant something everywhere.
+  void _setViewingAs(Role role) {
+    _viewingAs = role;
+    final backend = _backend;
+    if (backend is DemoBackend) backend.viewingAs = role;
   }
 
   /// The events this actor may fire on this contract right now.
   List<TransactionEvent> actionsFor(Contract contract) =>
-      availableEventsFor(contract.state, actor)
+      availableEventsFor(contract.state, actorOn(contract))
           // The system fires these off the back of other work; they are never
           // buttons a party presses.
           .where((e) => e != TransactionEvent.resolveDispute)
@@ -69,148 +123,174 @@ class AppState extends ChangeNotifier {
   /// Delegates to the shared guard rather than re-deciding here, so the app,
   /// the server and the database all answer the same question the same way.
   TransitionError? guardFor(Contract contract, TransactionEvent event) =>
-      identityGate(event, verificationFor(contract), actor);
+      identityGate(event, verificationFor(contract), actorOn(contract));
 
-  /// Runs identity verification and marks you verified on success.
-  Future<VerificationOutcome> verifyIdentity() async {
-    final outcome = await _identity.verify(role: _viewingAs);
-    if (outcome is VerificationSucceeded) {
-      _markVerified(_viewingAs);
+  /* ---------------------------------------------------------------- *
+   * Session
+   * ---------------------------------------------------------------- */
+
+  Future<bool> signIn({required String email, required String password}) async {
+    return _guard(() async {
+      await _backend.signIn(email: email, password: password);
+      _contracts = await _backend.loadContracts();
+    });
+  }
+
+  Future<void> signOut() async {
+    await _backend.signOut();
+    _contracts = const [];
+    notifyListeners();
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Loading
+   * ---------------------------------------------------------------- */
+
+  Future<void> refresh() async {
+    await _guard(() async {
+      _contracts = await _backend.loadContracts();
+    });
+  }
+
+  /// Runs a backend call with the loading flag and error message around it.
+  ///
+  /// Returns whether it succeeded. A failure is kept in [error] rather than
+  /// thrown: every caller here is a button, and a button that throws leaves
+  /// the person looking at a spinner with no idea what happened.
+  Future<bool> _guard(Future<void> Function() body) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await body();
+      return true;
+    } on BackendException catch (e) {
+      _error = e.message;
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    } finally {
+      _loading = false;
       notifyListeners();
     }
-    return outcome;
   }
 
-  /// Marks the given side verified everywhere they appear.
-  ///
-  /// Verification belongs to a person, not to one contract, so it lands on
-  /// every contract they are on rather than only the one they were looking at.
-  void _markVerified(Role role) {
-    final me = _contracts
-        .map((c) => c.partyFor(role))
-        .where((p) => p.id == 'usr_you' || p.verified == false)
-        .toList();
-    if (me.isEmpty) return;
+  /* ---------------------------------------------------------------- *
+   * Identity
+   * ---------------------------------------------------------------- */
 
-    _contracts = [
-      for (final c in _contracts)
-        c.withParties(
-          buyer: role == Role.buyer ? _verified(c.buyer) : c.buyer,
-          seller: role == Role.seller ? _verified(c.seller) : c.seller,
-        ),
-    ];
+  /// Runs identity verification and records it on success.
+  Future<VerificationOutcome> verifyIdentity() async {
+    final outcome = await _identity.verify(role: _viewingAs);
+    if (outcome is! VerificationSucceeded) return outcome;
+
+    try {
+      await _backend.recordVerification(_viewingAs);
+      _contracts = await _backend.loadContracts();
+      notifyListeners();
+      return outcome;
+    } on BackendException catch (e) {
+      // The provider said yes and the record did not follow. Reporting success
+      // here would show someone a verified badge that exists nowhere but their
+      // screen, and the identity gate would then refuse them without a reason
+      // they could see.
+      return VerificationFailed(e.message);
+    }
   }
 
-  static Party _verified(Party party) =>
-      Party(id: party.id, name: party.name, verified: true);
+  /* ---------------------------------------------------------------- *
+   * Contracts
+   * ---------------------------------------------------------------- */
 
   /// Creates a contract in draft.
   ///
-  /// The amount arrives as the text the person typed and is parsed by the
-  /// domain, so a value the domain would refuse never becomes a contract.
-  /// Nothing here rounds, and nothing here holds a double.
-  Contract createContract({
+  /// The amount arrives as a parsed [Fils] from the domain, so a value the
+  /// domain would refuse never becomes a contract. Nothing here rounds, and
+  /// nothing here holds a double.
+  Future<Contract?> createContract({
     required String description,
     required String terms,
     required Fils amount,
     required Role youAre,
-    required String counterpartyName,
-  }) {
-    final me = Party(
-      id: 'usr_you',
-      name: youAre == Role.buyer ? 'Ahmed Al-Rashid' : 'Sara Design Studio',
-      verified: true,
-    );
-    final them = Party(
-      id: 'usr_counterparty_${_contracts.length}',
-      name: counterpartyName,
-      verified: false,
-    );
-
-    final contract = Contract(
-      id: 'txn_${DateTime.now().microsecondsSinceEpoch}',
-      reference: 'TIQ-2026-${(900 + _contracts.length).toString().padLeft(4, '0')}',
-      state: TransactionState.draft,
-      description: description,
-      terms: terms,
-      totalAmount: amount,
-      buyer: youAre == Role.buyer ? me : them,
-      seller: youAre == Role.seller ? me : them,
-      createdAt: DateTime.now(),
-    );
-
-    _contracts = [contract, ..._contracts];
-    _viewingAs = youAre;
-    notifyListeners();
-    return contract;
+    required String counterparty,
+  }) async {
+    Contract? created;
+    final ok = await _guard(() async {
+      created = await _backend.createContract(
+        description: description,
+        terms: terms,
+        amount: amount,
+        youAre: youAre,
+        counterpartyEmail: counterparty,
+      );
+      _setViewingAs(youAre);
+      _contracts = await _backend.loadContracts();
+    });
+    return ok ? created : null;
   }
 
-  /// Opens a dispute with the claim its author wrote.
+  /// Applies an event, or returns why it was refused.
   ///
-  /// The contract transition and the dispute record are made together: a
-  /// contract in `disputed` with no dispute attached would be a state the rest
-  /// of the product cannot read.
-  TransitionError? openDispute(String contractId, String claim) {
-    final contract = contractById(contractId);
-    final result = applyEvent(contract.state, TransactionEvent.openDispute, actor);
-
-    if (result case Err(:final error)) return error;
-
-    final nextState = result.unwrap();
-    final isBuyer = _viewingAs == Role.buyer;
-
-    _replace(contract.copyWith(
-      state: nextState,
-      dispute: Dispute(
-        id: 'dsp_${DateTime.now().microsecondsSinceEpoch}',
-        // Opens at `open`, not at `ai_review`. The case only reaches the model
-        // once the server has both sides and the evidence; the app does not
-        // decide that and must not pretend the analysis has started.
-        state: DisputeState.open,
-        openedByRole: _viewingAs,
-        buyerClaim: isBuyer ? claim : '',
-        sellerClaim: isBuyer ? null : claim,
-      ),
-      timeline: [
-        ...contract.timeline,
-        TimelineEntry(
-          at: DateTime.now(),
-          event: TransactionEvent.openDispute,
-          actor: actor,
-          describe: _describe(contract, TransactionEvent.openDispute),
-        ),
-      ],
-    ));
-    notifyListeners();
-    return null;
+  /// The refusal path is not dead code: it is what a stale screen hits when
+  /// the counterparty moved first, and the person deserves the real reason.
+  Future<TransitionError?> fire(String contractId, TransactionEvent event) async {
+    TransitionError? refusal;
+    await _guard(() async {
+      refusal = await _backend.fire(contractId, event);
+      _contracts = await _backend.loadContracts();
+    });
+    return refusal;
   }
 
-  /// The other party answering an open dispute.
-  void submitCounterClaim(String contractId, String claim) {
-    final contract = contractById(contractId);
-    final dispute = contract.dispute;
-    if (dispute == null) return;
+  /* ---------------------------------------------------------------- *
+   * Disputes
+   * ---------------------------------------------------------------- */
 
-    _replace(contract.copyWith(
-      dispute: Dispute(
-        id: dispute.id,
-        state: dispute.state,
-        openedByRole: dispute.openedByRole,
-        buyerClaim: _viewingAs == Role.buyer ? claim : dispute.buyerClaim,
-        sellerClaim: _viewingAs == Role.seller ? claim : dispute.sellerClaim,
-        proposal: dispute.proposal,
-        escalationReason: dispute.escalationReason,
-      ),
-    ));
-    notifyListeners();
+  Future<TransitionError?> openDispute(String contractId, String claim) async {
+    TransitionError? refusal;
+    await _guard(() async {
+      refusal = await _backend.openDispute(contractId, claim);
+      _contracts = await _backend.loadContracts();
+    });
+    return refusal;
   }
+
+  Future<void> submitCounterClaim(String contractId, String claim) async {
+    await _guard(() async {
+      await _backend.submitCounterClaim(contractId, claim);
+      _contracts = await _backend.loadContracts();
+    });
+  }
+
+  /// Records this party accepting the current proposal.
+  ///
+  /// Idempotent, and the dispute closes only once both roles have accepted,
+  /// exactly as `recordAcceptance` and the database define it.
+  Future<void> acceptProposal(String contractId) async {
+    await _guard(() async {
+      await _backend.acceptProposal(contractId);
+      _contracts = await _backend.loadContracts();
+    });
+  }
+
+  /// Either party refusing sends the case to a human. One refusal is enough.
+  Future<void> rejectProposal(String contractId) async {
+    await _guard(() async {
+      await _backend.rejectProposal(contractId);
+      _contracts = await _backend.loadContracts();
+    });
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Evidence
+   * ---------------------------------------------------------------- */
 
   /// Files a document against a contract.
   ///
-  /// The digest on the stored item is the uploader's, which stands in for the
-  /// server here. The app never writes a fingerprint of its own into the
-  /// record: whatever it could compute locally is a claim, and the value kept
-  /// is the one computed from the bytes that were actually stored.
+  /// The digest kept is the server's, computed from the bytes it stored. The
+  /// app never writes a fingerprint of its own into the record: whatever it
+  /// could compute locally is a claim, checked and then discarded.
   Future<EvidenceUploadResult> fileEvidence({
     required String contractId,
     required String filename,
@@ -218,166 +298,20 @@ class AppState extends ChangeNotifier {
     required Uint8List bytes,
     String? note,
   }) async {
-    final result = await _uploader.upload(
+    final contract = contractById(contractId);
+    final result = await _backend.uploader.upload(
       contractId: contractId,
-      uploaderRole: _viewingAs,
+      uploaderRole: roleOn(contract),
       filename: filename,
       contentType: contentType,
       bytes: bytes,
       note: note,
     );
 
-    if (result case EvidenceUploaded(:final item)) {
-      final contract = contractById(contractId);
-      _replace(contract.withEvidence([...contract.evidence, item]));
+    if (result is EvidenceUploaded) {
+      _contracts = await _backend.loadContracts();
       notifyListeners();
     }
     return result;
-  }
-
-  /// Applies an event, or returns why the domain refused it.
-  ///
-  /// The refusal path is not dead code: it is what a stale screen hits when the
-  /// counterparty moved first, and the person deserves the real reason.
-  TransitionError? fire(String contractId, TransactionEvent event) {
-    final contract = contractById(contractId);
-    final result = applyEvent(contract.state, event, actor);
-
-    switch (result) {
-      case Err(:final error):
-        return error;
-      case Ok(value: final nextState):
-        final entry = TimelineEntry(
-          at: DateTime.now(),
-          event: event,
-          actor: actor,
-          describe: _describe(contract, event),
-        );
-        _replace(contract.copyWith(
-          state: nextState,
-          timeline: [...contract.timeline, entry],
-        ));
-        notifyListeners();
-        return null;
-    }
-  }
-
-  /// Records this party accepting the current proposal.
-  ///
-  /// Idempotent, and the dispute closes only once both roles have accepted,
-  /// exactly as `recordAcceptance` and the database define it.
-  void acceptProposal(String contractId) {
-    final contract = contractById(contractId);
-    final dispute = contract.dispute;
-    final proposal = dispute?.proposal;
-    if (dispute == null || proposal == null) return;
-
-    final outcome = recordAcceptance(proposal.acceptedBy, _viewingAs);
-    final updatedProposal = ResolutionProposal(
-      decision: proposal.decision,
-      summary: proposal.summary,
-      findings: proposal.findings,
-      sellerAmount: proposal.sellerAmount,
-      buyerAmount: proposal.buyerAmount,
-      confidence: proposal.confidence,
-      acceptedBy: outcome.acceptedBy,
-    );
-
-    if (!outcome.bothAccepted) {
-      _replace(contract.copyWith(
-        dispute: Dispute(
-          id: dispute.id,
-          state: dispute.state,
-          openedByRole: dispute.openedByRole,
-          buyerClaim: dispute.buyerClaim,
-          sellerClaim: dispute.sellerClaim,
-          proposal: updatedProposal,
-        ),
-      ));
-      notifyListeners();
-      return;
-    }
-
-    // Both sides are in. The system, not either party, closes the dispute and
-    // resolves the contract.
-    final closedDispute = Dispute(
-      id: dispute.id,
-      state: applyDisputeEvent(
-        dispute.state,
-        DisputeEvent.acceptProposal,
-        Actor.system,
-      ).unwrap(),
-      openedByRole: dispute.openedByRole,
-      buyerClaim: dispute.buyerClaim,
-      sellerClaim: dispute.sellerClaim,
-      proposal: updatedProposal,
-    );
-
-    final resolved = applyEvent(
-      contract.state,
-      TransactionEvent.resolveDispute,
-      Actor.system,
-    ).unwrap();
-
-    _replace(contract.copyWith(
-      state: resolved,
-      dispute: closedDispute,
-      timeline: [
-        ...contract.timeline,
-        TimelineEntry(
-          at: DateTime.now(),
-          event: TransactionEvent.resolveDispute,
-          actor: Actor.system,
-          describe: 'Both parties accepted the proposal',
-        ),
-      ],
-    ));
-    notifyListeners();
-  }
-
-  /// Either party refusing sends the case to a human. One refusal is enough.
-  void rejectProposal(String contractId) {
-    final contract = contractById(contractId);
-    final dispute = contract.dispute;
-    if (dispute == null) return;
-
-    final next = applyDisputeEvent(dispute.state, DisputeEvent.rejectProposal, actor);
-    if (next case Ok(value: final state)) {
-      _replace(contract.copyWith(
-        dispute: Dispute(
-          id: dispute.id,
-          state: state,
-          openedByRole: dispute.openedByRole,
-          buyerClaim: dispute.buyerClaim,
-          sellerClaim: dispute.sellerClaim,
-          proposal: dispute.proposal,
-          escalationReason:
-              '${_viewingAs.wireName == 'buyer' ? 'The buyer' : 'The seller'} '
-              'refused the proposal',
-        ),
-      ));
-      notifyListeners();
-    }
-  }
-
-  void _replace(Contract updated) {
-    _contracts = [
-      for (final c in _contracts) if (c.id == updated.id) updated else c,
-    ];
-  }
-
-  String _describe(Contract contract, TransactionEvent event) {
-    final who = contract.partyFor(_viewingAs).name;
-    return switch (event) {
-      TransactionEvent.submit => '$who sent the contract',
-      TransactionEvent.accept => '$who accepted the terms',
-      TransactionEvent.decline => '$who declined the terms',
-      TransactionEvent.withdraw => '$who withdrew the contract',
-      TransactionEvent.markDelivered => '$who marked the work delivered',
-      TransactionEvent.requestRevision => '$who requested changes',
-      TransactionEvent.confirmDelivery => '$who confirmed the delivery',
-      TransactionEvent.openDispute => '$who opened a dispute',
-      _ => '$who fired ${event.wireName}',
-    };
   }
 }

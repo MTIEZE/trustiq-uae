@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
+import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/data/evidence_service.dart';
 import 'package:trustiq_app/screens/add_evidence_screen.dart';
 import 'package:trustiq_core/trustiq_core.dart';
@@ -16,7 +17,9 @@ Uint8List bytesOf(String text) => Uint8List.fromList(utf8.encode(text));
 void main() {
   group('the digest belongs to the receiver, not the sender', () {
     test('records the digest of the bytes that were actually stored', () async {
-      final state = AppState();
+      final state = AppState(backend: DemoBackend());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final contract =
           state.contracts.firstWhere((c) => c.state == TransactionState.delivered);
       final bytes = bytesOf('the signed brief, as a pdf would be');
@@ -34,7 +37,7 @@ void main() {
       expect(item.sha256, hasLength(64));
     });
 
-    test('a single changed byte produces a different fingerprint', () {
+    test('a single changed byte produces a different fingerprint', () async {
       // The property the whole evidence vault rests on: tampering is visible.
       final original = sha256Hex(bytesOf('the signed brief'));
       // One character changed, nothing else.
@@ -47,7 +50,9 @@ void main() {
     });
 
     test('the filed item lands on the contract and is visible to both sides', () async {
-      final state = AppState();
+      final state = AppState(backend: DemoBackend());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final contract =
           state.contracts.firstWhere((c) => c.state == TransactionState.delivered);
       final before = contract.evidence.length;
@@ -67,7 +72,9 @@ void main() {
     });
 
     test('the uploader role comes from who you are, not from the call', () async {
-      final state = AppState();
+      final state = AppState(backend: DemoBackend());
+      // Contracts are loaded on demand now, not in the constructor.
+      await state.refresh();
       final contract =
           state.contracts.firstWhere((c) => c.state == TransactionState.delivered);
 
@@ -87,8 +94,9 @@ void main() {
     late AppState state;
     late String contractId;
 
-    setUp(() {
-      state = AppState();
+    setUp(() async {
+      state = AppState(backend: DemoBackend());
+      await state.refresh();
       contractId = state.contracts
           .firstWhere((c) => c.state == TransactionState.delivered)
           .id;
@@ -157,7 +165,7 @@ void main() {
   });
 
   group('shape rules match the server', () {
-    test('the size ceiling is the one the bucket enforces', () {
+    test('the size ceiling is the one the bucket enforces', () async {
       expect(maxEvidenceBytes, 52428800);
       expect(
         checkEvidenceShape(
@@ -177,7 +185,7 @@ void main() {
       );
     });
 
-    test('a real null character in a filename is refused', () {
+    test('a real null character in a filename is refused', () async {
       final withNul = 'a${String.fromCharCode(0)}b.pdf';
       expect(
         checkEvidenceShape(
@@ -189,7 +197,7 @@ void main() {
       );
     });
 
-    test('every allowed content type is actually accepted', () {
+    test('every allowed content type is actually accepted', () async {
       for (final type in allowedContentTypes) {
         expect(
           checkEvidenceShape(filename: 'f.bin', contentType: type, byteSize: 1),
@@ -201,13 +209,13 @@ void main() {
   });
 
   group('what the person reads', () {
-    test('file sizes are rendered in units a person uses', () {
+    test('file sizes are rendered in units a person uses', () async {
       expect(humanSize(512), '512 bytes');
       expect(humanSize(2048), '2 KB');
       expect(humanSize(5 * 1024 * 1024), '5.0 MB');
     });
 
-    test('every rejection has a message that says what to do', () {
+    test('every rejection has a message that says what to do', () async {
       for (final rejection in EvidenceRejection.values) {
         final message = evidenceRejectionMessage(rejection);
         expect(message.trim(), isNotEmpty, reason: rejection.name);

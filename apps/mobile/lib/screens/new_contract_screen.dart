@@ -228,17 +228,32 @@ class _NewContractScreenState extends State<NewContractScreen> {
     );
   }
 
-  void _create() {
+  Future<void> _create() async {
     final amount = _parsedAmount;
     if (amount == null) return;
 
-    final contract = widget.state.createContract(
+    final contract = await widget.state.createContract(
       description: _description.text.trim(),
       terms: _terms.text.trim(),
       amount: amount,
       youAre: _youAre,
-      counterpartyName: _counterparty.text.trim(),
+      counterparty: _counterparty.text.trim(),
     );
+
+    if (!mounted) return;
+
+    // Null means the backend refused. The reason is on the state, and showing
+    // it here beats opening a contract screen for a contract that does not
+    // exist.
+    if (contract == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.state.error ?? 'The contract could not be created.'),
+          backgroundColor: TrustIqColors.critical,
+        ),
+      );
+      return;
+    }
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(

@@ -25,8 +25,8 @@ class ContractDetailScreen extends StatelessWidget {
       listenable: state,
       builder: (context, _) {
         final contract = state.contractById(contractId);
-        final me = contract.partyFor(state.viewingAs);
-        final other = contract.counterpartyFor(state.viewingAs);
+        final me = contract.partyFor(state.roleOn(contract));
+        final other = contract.counterpartyFor(state.roleOn(contract));
         final actions = state.actionsFor(contract);
         // A move can be legal in the table and still blocked by a guard. The
         // database refuses these too, so the screen must not offer them as if
@@ -83,7 +83,7 @@ class ContractDetailScreen extends StatelessWidget {
                           child: LabelledValue(
                             label: 'You are the',
                             child: Text(
-                              state.viewingAs == Role.buyer ? 'Buyer' : 'Seller',
+                              state.roleOn(contract) == Role.buyer ? 'Buyer' : 'Seller',
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -195,7 +195,7 @@ class ContractDetailScreen extends StatelessWidget {
     );
   }
 
-  void _fire(BuildContext context, TransactionEvent event) {
+  Future<void> _fire(BuildContext context, TransactionEvent event) async {
     if (event == TransactionEvent.openDispute) {
       // A dispute needs the claim that opens it, so this routes to a screen
       // rather than firing the transition from a confirmation dialog.
@@ -206,7 +206,7 @@ class ContractDetailScreen extends StatelessWidget {
       );
       return;
     }
-    final error = state.fire(contractId, event);
+    final error = await state.fire(contractId, event);
     if (error != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -283,7 +283,7 @@ class _DisputeBanner extends StatelessWidget {
     final dispute = contract.dispute!;
     final awaitingYou = dispute.state == DisputeState.proposalIssued &&
         dispute.proposal != null &&
-        !dispute.proposal!.acceptedBy.contains(state.viewingAs);
+        !dispute.proposal!.acceptedBy.contains(state.roleOn(contract));
 
     return Card(
       shape: RoundedRectangleBorder(

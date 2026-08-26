@@ -22,10 +22,13 @@ migrations/
   0010_evidence_extracted_text.sql
                         what each document actually says, and why it says
                         nothing when it does not
+  0011_counterparty_visibility.sql
+                        seeing who is on the other side of your contract, and
+                        addressing a contract to someone by email
 
 tests/
   00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
-  schema.test.sql        85 assertions run against a real Postgres
+  schema.test.sql        99 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -92,6 +95,13 @@ reason for it to be less confident rather than a neutral blank, and a CHECK
 keeps the status and the text from contradicting each other. Truncation is
 recorded in the status rather than marked inside the text, because the text is
 written by a party and anyone can type "[truncated]".
+
+**You can see your counterparty, and nobody else.** `public.visible_profiles`
+shows yourself and anyone you share a contract with, and only their name and
+whether they are verified. Not their email, not the rest of the row. A view
+rather than a policy because a profiles policy that reads transactions would
+recurse through the transactions policy, and because a view is the only place
+in this schema where a column can be withheld.
 
 **The record cannot be rewritten.** Evidence, both audit logs, proposals and
 acceptances are append-only, enforced by a trigger that fires even for roles

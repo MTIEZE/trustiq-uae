@@ -65,14 +65,14 @@ class DisputeScreen extends StatelessWidget {
                 label: 'What the buyer says',
                 who: contract.buyer.name,
                 claim: dispute.buyerClaim,
-                isYou: state.viewingAs == Role.buyer,
+                isYou: state.roleOn(contract) == Role.buyer,
               ),
               const SizedBox(height: 12),
               _ClaimCard(
                 label: 'What the seller says',
                 who: contract.seller.name,
                 claim: dispute.sellerClaim,
-                isYou: state.viewingAs == Role.seller,
+                isYou: state.roleOn(contract) == Role.seller,
               ),
               const SizedBox(height: 12),
               _EvidenceCard(evidence: contract.evidence),
@@ -91,7 +91,7 @@ class DisputeScreen extends StatelessWidget {
                   label: const Text('Add evidence'),
                 ),
               ],
-              if (_awaitingYourAccount(dispute, state.viewingAs)) ...[
+              if (_awaitingYourAccount(dispute, state.roleOn(contract))) ...[
                 const SizedBox(height: 12),
                 InfoCard(
                   child: Column(
@@ -343,8 +343,8 @@ class _ProposalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final youAccepted = proposal.acceptedBy.contains(state.viewingAs);
-    final otherAccepted = proposal.acceptedBy.contains(state.viewingAs.counterparty);
+    final youAccepted = proposal.acceptedBy.contains(state.roleOn(contract));
+    final otherAccepted = proposal.acceptedBy.contains(state.roleOn(contract).counterparty);
     final closed = dispute.state.isTerminal;
 
     return Card(
@@ -438,7 +438,7 @@ class _ProposalCard extends StatelessWidget {
               youAccepted: youAccepted,
               otherAccepted: otherAccepted,
               closed: closed,
-              otherName: contract.counterpartyFor(state.viewingAs).name,
+              otherName: contract.counterpartyFor(state.roleOn(contract)).name,
             ),
             if (!closed) ...[
               const SizedBox(height: 14),

@@ -51,7 +51,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
   @override
   Widget build(BuildContext context) {
     final contract = widget.state.contractById(widget.contractId);
-    final other = contract.counterpartyFor(widget.state.viewingAs);
+    final other = contract.counterpartyFor(widget.state.roleOn(contract));
 
     return Scaffold(
       appBar: AppBar(
@@ -105,7 +105,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                   SectionLabel('What ${other.name} says'),
                   const SizedBox(height: 8),
                   Text(
-                    widget.state.viewingAs == Role.buyer
+                    widget.state.roleOn(contract) == Role.buyer
                         ? (contract.dispute!.sellerClaim ?? '')
                         : contract.dispute!.buyerClaim,
                     style: const TextStyle(fontSize: 14, height: 1.5),
@@ -187,7 +187,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final claim = _claim.text.trim();
 
     if (widget.answering) {
@@ -196,8 +196,8 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
       return;
     }
 
-    final error = widget.state.openDispute(widget.contractId, claim);
-    if (error != null) {
+    final error = await widget.state.openDispute(widget.contractId, claim);
+    if (error != null && mounted) {
       // The counterparty moved first and this screen is stale. Say what the
       // domain actually said rather than a generic failure.
       ScaffoldMessenger.of(context).showSnackBar(
@@ -208,6 +208,6 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
       );
       return;
     }
-    Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop();
   }
 }

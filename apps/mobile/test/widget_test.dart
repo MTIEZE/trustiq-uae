@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
+import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/main.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -11,7 +12,7 @@ import 'package:trustiq_core/trustiq_core.dart';
 
 void main() {
   testWidgets('the contract list renders and shows state in words', (tester) async {
-    await tester.pumpWidget(const TrustIqApp());
+    await tester.pumpWidget(TrustIqApp(backend: DemoBackend()));
     await tester.pumpAndSettle();
 
     expect(find.text('Contracts'), findsOneWidget);
@@ -23,7 +24,9 @@ void main() {
 
   testWidgets('a delivered contract offers the buyer and the seller different moves',
       (tester) async {
-    final state = AppState();
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     final delivered =
         state.contracts.firstWhere((c) => c.state == TransactionState.delivered);
 
@@ -39,7 +42,9 @@ void main() {
   });
 
   testWidgets('the screen never offers a system-only move', (tester) async {
-    final state = AppState();
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     for (final role in Role.values) {
       state.viewAs(role);
       for (final contract in state.contracts) {
@@ -48,7 +53,7 @@ void main() {
         expect(offered, isNot(contains(TransactionEvent.cancelByAgreement)));
         // Whatever is offered must also be legal in the domain.
         for (final event in offered) {
-          expect(canTransition(contract.state, event, state.actor), isTrue,
+          expect(canTransition(contract.state, event, state.actorOn(contract)), isTrue,
               reason: '${contract.state.name}/${event.name}/${role.name}');
         }
       }
@@ -56,7 +61,9 @@ void main() {
   });
 
   testWidgets('a closed contract offers nothing at all', (tester) async {
-    final state = AppState();
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     final completed =
         state.contracts.firstWhere((c) => c.state == TransactionState.completed);
     for (final role in Role.values) {
@@ -66,20 +73,22 @@ void main() {
   });
 
   testWidgets('one party accepting does not close the dispute', (tester) async {
-    final state = AppState();
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     final disputed =
         state.contracts.firstWhere((c) => c.state == TransactionState.disputed);
     // Seeded with the seller already in; the buyer has not answered.
     expect(disputed.dispute!.proposal!.acceptedBy, {Role.seller});
 
     state.viewAs(Role.seller);
-    state.acceptProposal(disputed.id); // idempotent, changes nothing
+    await state.acceptProposal(disputed.id); // idempotent, changes nothing
     var current = state.contractById(disputed.id);
     expect(current.dispute!.proposal!.acceptedBy, {Role.seller});
     expect(current.state, TransactionState.disputed);
 
     state.viewAs(Role.buyer);
-    state.acceptProposal(disputed.id);
+    await state.acceptProposal(disputed.id);
     current = state.contractById(disputed.id);
     expect(current.dispute!.proposal!.bothAccepted, isTrue);
     expect(current.dispute!.state, DisputeState.accepted);
@@ -89,19 +98,23 @@ void main() {
   });
 
   testWidgets('either party refusing sends the case to a human', (tester) async {
-    final state = AppState();
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     final disputed =
         state.contracts.firstWhere((c) => c.state == TransactionState.disputed);
 
     state.viewAs(Role.buyer);
-    state.rejectProposal(disputed.id);
+    await state.rejectProposal(disputed.id);
 
     final current = state.contractById(disputed.id);
     expect(current.dispute!.state, DisputeState.escalated);
   });
 
   testWidgets('the proposed split adds up to the amount in dispute', (tester) async {
-    final state = AppState();
+    final state = AppState(backend: DemoBackend());
+    // Contracts are loaded on demand now, not in the constructor.
+    await state.refresh();
     final disputed =
         state.contracts.firstWhere((c) => c.state == TransactionState.disputed);
     final proposal = disputed.dispute!.proposal!;
@@ -113,7 +126,7 @@ void main() {
   });
 
   testWidgets('the dispute screen shows the evidence fingerprints', (tester) async {
-    await tester.pumpWidget(const TrustIqApp());
+    await tester.pumpWidget(TrustIqApp(backend: DemoBackend()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Logo design for a startup'));

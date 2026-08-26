@@ -26,7 +26,16 @@ class ContractsScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
         ),
         actions: [
-          _RoleSwitch(state: state),
+          // Only in the demo. Against a real project the side you are on comes
+          // from your session and cannot be chosen, and offering the control
+          // anyway would suggest otherwise.
+          if (!state.isLive) _RoleSwitch(state: state),
+          if (state.isLive)
+            IconButton(
+              tooltip: 'Sign out of ${state.backendLabel}',
+              onPressed: state.signOut,
+              icon: const Icon(Icons.logout, size: 20),
+            ),
           const SizedBox(width: 12),
         ],
       ),
@@ -41,9 +50,23 @@ class ContractsScreen extends StatelessWidget {
         icon: const Icon(Icons.add),
         label: const Text('New contract'),
       ),
-      body: ListView(
+      body: RefreshIndicator(
+        onRefresh: state.refresh,
+        child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          if (!state.isLive) ...[
+            const RuleNote(
+              'Demo data. Nothing on this screen is stored anywhere, and no '
+              'contract here exists outside this app.',
+              icon: Icons.science_outlined,
+            ),
+            const SizedBox(height: 14),
+          ],
+          if (state.error != null) ...[
+            _ErrorNote(message: state.error!, onDismiss: state.clearError),
+            const SizedBox(height: 14),
+          ],
           if (needsYou.isNotEmpty) ...[
             const SectionLabel('Waiting on you'),
             const SizedBox(height: 10),
@@ -67,6 +90,7 @@ class ContractsScreen extends StatelessWidget {
             icon: Icons.account_balance_outlined,
           ),
         ],
+        ),
       ),
     );
   }
@@ -122,7 +146,7 @@ class _ContractTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final counterparty = contract.counterpartyFor(state.viewingAs);
+    final counterparty = contract.counterpartyFor(state.roleOn(contract));
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -191,6 +215,47 @@ class _ContractTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+/// Something the backend refused, shown where it happened rather than as a
+/// snackbar that has already gone by the time anyone looks up.
+class _ErrorNote extends StatelessWidget {
+  const _ErrorNote({required this.message, required this.onDismiss});
+
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+      decoration: BoxDecoration(
+        color: TrustIqColors.critical.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: TrustIqColors.critical.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, size: 18, color: TrustIqColors.critical),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 13, color: TrustIqColors.critical),
+            ),
+          ),
+          IconButton(
+            onPressed: onDismiss,
+            iconSize: 18,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.close, color: TrustIqColors.critical),
+          ),
+        ],
       ),
     );
   }
