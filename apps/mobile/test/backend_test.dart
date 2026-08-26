@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/data/config.dart';
 import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/data/rows.dart';
+import 'package:trustiq_app/screens/dispute_screen.dart' show unreadableNote;
 import 'package:trustiq_core/trustiq_core.dart';
 
 /// The two pure pieces of the live backend: the key guard, and turning rows
@@ -132,6 +133,58 @@ void main() {
       final unknown = partyFromProfile(null, 'u9');
       expect(unknown.id, 'u9');
       expect(unknown.verified, isFalse);
+    });
+  });
+
+  group('reading a document off its row', () {
+    Map<String, dynamic> evidenceRow({String? status}) => {
+          'id': 'ev_1',
+          'filename': 'brief.pdf',
+          'uploaded_by_role': 'buyer',
+          'uploaded_at': '2026-08-01T09:00:00Z',
+          'sha256': 'a' * 64,
+          'note': null,
+          'extraction_status': ?status,
+        };
+
+    test('reads whether the server managed to read the document', () {
+      expect(evidenceFromRow(evidenceRow(status: 'extracted')).extractionStatus,
+          ExtractionStatus.extracted);
+      expect(evidenceFromRow(evidenceRow(status: 'unsupported')).extractionStatus,
+          ExtractionStatus.unsupported);
+      expect(evidenceFromRow(evidenceRow(status: 'failed')).extractionStatus,
+          ExtractionStatus.failed);
+    });
+
+    test('counts extracted and truncated as read, and nothing else', () {
+      expect(ExtractionStatus.extracted.wasRead, isTrue);
+      expect(ExtractionStatus.truncated.wasRead, isTrue);
+      for (final status in [
+        ExtractionStatus.unsupported,
+        ExtractionStatus.failed,
+        ExtractionStatus.notAttempted,
+      ]) {
+        expect(status.wasRead, isFalse, reason: status.name);
+      }
+    });
+
+    test('treats a row with no status as never attempted', () {
+      // Rows filed before extraction existed. Not a judgement about the file.
+      expect(evidenceFromRow(evidenceRow()).extractionStatus, ExtractionStatus.notAttempted);
+    });
+
+    test('refuses a status this build does not know', () {
+      expect(() => evidenceFromRow(evidenceRow(status: 'ocr_pending')),
+          throwsA(isA<RowMappingException>()));
+    });
+
+    test('tells a person something they can act on only when there is something', () {
+      // An image having no text is not the reader's problem. A file that
+      // should have been readable is, and only they can fix it.
+      expect(unreadableNote(ExtractionStatus.failed), contains('file them as text'));
+      expect(unreadableNote(ExtractionStatus.unsupported), contains('cannot read this kind of file'));
+      expect(unreadableNote(ExtractionStatus.unsupported),
+          isNot(contains('file them as text')));
     });
   });
 

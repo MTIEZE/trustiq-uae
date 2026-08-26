@@ -33,6 +33,25 @@ class TimelineEntry {
   final String describe;
 }
 
+/// Whether a document's text could be read, and if not, which kind of not.
+///
+/// Carried all the way to the screen because the two absences are different
+/// facts. A photograph has no text to read. A file that failed means there is
+/// content nobody is seeing, including whoever decides the dispute, and the
+/// person who filed it is the only one who can do something about that.
+enum ExtractionStatus {
+  notAttempted('not_attempted'),
+  unsupported('unsupported'),
+  failed('failed'),
+  extracted('extracted'),
+  truncated('truncated');
+
+  const ExtractionStatus(this.wireName);
+  final String wireName;
+
+  bool get wasRead => this == extracted || this == truncated;
+}
+
 class EvidenceItem {
   const EvidenceItem({
     required this.id,
@@ -41,6 +60,7 @@ class EvidenceItem {
     required this.uploadedAt,
     required this.sha256,
     this.note,
+    this.extractionStatus = ExtractionStatus.notAttempted,
   });
   final String id;
   final String filename;
@@ -52,6 +72,11 @@ class EvidenceItem {
   /// document was not swapped.
   final String sha256;
   final String? note;
+
+  /// Set by the server at upload. The app never decides this, and never
+  /// guesses it from the file extension: whether the text came out is a fact
+  /// about what the server managed to read, not about the name of the file.
+  final ExtractionStatus extractionStatus;
 }
 
 /// Who wrote a resolution.
@@ -277,6 +302,9 @@ List<Contract> seedContracts() => [
           EvidenceItem(
             id: 'ev_contract',
             filename: 'signed-brief.pdf',
+            // A PDF, which v1 does not read. The demo shows the real
+            // behaviour rather than a flattering version of it.
+            extractionStatus: ExtractionStatus.unsupported,
             uploadedByRole: Role.buyer,
             uploadedAt: _d(10, 10),
             sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
@@ -285,6 +313,7 @@ List<Contract> seedContracts() => [
           EvidenceItem(
             id: 'ev_delivery',
             filename: 'concepts-v1.zip',
+            extractionStatus: ExtractionStatus.unsupported,
             uploadedByRole: Role.seller,
             uploadedAt: _d(10, 12),
             sha256: '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',

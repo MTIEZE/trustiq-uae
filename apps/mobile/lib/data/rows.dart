@@ -121,6 +121,12 @@ EvidenceItem evidenceFromRow(Map<String, dynamic> row) => EvidenceItem(
       uploadedAt: readTime(row, 'uploaded_at'),
       sha256: readString(row, 'sha256'),
       note: row['note'] as String?,
+      extractionStatus: readEnum(
+        (row['extraction_status'] as String?) ?? 'not_attempted',
+        ExtractionStatus.values,
+        (e) => e.wireName,
+        'evidence.extraction_status',
+      ),
     );
 
 TimelineEntry timelineFromRow(Map<String, dynamic> row, Contract Function()? _) => TimelineEntry(

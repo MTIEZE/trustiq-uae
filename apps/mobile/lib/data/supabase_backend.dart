@@ -199,7 +199,7 @@ class SupabaseBackend implements Backend {
     final evidence = await _select(
       () => _client
           .from('evidence')
-          .select('id, transaction_id, filename, uploaded_by_role, uploaded_at, sha256, note')
+          .select('id, transaction_id, filename, uploaded_by_role, uploaded_at, sha256, note, extraction_status')
           .inFilter('transaction_id', ids)
           .order('uploaded_at'),
       'documents',

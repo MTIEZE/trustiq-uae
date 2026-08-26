@@ -323,10 +323,54 @@ class _EvidenceRow extends StatelessWidget {
             ),
           ),
         ),
+        // Said only when it is worth saying. A document that was read needs no
+        // remark; one that could not be tells the person who filed it that the
+        // resolution will be decided without its contents, and they are the
+        // only one who can fix that.
+        if (!item.extractionStatus.wasRead) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.visibility_off_outlined, size: 13, color: TrustIqColors.inkFaint),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    unreadableNote(item.extractionStatus),
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: TrustIqColors.inkFaint,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 }
+
+/// What to tell someone about a document whose text was not read.
+///
+/// Three different facts, and flattening them into "unreadable" would be
+/// unhelpful in the one case where the person can act. An image is expected to
+/// have no text; a file that failed is a problem they can solve by filing a
+/// readable version.
+String unreadableNote(ExtractionStatus status) => switch (status) {
+      ExtractionStatus.unsupported =>
+        'The analysis cannot read this kind of file, so it will weigh the note '
+            'above rather than the contents.',
+      ExtractionStatus.failed =>
+        'This file should have been readable and was not. If its contents '
+            'matter, file them as text as well.',
+      ExtractionStatus.notAttempted => 'Filed before documents were read.',
+      _ => '',
+    };
 
 class _ProposalCard extends StatelessWidget {
   const _ProposalCard({

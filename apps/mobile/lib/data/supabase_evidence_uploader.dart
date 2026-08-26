@@ -111,8 +111,20 @@ class SupabaseEvidenceUploader implements EvidenceUploader {
         // only ever a claim and is discarded the moment it has been checked.
         sha256: body['sha256'] as String,
         note: (note == null || note.trim().isEmpty) ? null : note.trim(),
+        // Whether the server could read the document. Worth surfacing at the
+        // moment of filing: a file nobody can read still counts as evidence,
+        // but the person who filed it is the only one who can add a readable
+        // version, and only if they are told.
+        extractionStatus: _statusFor(body['extractionStatus'] as String?),
       ),
     );
+  }
+
+  static ExtractionStatus _statusFor(String? wire) {
+    for (final status in ExtractionStatus.values) {
+      if (status.wireName == wire) return status;
+    }
+    return ExtractionStatus.notAttempted;
   }
 
   /// Maps the server's rejection code onto the one the app knows.

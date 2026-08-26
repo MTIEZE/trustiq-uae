@@ -8,6 +8,7 @@ import '../app_state.dart';
 import '../data/demo_data.dart';
 import '../data/evidence_service.dart';
 import '../theme.dart';
+import 'dispute_screen.dart' show unreadableNote;
 import '../widgets/common.dart';
 
 /// Filing a document against a contract.
@@ -171,6 +172,17 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                 'something later.',
                 icon: Icons.fingerprint,
               ),
+              // Said here rather than left to be discovered later. If the
+              // resolution is going to be decided without this document's
+              // contents, the moment to learn that is now, while the person is
+              // still holding the file and can send a readable version.
+              if (!item.extractionStatus.wasRead) ...[
+                const SizedBox(height: 10),
+                RuleNote(
+                  unreadableNote(item.extractionStatus),
+                  icon: Icons.visibility_off_outlined,
+                ),
+              ],
             ],
           ),
         ),
