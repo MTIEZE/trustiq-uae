@@ -226,6 +226,28 @@ step('Refusals that must come before anything is stored')
 }
 
 {
+  // A plain separator, not a traversal signature. This is the one that proves
+  // our own rule: `../../etc/passwd` never reaches the function, because the
+  // WAF in front of Supabase answers it with a 403 HTML page first. Asserting
+  // INVALID_FILENAME on that input tested the edge, not this codebase.
+  const r = await post({
+    token: buyerToken,
+    transactionId: contract.id,
+    bytes: new TextEncoder().encode('separator attempt'),
+    contentType: 'text/plain',
+    filename: 'sub/dir.txt',
+  })
+  check(
+    r.body?.code === 'INVALID_FILENAME',
+    `a filename with a path separator is refused by the function (${r.status} ${r.body?.code})`,
+  )
+}
+
+{
+  // And the traversal signature is refused by something, which is all this can
+  // honestly claim: against the deployed function the WAF answers first, and
+  // against a local run the function does. Both are refusals; only the status
+  // differs, so only the refusal is asserted.
   const r = await post({
     token: buyerToken,
     transactionId: contract.id,
@@ -234,8 +256,8 @@ step('Refusals that must come before anything is stored')
     filename: '../../etc/passwd',
   })
   check(
-    r.body?.code === 'INVALID_FILENAME',
-    `a filename with path separators is refused (${r.status} ${r.body?.code})`,
+    r.status >= 400,
+    `a path traversal in a filename never lands (${r.status} ${r.body?.code ?? 'refused upstream'})`,
   )
 }
 
