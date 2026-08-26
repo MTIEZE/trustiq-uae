@@ -66,19 +66,52 @@ then
   fatal "could not start $CONTAINER: $(reason)"
 fi
 
+# Waiting for the *real* server, which is not the first one to answer.
+#
+# The postgres image boots a temporary server to run initdb, announces
+# "database system is ready to accept connections", shuts it down, and only
+# then starts the server that keeps running:
+#
+#   LOG:  database system is ready to accept connections   <- temporary
+#   LOG:  shutting down
+#   PostgreSQL init process complete; ready for start up.
+#   LOG:  database system is ready to accept connections   <- the real one
+#
+# `pg_isready` answers yes during that first window. Waiting on it alone means
+# the migrations can start against a server that is about to shut down, and
+# psql then exits 2 with the connection lost. It passes locally and fails on a
+# slower runner, which is exactly how this behaved: green on three runs, red on
+# three others, with nothing in the SQL changing between them.
+#
+# The init marker is unambiguous, so it is what we wait for first.
+printf 'Waiting for initialisation'
+initialised=""
+for _ in $(seq 1 60); do
+  if docker logs "$CONTAINER" 2>&1 | grep -q 'init process complete'; then
+    initialised="yes"
+    echo ' done'
+    break
+  fi
+  printf '.'
+  sleep 1
+done
+[ -n "$initialised" ] || fatal "$CONTAINER never finished initialising"
+
 printf 'Waiting for Postgres'
 for _ in $(seq 1 60); do
-  if docker exec "$CONTAINER" pg_isready -U postgres -d trustiq >/dev/null 2>&1; then
-    echo " ready"
+  # A real query rather than pg_isready: the point is that the server will
+  # answer the next statement too, and only a statement proves that.
+  if docker exec "$CONTAINER" psql -U postgres -d trustiq -tAc 'select 1' >/dev/null 2>&1; then
+    echo ' ready'
     break
   fi
   printf '.'
   sleep 1
 done
 
-if ! docker exec "$CONTAINER" pg_isready -U postgres -d trustiq >/dev/null 2>&1; then
-  echo " timed out"
-  fatal "Postgres in $CONTAINER never became ready"
+if ! docker exec "$CONTAINER" psql -U postgres -d trustiq -tAc 'select 1' >/dev/null 2>&1; then
+  echo ' timed out'
+  fatal "Postgres in $CONTAINER never accepted a query"
 fi
 
 run_sql_file() {
