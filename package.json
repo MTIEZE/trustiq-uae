@@ -1,23 +1,26 @@
 {
-  "name": "trustiq-uae",
+  "name": "trustiq",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "npm run dev -w @trustiq/web",
+    "build": "npm run build -w @trustiq/core && npm run build -w @trustiq/ai && npm run build -w @trustiq/server && npm run build -w @trustiq/web",
+    "preview": "npm run preview -w @trustiq/web",
     "lint": "oxlint",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "test": "npm run test -w @trustiq/core && npm run test -w @trustiq/ai && npm run test -w @trustiq/server",
+    "test:db": "bash scripts/db-test.sh",
+    "test:dart": "cd packages/core-dart && dart test",
+    "typecheck": "npm run typecheck -w @trustiq/core && npm run typecheck -w @trustiq/ai && npm run typecheck -w @trustiq/server",
+    "verify:supabase": "node scripts/verify-supabase.mjs",
+    "seed:live": "node scripts/seed-live-dispute.mjs",
+    "dryrun:live": "node scripts/dry-run-resolution.mjs"
   },
   "devDependencies": {
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
-    "vite": "^8.1.0"
+    "supabase": "^2.115.0"
   }
 }

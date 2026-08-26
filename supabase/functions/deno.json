@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.112.4",
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@^0.117.1",
+    "@trustiq/core": "./_shared/core/index.js",
+    "@trustiq/ai": "./_shared/ai/index.js",
+    "@trustiq/server": "./_shared/server/index.js"
+  }
+}
