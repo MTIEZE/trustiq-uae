@@ -66,7 +66,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
       final parsed = filsFromAed(raw);
       setState(() {
         _parsedAmount = parsed.isPositive ? parsed : null;
-        _amountError = parsed.isPositive ? null : 'The amount must be more than zero.';
+        _amountError = parsed.isPositive ? null : context.l.amountMustBePositive;
       });
     } on MoneyError {
       setState(() {
@@ -74,8 +74,8 @@ class _NewContractScreenState extends State<NewContractScreen> {
         // The domain's own message names internals; this is the same rule said
         // to the person typing.
         _amountError = raw.contains('.') && raw.split('.').last.length > 2
-            ? 'Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.'
-            : 'Enter an amount in AED, like 500 or 1250.50.';
+            ? context.l.amountTwoDecimals
+            : context.l.amountFormat;
       });
     }
   }
@@ -88,24 +88,18 @@ class _NewContractScreenState extends State<NewContractScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final c = context.c;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'New contract',
-        ),
+        title: Text(l.newContract),
       ),
       body: ListView(
         padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           // A form of three questions rather than one wall of fields. The
           // numbers are not decoration: they tell someone how much is left.
-          const _Step(
-            number: 1,
-            title: 'Who this is with',
-            blurb: 'Both of you will see the same contract, and neither can '
-                'change it once it is accepted.',
-          ),
+          _Step(number: 1, title: l.stepWhoWith, blurb: l.stepWhoWithBlurb),
           InfoCard(
             padding: const EdgeInsets.all(Space.xl),
             child: Column(
@@ -114,17 +108,17 @@ class _NewContractScreenState extends State<NewContractScreen> {
                 SegmentedButton<Role>(
                   style: SegmentedButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                    textStyle: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
                   ),
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: Role.buyer,
-                      label: Text('I am paying'),
+                      label: Text(l.iAmPaying),
                       icon: Icon(Icons.south_west, size: IconSize.md),
                     ),
                     ButtonSegment(
                       value: Role.seller,
-                      label: Text('I am delivering'),
+                      label: Text(l.iAmDelivering),
                       icon: Icon(Icons.north_east, size: IconSize.md),
                     ),
                   ],
@@ -135,27 +129,19 @@ class _NewContractScreenState extends State<NewContractScreen> {
                 const SizedBox(height: Space.xl),
                 _Field(
                   controller: _counterparty,
-                  label: _youAre == Role.buyer
-                      ? 'Email of the person delivering'
-                      : 'Email of the person paying',
+                  label: _youAre == Role.buyer ? l.emailOfDeliverer : l.emailOfPayer,
                   hint: 'name@example.ae',
                   keyboardType: TextInputType.emailAddress,
                   // An email, not a name. The contract is addressed to an
                   // account, and the server resolves the address to one.
-                  helper: 'They need a TrustIQ account already. Inviting '
-                      'someone who has none is not supported yet.',
+                  helper: l.counterpartyHelper,
                 ),
               ],
             ),
           ),
 
           const SizedBox(height: Space.xxl),
-          const _Step(
-            number: 2,
-            title: 'What was agreed',
-            blurb: 'This is the text a dispute would be judged against, so be '
-                'specific about what counts as delivered.',
-          ),
+          _Step(number: 2, title: l.stepWhatAgreed, blurb: l.stepWhatAgreedBlurb),
           InfoCard(
             padding: const EdgeInsets.all(Space.xl),
             child: Column(
@@ -163,16 +149,15 @@ class _NewContractScreenState extends State<NewContractScreen> {
               children: [
                 _Field(
                   controller: _description,
-                  label: 'What is being done',
-                  hint: 'Logo design for a startup',
+                  label: l.whatIsBeingDone,
+                  hint: l.exampleDescription,
                   maxLength: 120,
                 ),
                 const SizedBox(height: Space.xl),
                 _Field(
                   controller: _terms,
-                  label: 'Agreed terms',
-                  hint: 'Deliver three distinct concepts within seven days. '
-                      'Two rounds of revision. Final files as SVG and PNG.',
+                  label: l.agreedTerms,
+                  hint: l.exampleTerms,
                   maxLines: 5,
                   maxLength: 1000,
                 ),
@@ -181,11 +166,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
           ),
 
           const SizedBox(height: Space.xxl),
-          const _Step(
-            number: 3,
-            title: 'How much',
-            blurb: 'Recorded to the fil. Nothing here rounds.',
-          ),
+          _Step(number: 3, title: l.stepHowMuch, blurb: l.stepHowMuchBlurb),
           InfoCard(
             padding: const EdgeInsets.all(Space.xl),
             child: Column(
@@ -216,7 +197,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
                       Icon(Icons.check_circle_outline, size: IconSize.sm, color: c.ok),
                       const SizedBox(width: Space.sm),
                       Text(
-                        'Recorded as ${formatAed(_parsedAmount!)}',
+                        l.recordedAs(formatAed(_parsedAmount!)),
                         style: Type.caption.copyWith(
                           color: c.ok,
                           fontWeight: FontWeight.w600,
@@ -227,12 +208,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   ),
                 ],
                 const SizedBox(height: Space.lg),
-                const RuleNote(
-                  'TrustIQ does not take this money. It records what you agreed '
-                  'so there is something to point at later; you pay each other '
-                  'directly.',
-                  icon: Icons.account_balance_outlined,
-                ),
+                RuleNote(l.noEscrowShort, icon: Icons.account_balance_outlined),
               ],
             ),
           ),
@@ -240,14 +216,10 @@ class _NewContractScreenState extends State<NewContractScreen> {
           const SizedBox(height: Space.xxl),
           FilledButton(
             onPressed: _canSubmit ? _create : null,
-            child: const Text('Create as a draft'),
+            child: Text(l.createAsDraft),
           ),
           const SizedBox(height: Space.md),
-          const RuleNote(
-            'A draft is yours alone until you send it. Once the other party '
-            'accepts, neither of you can change the terms.',
-            icon: Icons.edit_note_outlined,
-          ),
+          RuleNote(l.draftNote, icon: Icons.edit_note_outlined),
         ],
       ),
     );
@@ -273,7 +245,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
     if (contract == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.state.error ?? 'The contract could not be created.'),
+          content: Text(widget.state.error ?? context.l.contractCouldNotBeCreated),
           backgroundColor: context.c.critical,
         ),
       );

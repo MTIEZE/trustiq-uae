@@ -558,6 +558,738 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Demo only: switch which side of the contracts you are viewing'**
   String get demoRoleSwitchTooltip;
+
+  /// No description provided for @you.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get you;
+
+  /// No description provided for @otherParty.
+  ///
+  /// In en, this message translates to:
+  /// **'Other party'**
+  String get otherParty;
+
+  /// No description provided for @amountAgreed.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount agreed'**
+  String get amountAgreed;
+
+  /// No description provided for @youAreTheBuyer.
+  ///
+  /// In en, this message translates to:
+  /// **'You are the buyer'**
+  String get youAreTheBuyer;
+
+  /// No description provided for @youAreTheSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'You are the seller'**
+  String get youAreTheSeller;
+
+  /// No description provided for @agreedTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Agreed terms'**
+  String get agreedTerms;
+
+  /// No description provided for @milestones.
+  ///
+  /// In en, this message translates to:
+  /// **'Milestones'**
+  String get milestones;
+
+  /// No description provided for @whatYouCanDo.
+  ///
+  /// In en, this message translates to:
+  /// **'What you can do'**
+  String get whatYouCanDo;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @contractClosedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This contract is closed. Its record stays available to both parties and cannot be edited by either of you.'**
+  String get contractClosedNote;
+
+  /// No description provided for @nothingToDoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing for you to do right now. The next move belongs to {name}.'**
+  String nothingToDoNote(String name);
+
+  /// No description provided for @movesRuleNote.
+  ///
+  /// In en, this message translates to:
+  /// **'These are the only moves allowed from this state for your role. The same rule table runs on the server and in the database, so a move that is not offered here would be refused there too.'**
+  String get movesRuleNote;
+
+  /// No description provided for @historyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Every entry is written once and cannot be edited or removed, by either party or by TrustIQ.'**
+  String get historyNote;
+
+  /// No description provided for @proposalWaitingForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'A proposal is waiting for your answer'**
+  String get proposalWaitingForYou;
+
+  /// No description provided for @dispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute'**
+  String get dispute;
+
+  /// No description provided for @noDisputeOnContract.
+  ///
+  /// In en, this message translates to:
+  /// **'No dispute on this contract.'**
+  String get noDisputeOnContract;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @inDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'In dispute'**
+  String get inDispute;
+
+  /// No description provided for @whatTheBuyerSays.
+  ///
+  /// In en, this message translates to:
+  /// **'What the buyer says'**
+  String get whatTheBuyerSays;
+
+  /// No description provided for @whatTheSellerSays.
+  ///
+  /// In en, this message translates to:
+  /// **'What the seller says'**
+  String get whatTheSellerSays;
+
+  /// No description provided for @noAccountGivenYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No account given yet.'**
+  String get noAccountGivenYet;
+
+  /// No description provided for @youShort.
+  ///
+  /// In en, this message translates to:
+  /// **'YOU'**
+  String get youShort;
+
+  /// No description provided for @evidenceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence ({count})'**
+  String evidenceCount(int count);
+
+  /// No description provided for @addEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Add evidence'**
+  String get addEvidence;
+
+  /// No description provided for @yourTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your turn'**
+  String get yourTurn;
+
+  /// No description provided for @yourTurnBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'The other party has given their account. Nothing is analysed until you give yours, so the case is waiting on you.'**
+  String get yourTurnBlurb;
+
+  /// No description provided for @giveYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Give your account'**
+  String get giveYourAccount;
+
+  /// No description provided for @bothAccountsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Both accounts are in. The case goes to the resolution agent, which reads them against the evidence and proposes an outcome. You will be asked to accept or refuse it.'**
+  String get bothAccountsIn;
+
+  /// No description provided for @needsAPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'This case needs a person to look at it.'**
+  String get needsAPerson;
+
+  /// No description provided for @reviewerWillRead.
+  ///
+  /// In en, this message translates to:
+  /// **'A reviewer will read the same claims and evidence you can see here, and will contact you both before deciding.'**
+  String get reviewerWillRead;
+
+  /// No description provided for @fingerprintsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The fingerprint under each file is calculated by TrustIQ from the bytes it stored, not supplied by whoever uploaded it. Neither party can replace a file after filing it.'**
+  String get fingerprintsNote;
+
+  /// No description provided for @unreadableUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The analysis cannot read this kind of file, so it will weigh the note above rather than the contents.'**
+  String get unreadableUnsupported;
+
+  /// No description provided for @unreadableFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This file should have been readable and was not. If its contents matter, file them as text as well.'**
+  String get unreadableFailed;
+
+  /// No description provided for @filedBeforeExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Filed before documents were read.'**
+  String get filedBeforeExtraction;
+
+  /// No description provided for @decisionByReviewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision by a TrustIQ reviewer'**
+  String get decisionByReviewer;
+
+  /// No description provided for @proposedResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposed resolution'**
+  String get proposedResolution;
+
+  /// No description provided for @confidencePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% confidence'**
+  String confidencePercent(int percent);
+
+  /// No description provided for @whatThisIsBasedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'What this is based on'**
+  String get whatThisIsBasedOn;
+
+  /// No description provided for @groundedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Every statement above had to cite a document that was actually filed. A finding with nothing behind it is refused before you ever see it.'**
+  String get groundedNote;
+
+  /// No description provided for @toParty.
+  ///
+  /// In en, this message translates to:
+  /// **'To {name}'**
+  String toParty(String name);
+
+  /// No description provided for @splitDoesNotAddUp.
+  ///
+  /// In en, this message translates to:
+  /// **'This split does not add up to the amount in dispute. Do not act on it; contact support.'**
+  String get splitDoesNotAddUp;
+
+  /// No description provided for @acceptThisResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept this resolution'**
+  String get acceptThisResolution;
+
+  /// No description provided for @refuseAndAskForHuman.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse and ask for a human'**
+  String get refuseAndAskForHuman;
+
+  /// No description provided for @youHaveAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'You have accepted. Nothing takes effect until the other party accepts as well.'**
+  String get youHaveAccepted;
+
+  /// No description provided for @proposalNotDecisionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a proposal, not a decision. It only takes effect if you both accept it, and refusing sends the case to a human reviewer at no cost to you.'**
+  String get proposalNotDecisionNote;
+
+  /// No description provided for @refuseThisProposal.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse this proposal?'**
+  String get refuseThisProposal;
+
+  /// No description provided for @refuseConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The case goes to a human reviewer, who will read the same claims and evidence and contact you both.\n\nOne refusal is enough: the other party does not have to agree.'**
+  String get refuseConfirmBody;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get goBack;
+
+  /// No description provided for @refuse.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse'**
+  String get refuse;
+
+  /// No description provided for @bothPartiesAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Both parties accepted. The dispute is closed.'**
+  String get bothPartiesAccepted;
+
+  /// No description provided for @whoHasAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Who has accepted'**
+  String get whoHasAccepted;
+
+  /// No description provided for @hasAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get hasAccepted;
+
+  /// No description provided for @notYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get notYet;
+
+  /// No description provided for @openADispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a dispute'**
+  String get openADispute;
+
+  /// No description provided for @yourResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Your response'**
+  String get yourResponse;
+
+  /// No description provided for @theContract.
+  ///
+  /// In en, this message translates to:
+  /// **'The contract'**
+  String get theContract;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @whatPartySays.
+  ///
+  /// In en, this message translates to:
+  /// **'What {name} says'**
+  String whatPartySays(String name);
+
+  /// No description provided for @yourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account'**
+  String get yourAccount;
+
+  /// No description provided for @claimHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Say what happened and how it differs from the terms above. Point at dates and deliverables rather than intentions: those are what can be checked against the evidence.'**
+  String get claimHint;
+
+  /// No description provided for @claimExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Only two of the three concepts were delivered, and the third is a colour variation of the second.'**
+  String get claimExample;
+
+  /// No description provided for @claimMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min} characters. A one-line claim gives the reviewer nothing to work with.'**
+  String claimMinimum(int min);
+
+  /// No description provided for @submitYourResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit your response'**
+  String get submitYourResponse;
+
+  /// No description provided for @openTheDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the dispute'**
+  String get openTheDispute;
+
+  /// No description provided for @disputeFlowNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Both accounts and all the evidence go to the same place. An AI agent reads them and proposes a resolution, which takes effect only if you both accept it. Either of you can refuse and ask for a person.'**
+  String get disputeFlowNote;
+
+  /// No description provided for @claimVisibilityNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What you write here is shown to the other party in full. It cannot be edited once submitted.'**
+  String get claimVisibilityNote;
+
+  /// No description provided for @theFile.
+  ///
+  /// In en, this message translates to:
+  /// **'The file'**
+  String get theFile;
+
+  /// No description provided for @chooseAFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a file'**
+  String get chooseAFile;
+
+  /// No description provided for @readingTheFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the file'**
+  String get readingTheFile;
+
+  /// No description provided for @fileTypesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF, image, document, text or zip'**
+  String get fileTypesShort;
+
+  /// No description provided for @fileTypesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'PDFs, images, documents, plain text and zip archives, up to 50 MB. The other party sees everything you file here.'**
+  String get fileTypesNote;
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptional;
+
+  /// No description provided for @noteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What this shows, and why it matters.'**
+  String get noteHint;
+
+  /// No description provided for @fileThisEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'File this evidence'**
+  String get fileThisEvidence;
+
+  /// No description provided for @evidencePermanentNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Once filed, a document cannot be edited or withdrawn. A fingerprint of it is recorded so either of you can prove, later, that it is the file that was submitted.'**
+  String get evidencePermanentNote;
+
+  /// No description provided for @change.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get change;
+
+  /// No description provided for @filed.
+  ///
+  /// In en, this message translates to:
+  /// **'Filed'**
+  String get filed;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @fingerprintRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint recorded by TrustIQ'**
+  String get fingerprintRecorded;
+
+  /// No description provided for @fingerprintNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This was calculated from the bytes that were stored, not from anything your device reported. That is what makes it worth something later.'**
+  String get fingerprintNote;
+
+  /// No description provided for @fileCouldNotBeRead.
+  ///
+  /// In en, this message translates to:
+  /// **'That file could not be read: {error}'**
+  String fileCouldNotBeRead(String error);
+
+  /// No description provided for @verifyYourIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your identity'**
+  String get verifyYourIdentity;
+
+  /// No description provided for @bindingBetweenVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'A contract only becomes binding between verified identities.'**
+  String get bindingBetweenVerified;
+
+  /// No description provided for @canDraftWithoutVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'You can draft a contract, send it, and file evidence without verifying. What you cannot do is accept one, because the other party has no way of knowing who agreed.'**
+  String get canDraftWithoutVerifying;
+
+  /// No description provided for @whatTrustIqKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'What TrustIQ keeps'**
+  String get whatTrustIqKeeps;
+
+  /// No description provided for @keepsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get keepsName;
+
+  /// No description provided for @keepsNameDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown to the other party on contracts you are on.'**
+  String get keepsNameDetail;
+
+  /// No description provided for @keepsReference.
+  ///
+  /// In en, this message translates to:
+  /// **'A reference from UAE Pass'**
+  String get keepsReference;
+
+  /// No description provided for @keepsReferenceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'An identifier that means nothing outside TrustIQ.'**
+  String get keepsReferenceDetail;
+
+  /// No description provided for @notKeptEmiratesId.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Emirates ID number'**
+  String get notKeptEmiratesId;
+
+  /// No description provided for @notKeptEmiratesIdDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Available to us during verification, and not stored. It identifies you across every system in the country, so keeping it would make this database worth attacking for reasons that have nothing to do with TrustIQ.'**
+  String get notKeptEmiratesIdDetail;
+
+  /// No description provided for @notKeptPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Your address, nationality and date of birth'**
+  String get notKeptPersonal;
+
+  /// No description provided for @notKeptPersonalDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Not requested and not stored.'**
+  String get notKeptPersonalDetail;
+
+  /// No description provided for @continueWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {provider}'**
+  String continueWith(String provider);
+
+  /// No description provided for @uaePassNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'UAE Pass is not connected in this build. TrustIQ has to be registered as a Service Provider first, which is a paperwork step, not a software one. Continuing here marks you verified locally so the rest of the app can be used; it checks nothing.'**
+  String get uaePassNotConnected;
+
+  /// No description provided for @uaePassHandoffNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You will be handed to UAE Pass to sign in. TrustIQ never sees your UAE Pass password.'**
+  String get uaePassHandoffNote;
+
+  /// No description provided for @cannotBeAcceptedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot be accepted yet'**
+  String get cannotBeAcceptedYet;
+
+  /// No description provided for @identityGateNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You have not verified your identity yet. A contract only becomes binding between verified identities.'**
+  String get identityGateNote;
+
+  /// No description provided for @verifyMyIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify my identity'**
+  String get verifyMyIdentity;
+
+  /// No description provided for @amountMustBePositive.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount must be more than zero.'**
+  String get amountMustBePositive;
+
+  /// No description provided for @amountTwoDecimals.
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.'**
+  String get amountTwoDecimals;
+
+  /// No description provided for @amountFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount in AED, like 500 or 1250.50.'**
+  String get amountFormat;
+
+  /// No description provided for @stepWhoWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Who this is with'**
+  String get stepWhoWith;
+
+  /// No description provided for @stepWhoWithBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'Both of you will see the same contract, and neither can change it once it is accepted.'**
+  String get stepWhoWithBlurb;
+
+  /// No description provided for @iAmPaying.
+  ///
+  /// In en, this message translates to:
+  /// **'I am paying'**
+  String get iAmPaying;
+
+  /// No description provided for @iAmDelivering.
+  ///
+  /// In en, this message translates to:
+  /// **'I am delivering'**
+  String get iAmDelivering;
+
+  /// No description provided for @emailOfDeliverer.
+  ///
+  /// In en, this message translates to:
+  /// **'Email of the person delivering'**
+  String get emailOfDeliverer;
+
+  /// No description provided for @emailOfPayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Email of the person paying'**
+  String get emailOfPayer;
+
+  /// No description provided for @counterpartyHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'They need a TrustIQ account already. Inviting someone who has none is not supported yet.'**
+  String get counterpartyHelper;
+
+  /// No description provided for @stepWhatAgreed.
+  ///
+  /// In en, this message translates to:
+  /// **'What was agreed'**
+  String get stepWhatAgreed;
+
+  /// No description provided for @stepWhatAgreedBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the text a dispute would be judged against, so be specific about what counts as delivered.'**
+  String get stepWhatAgreedBlurb;
+
+  /// No description provided for @whatIsBeingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'What is being done'**
+  String get whatIsBeingDone;
+
+  /// No description provided for @exampleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo design for a startup'**
+  String get exampleDescription;
+
+  /// No description provided for @exampleTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver three distinct concepts within seven days. Two rounds of revision. Final files as SVG and PNG.'**
+  String get exampleTerms;
+
+  /// No description provided for @stepHowMuch.
+  ///
+  /// In en, this message translates to:
+  /// **'How much'**
+  String get stepHowMuch;
+
+  /// No description provided for @stepHowMuchBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded to the fil. Nothing here rounds.'**
+  String get stepHowMuchBlurb;
+
+  /// No description provided for @recordedAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded as {amount}'**
+  String recordedAs(String amount);
+
+  /// No description provided for @noEscrowShort.
+  ///
+  /// In en, this message translates to:
+  /// **'TrustIQ does not take this money. It records what you agreed so there is something to point at later; you pay each other directly.'**
+  String get noEscrowShort;
+
+  /// No description provided for @createAsDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Create as a draft'**
+  String get createAsDraft;
+
+  /// No description provided for @draftNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A draft is yours alone until you send it. Once the other party accepts, neither of you can change the terms.'**
+  String get draftNote;
+
+  /// No description provided for @contractCouldNotBeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'The contract could not be created.'**
+  String get contractCouldNotBeCreated;
+
+  /// No description provided for @characterCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} characters'**
+  String characterCount(int count);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -92,6 +92,38 @@ void main() {
     }
   });
 
+  group('nothing is hardcoded on a screen', () {
+    // The drift guard for language, the same shape as the one for colour. An
+    // English string left in a screen renders as English inside an Arabic
+    // interface: no error, no test failure, just one line that did not switch.
+    final screens = Directory('lib/screens')
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'))
+        .toList();
+
+    test('there are screens to check', () => expect(screens.length, greaterThan(5)));
+
+    for (final file in screens) {
+      test('${file.uri.pathSegments.last} reads its text from the ARB', () {
+        final offenders = <String>[];
+        final lines = file.readAsLinesSync();
+        for (var i = 0; i < lines.length; i += 1) {
+          final line = lines[i];
+          final trimmed = line.trimLeft();
+          if (trimmed.startsWith('//') || trimmed.startsWith('///')) continue;
+          // A sentence, not an identifier: starts with a capital and runs on.
+          for (final m in RegExp(r"'([A-Z][^']{6,})'").allMatches(line)) {
+            final value = m.group(1)!;
+            if (value.startsWith('package') || value.startsWith('assets')) continue;
+            offenders.add('line ${i + 1}: $value');
+          }
+        }
+        expect(offenders, isEmpty, reason: 'move to the ARB: ${offenders.join(' | ')}');
+      });
+    }
+  });
+
   group('remembering the choice', () {
     test('an unset language follows the device', () {
       final controller = LanguageController.forTests();

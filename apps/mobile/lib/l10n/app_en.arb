@@ -1,14 +1,15 @@
 {
   "@@locale": "en",
-
   "appName": "TrustIQ",
-  "@appName": { "description": "The product name. Not translated: it is the brand." },
-
+  "@appName": {
+    "description": "The product name. Not translated: it is the brand."
+  },
   "language": "Language",
   "languageEnglish": "English",
   "languageArabic": "العربية",
-  "@languageArabic": { "description": "Each language names itself in its own script, so somebody who cannot read the current one can still find theirs." },
-
+  "@languageArabic": {
+    "description": "Each language names itself in its own script, so somebody who cannot read the current one can still find theirs."
+  },
   "stateDraft": "Draft",
   "stateAwaitingAcceptance": "Awaiting acceptance",
   "stateInProgress": "In progress",
@@ -19,8 +20,9 @@
   "stateDeclined": "Declined",
   "stateCancelled": "Cancelled",
   "stateExpired": "Expired",
-  "@stateDraft": { "description": "Contract states, in plain language. A party is never shown the wire value." },
-
+  "@stateDraft": {
+    "description": "Contract states, in plain language. A party is never shown the wire value."
+  },
   "eventSubmit": "Send to the other party",
   "eventWithdraw": "Withdraw",
   "eventAccept": "Accept the terms",
@@ -32,8 +34,9 @@
   "eventOpenDispute": "Open a dispute",
   "eventResolveDispute": "Resolve",
   "eventCancelByAgreement": "Cancel by agreement",
-  "@eventSubmit": { "description": "Button labels, phrased for the person pressing them rather than after the enum member." },
-
+  "@eventSubmit": {
+    "description": "Button labels, phrased for the person pressing them rather than after the enum member."
+  },
   "disputeOpen": "Open",
   "disputeBeingAnalysed": "Being analysed",
   "disputeProposalIssued": "Proposal issued",
@@ -42,16 +45,13 @@
   "disputeUnderHumanReview": "Under human review",
   "disputeDecidedByReviewer": "Decided by a reviewer",
   "disputeWithdrawn": "Withdrawn",
-
   "decisionReleaseToSeller": "Everything to the seller",
   "decisionRefundToBuyer": "Everything refunded to the buyer",
   "decisionSplit": "Split between both parties",
-
   "roleBuyer": "Buyer",
   "roleSeller": "Seller",
   "verified": "Verified",
   "unverified": "Unverified",
-
   "signInTitle": "Sign in",
   "signUpTitle": "Create your account",
   "resetTitle": "Reset your password",
@@ -74,14 +74,23 @@
   "backToSigningIn": "Back to signing in",
   "privacyNote": "Your contracts are visible to you and to the other party, and to nobody else. That is enforced by the database, not by this app.",
   "confirmEmailNotice": "Account created. Open the link we sent to {email}, then sign in.",
-  "@confirmEmailNotice": { "placeholders": { "email": { "type": "String" } } },
+  "@confirmEmailNotice": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "resetSentNotice": "If an account exists for {email}, a reset link is on its way.",
   "@resetSentNotice": {
     "description": "Says the same thing whether or not the address has an account. The other answer turns the form into a way to find out who is a user.",
-    "placeholders": { "email": { "type": "String" } }
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
   "couldNotSignIn": "Could not sign in.",
-
   "contracts": "Contracts",
   "waitingOnYou": "Waiting on you",
   "yourContracts": "Your contracts",
@@ -92,8 +101,206 @@
   "demoDataNote": "Demo data. Nothing on this screen is stored anywhere, and no contract here exists outside this app.",
   "noEscrowNote": "TrustIQ does not hold your money in v1. Payment happens directly between you and the other party; what is tracked here is the agreement, the delivery and the evidence.",
   "signOutOf": "Sign out of {backend}",
-  "@signOutOf": { "placeholders": { "backend": { "type": "String" } } },
+  "@signOutOf": {
+    "placeholders": {
+      "backend": {
+        "type": "String"
+      }
+    }
+  },
   "viewAsBuyer": "Buyer",
   "viewAsSeller": "Seller",
-  "demoRoleSwitchTooltip": "Demo only: switch which side of the contracts you are viewing"
+  "demoRoleSwitchTooltip": "Demo only: switch which side of the contracts you are viewing",
+  "you": "You",
+  "otherParty": "Other party",
+  "amountAgreed": "Amount agreed",
+  "youAreTheBuyer": "You are the buyer",
+  "youAreTheSeller": "You are the seller",
+  "agreedTerms": "Agreed terms",
+  "milestones": "Milestones",
+  "whatYouCanDo": "What you can do",
+  "history": "History",
+  "contractClosedNote": "This contract is closed. Its record stays available to both parties and cannot be edited by either of you.",
+  "nothingToDoNote": "Nothing for you to do right now. The next move belongs to {name}.",
+  "@nothingToDoNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movesRuleNote": "These are the only moves allowed from this state for your role. The same rule table runs on the server and in the database, so a move that is not offered here would be refused there too.",
+  "historyNote": "Every entry is written once and cannot be edited or removed, by either party or by TrustIQ.",
+  "proposalWaitingForYou": "A proposal is waiting for your answer",
+  "dispute": "Dispute",
+  "noDisputeOnContract": "No dispute on this contract.",
+  "status": "Status",
+  "inDispute": "In dispute",
+  "whatTheBuyerSays": "What the buyer says",
+  "whatTheSellerSays": "What the seller says",
+  "noAccountGivenYet": "No account given yet.",
+  "youShort": "YOU",
+  "evidenceCount": "Evidence ({count})",
+  "@evidenceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addEvidence": "Add evidence",
+  "yourTurn": "Your turn",
+  "yourTurnBlurb": "The other party has given their account. Nothing is analysed until you give yours, so the case is waiting on you.",
+  "giveYourAccount": "Give your account",
+  "bothAccountsIn": "Both accounts are in. The case goes to the resolution agent, which reads them against the evidence and proposes an outcome. You will be asked to accept or refuse it.",
+  "needsAPerson": "This case needs a person to look at it.",
+  "reviewerWillRead": "A reviewer will read the same claims and evidence you can see here, and will contact you both before deciding.",
+  "fingerprintsNote": "The fingerprint under each file is calculated by TrustIQ from the bytes it stored, not supplied by whoever uploaded it. Neither party can replace a file after filing it.",
+  "unreadableUnsupported": "The analysis cannot read this kind of file, so it will weigh the note above rather than the contents.",
+  "unreadableFailed": "This file should have been readable and was not. If its contents matter, file them as text as well.",
+  "filedBeforeExtraction": "Filed before documents were read.",
+  "decisionByReviewer": "Decision by a TrustIQ reviewer",
+  "proposedResolution": "Proposed resolution",
+  "confidencePercent": "{percent}% confidence",
+  "@confidencePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "whatThisIsBasedOn": "What this is based on",
+  "groundedNote": "Every statement above had to cite a document that was actually filed. A finding with nothing behind it is refused before you ever see it.",
+  "toParty": "To {name}",
+  "@toParty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitDoesNotAddUp": "This split does not add up to the amount in dispute. Do not act on it; contact support.",
+  "acceptThisResolution": "Accept this resolution",
+  "refuseAndAskForHuman": "Refuse and ask for a human",
+  "youHaveAccepted": "You have accepted. Nothing takes effect until the other party accepts as well.",
+  "proposalNotDecisionNote": "This is a proposal, not a decision. It only takes effect if you both accept it, and refusing sends the case to a human reviewer at no cost to you.",
+  "refuseThisProposal": "Refuse this proposal?",
+  "refuseConfirmBody": "The case goes to a human reviewer, who will read the same claims and evidence and contact you both.\n\nOne refusal is enough: the other party does not have to agree.",
+  "goBack": "Go back",
+  "refuse": "Refuse",
+  "bothPartiesAccepted": "Both parties accepted. The dispute is closed.",
+  "whoHasAccepted": "Who has accepted",
+  "hasAccepted": "Accepted",
+  "notYet": "Not yet",
+  "openADispute": "Open a dispute",
+  "yourResponse": "Your response",
+  "theContract": "The contract",
+  "amount": "Amount",
+  "whatPartySays": "What {name} says",
+  "@whatPartySays": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "yourAccount": "Your account",
+  "claimHint": "Say what happened and how it differs from the terms above. Point at dates and deliverables rather than intentions: those are what can be checked against the evidence.",
+  "claimExample": "Only two of the three concepts were delivered, and the third is a colour variation of the second.",
+  "claimMinimum": "At least {min} characters. A one-line claim gives the reviewer nothing to work with.",
+  "@claimMinimum": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "submitYourResponse": "Submit your response",
+  "openTheDispute": "Open the dispute",
+  "disputeFlowNote": "Both accounts and all the evidence go to the same place. An AI agent reads them and proposes a resolution, which takes effect only if you both accept it. Either of you can refuse and ask for a person.",
+  "claimVisibilityNote": "What you write here is shown to the other party in full. It cannot be edited once submitted.",
+  "theFile": "The file",
+  "chooseAFile": "Choose a file",
+  "readingTheFile": "Reading the file",
+  "fileTypesShort": "PDF, image, document, text or zip",
+  "fileTypesNote": "PDFs, images, documents, plain text and zip archives, up to 50 MB. The other party sees everything you file here.",
+  "noteOptional": "Note (optional)",
+  "noteHint": "What this shows, and why it matters.",
+  "fileThisEvidence": "File this evidence",
+  "evidencePermanentNote": "Once filed, a document cannot be edited or withdrawn. A fingerprint of it is recorded so either of you can prove, later, that it is the file that was submitted.",
+  "change": "Change",
+  "filed": "Filed",
+  "done": "Done",
+  "fingerprintRecorded": "Fingerprint recorded by TrustIQ",
+  "fingerprintNote": "This was calculated from the bytes that were stored, not from anything your device reported. That is what makes it worth something later.",
+  "fileCouldNotBeRead": "That file could not be read: {error}",
+  "@fileCouldNotBeRead": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyYourIdentity": "Verify your identity",
+  "bindingBetweenVerified": "A contract only becomes binding between verified identities.",
+  "canDraftWithoutVerifying": "You can draft a contract, send it, and file evidence without verifying. What you cannot do is accept one, because the other party has no way of knowing who agreed.",
+  "whatTrustIqKeeps": "What TrustIQ keeps",
+  "keepsName": "Your name",
+  "keepsNameDetail": "Shown to the other party on contracts you are on.",
+  "keepsReference": "A reference from UAE Pass",
+  "keepsReferenceDetail": "An identifier that means nothing outside TrustIQ.",
+  "notKeptEmiratesId": "Your Emirates ID number",
+  "notKeptEmiratesIdDetail": "Available to us during verification, and not stored. It identifies you across every system in the country, so keeping it would make this database worth attacking for reasons that have nothing to do with TrustIQ.",
+  "notKeptPersonal": "Your address, nationality and date of birth",
+  "notKeptPersonalDetail": "Not requested and not stored.",
+  "continueWith": "Continue with {provider}",
+  "@continueWith": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "uaePassNotConnected": "UAE Pass is not connected in this build. TrustIQ has to be registered as a Service Provider first, which is a paperwork step, not a software one. Continuing here marks you verified locally so the rest of the app can be used; it checks nothing.",
+  "uaePassHandoffNote": "You will be handed to UAE Pass to sign in. TrustIQ never sees your UAE Pass password.",
+  "cannotBeAcceptedYet": "Cannot be accepted yet",
+  "identityGateNote": "You have not verified your identity yet. A contract only becomes binding between verified identities.",
+  "verifyMyIdentity": "Verify my identity",
+  "amountMustBePositive": "The amount must be more than zero.",
+  "amountTwoDecimals": "Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.",
+  "amountFormat": "Enter an amount in AED, like 500 or 1250.50.",
+  "stepWhoWith": "Who this is with",
+  "stepWhoWithBlurb": "Both of you will see the same contract, and neither can change it once it is accepted.",
+  "iAmPaying": "I am paying",
+  "iAmDelivering": "I am delivering",
+  "emailOfDeliverer": "Email of the person delivering",
+  "emailOfPayer": "Email of the person paying",
+  "counterpartyHelper": "They need a TrustIQ account already. Inviting someone who has none is not supported yet.",
+  "stepWhatAgreed": "What was agreed",
+  "stepWhatAgreedBlurb": "This is the text a dispute would be judged against, so be specific about what counts as delivered.",
+  "whatIsBeingDone": "What is being done",
+  "exampleDescription": "Logo design for a startup",
+  "exampleTerms": "Deliver three distinct concepts within seven days. Two rounds of revision. Final files as SVG and PNG.",
+  "stepHowMuch": "How much",
+  "stepHowMuchBlurb": "Recorded to the fil. Nothing here rounds.",
+  "recordedAs": "Recorded as {amount}",
+  "@recordedAs": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "noEscrowShort": "TrustIQ does not take this money. It records what you agreed so there is something to point at later; you pay each other directly.",
+  "createAsDraft": "Create as a draft",
+  "draftNote": "A draft is yours alone until you send it. Once the other party accepts, neither of you can change the terms.",
+  "contractCouldNotBeCreated": "The contract could not be created.",
+  "characterCount": "{count} characters",
+  "@characterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

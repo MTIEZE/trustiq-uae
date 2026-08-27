@@ -100,7 +100,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'That file could not be read: $error';
+        _error = context.l.fileCouldNotBeRead('$error');
       });
     }
   }
@@ -142,7 +142,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Filed'),
+        title: Text(context.l.filed),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -154,7 +154,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                 style: Type.body,
               ),
               const SizedBox(height: Space.lg),
-              const SectionLabel('Fingerprint recorded by TrustIQ'),
+              SectionLabel(context.l.fingerprintRecorded),
               const SizedBox(height: 6),
               SelectableText(
                 item.sha256,
@@ -164,10 +164,8 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                 ),
               ),
               const SizedBox(height: Space.md),
-              const RuleNote(
-                'This was calculated from the bytes that were stored, not from '
-                'anything your device reported. That is what makes it worth '
-                'something later.',
+              RuleNote(
+                context.l.fingerprintNote,
                 icon: Icons.fingerprint,
               ),
               // Said here rather than left to be discovered later. If the
@@ -177,7 +175,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
               if (!item.extractionStatus.wasRead) ...[
                 const SizedBox(height: Space.md),
                 RuleNote(
-                  unreadableNote(item.extractionStatus),
+                  unreadableNote(item.extractionStatus, context.l),
                   icon: Icons.visibility_off_outlined,
                 ),
               ],
@@ -188,7 +186,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
           FilledButton(
             style: FilledButton.styleFrom(minimumSize: const Size(100, 44)),
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Done'),
+            child: Text(context.l.done),
           ),
         ],
       ),
@@ -198,13 +196,12 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
+    final l = context.l;
     final chosen = _chosen;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add evidence',
-        ),
+        title: Text(l.addEvidence),
       ),
       body: ListView(
         padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
@@ -213,7 +210,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('The file'),
+                SectionLabel(l.theFile),
                 const SizedBox(height: Space.md),
                 if (chosen == null)
                   // A target rather than a button. Choosing a file is the
@@ -239,12 +236,12 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                           ),
                           const SizedBox(height: Space.md),
                           Text(
-                            _busy ? 'Reading the file' : 'Choose a file',
+                            _busy ? l.readingTheFile : l.chooseAFile,
                             style: Type.bodyStrong.copyWith(color: c.accentStrong),
                           ),
                           const SizedBox(height: Space.xs),
                           Text(
-                            'PDF, image, document, text or zip',
+                            l.fileTypesShort,
                             style: Type.caption.copyWith(color: c.inkFaint),
                           ),
                         ],
@@ -258,9 +255,8 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                   _ErrorNote(_error!),
                 ],
                 const SizedBox(height: Space.lg),
-                const RuleNote(
-                  'PDFs, images, documents, plain text and zip archives, up to '
-                  '50 MB. The other party sees everything you file here.',
+                RuleNote(
+                  l.fileTypesNote,
                   icon: Icons.folder_outlined,
                 ),
               ],
@@ -271,15 +267,15 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('Note (optional)'),
+                SectionLabel(l.noteOptional),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _note,
                   maxLines: 3,
                   maxLength: 2000,
                   enabled: !_busy,
-                  decoration: const InputDecoration(
-                    hintText: 'What this shows, and why it matters.',
+                  decoration: InputDecoration(
+                    hintText: l.noteHint,
                     counterText: '',
                   ),
                   style: Type.body,
@@ -296,13 +292,11 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onAccent),
                   )
-                : const Text('File this evidence'),
+                : Text(l.fileThisEvidence),
           ),
           const SizedBox(height: Space.md),
-          const RuleNote(
-            'Once filed, a document cannot be edited or withdrawn. A fingerprint '
-            'of it is recorded so either of you can prove, later, that it is the '
-            'file that was submitted.',
+          RuleNote(
+            l.evidencePermanentNote,
             icon: Icons.lock_outline,
           ),
         ],
@@ -362,7 +356,7 @@ class _ChosenFile extends StatelessWidget {
             ],
           ),
         ),
-        TextButton(onPressed: onReplace, child: const Text('Change')),
+        TextButton(onPressed: onReplace, child: Text(context.l.change)),
       ],
     );
   }

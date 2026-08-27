@@ -250,4 +250,425 @@ class LAr extends L {
   @override
   String get demoRoleSwitchTooltip =>
       'للعرض التجريبي فقط: بدّل الطرف الذي تعرض العقود من جهته';
+
+  @override
+  String get you => 'أنت';
+
+  @override
+  String get otherParty => 'الطرف الآخر';
+
+  @override
+  String get amountAgreed => 'المبلغ المتفق عليه';
+
+  @override
+  String get youAreTheBuyer => 'أنت المشتري';
+
+  @override
+  String get youAreTheSeller => 'أنت البائع';
+
+  @override
+  String get agreedTerms => 'الشروط المتفق عليها';
+
+  @override
+  String get milestones => 'المراحل';
+
+  @override
+  String get whatYouCanDo => 'ما يمكنك فعله';
+
+  @override
+  String get history => 'السجل';
+
+  @override
+  String get contractClosedNote =>
+      'هذا العقد مغلق. يبقى سجله متاحاً للطرفين، ولا يستطيع أيٌّ منكما تعديله.';
+
+  @override
+  String nothingToDoNote(String name) {
+    return 'لا شيء عليك فعله الآن. الخطوة التالية على $name.';
+  }
+
+  @override
+  String get movesRuleNote =>
+      'هذه هي الإجراءات الوحيدة المسموح بها من هذه الحالة لدورك. جدول القواعد نفسه يعمل على الخادم وفي قاعدة البيانات، فأي إجراء لا يُعرض هنا سيُرفض هناك أيضاً.';
+
+  @override
+  String get historyNote =>
+      'كل سطر يُكتب مرة واحدة ولا يمكن تعديله أو حذفه، لا من أي طرف ولا من TrustIQ.';
+
+  @override
+  String get proposalWaitingForYou => 'هناك اقتراح ينتظر ردّك';
+
+  @override
+  String get dispute => 'النزاع';
+
+  @override
+  String get noDisputeOnContract => 'لا يوجد نزاع على هذا العقد.';
+
+  @override
+  String get status => 'الحالة';
+
+  @override
+  String get inDispute => 'محل النزاع';
+
+  @override
+  String get whatTheBuyerSays => 'ما يقوله المشتري';
+
+  @override
+  String get whatTheSellerSays => 'ما يقوله البائع';
+
+  @override
+  String get noAccountGivenYet => 'لم يُقدَّم أي بيان بعد.';
+
+  @override
+  String get youShort => 'أنت';
+
+  @override
+  String evidenceCount(int count) {
+    return 'الأدلة ($count)';
+  }
+
+  @override
+  String get addEvidence => 'إضافة دليل';
+
+  @override
+  String get yourTurn => 'دورك';
+
+  @override
+  String get yourTurnBlurb =>
+      'قدّم الطرف الآخر بيانه. لا يبدأ أي تحليل قبل أن تقدّم بيانك، فالقضية بانتظارك.';
+
+  @override
+  String get giveYourAccount => 'قدّم بيانك';
+
+  @override
+  String get bothAccountsIn =>
+      'وصل بيان الطرفين. تنتقل القضية إلى وكيل التسوية، الذي يقرأهما مقابل الأدلة ويقترح نتيجة. سيُطلب منك قبولها أو رفضها.';
+
+  @override
+  String get needsAPerson => 'هذه القضية تحتاج إلى شخص ينظر فيها.';
+
+  @override
+  String get reviewerWillRead =>
+      'سيقرأ المراجع البشري البيانات والأدلة نفسها التي تراها هنا، وسيتواصل معكما قبل البتّ.';
+
+  @override
+  String get fingerprintsNote =>
+      'البصمة أسفل كل ملف تحسبها TrustIQ من البايتات التي خزّنتها، لا يقدّمها من رفع الملف. ولا يستطيع أي طرف استبدال ملف بعد إيداعه.';
+
+  @override
+  String get unreadableUnsupported =>
+      'لا يستطيع التحليل قراءة هذا النوع من الملفات، لذا سيعتمد على الملاحظة أعلاه بدل المحتوى.';
+
+  @override
+  String get unreadableFailed =>
+      'كان يُفترض أن يكون هذا الملف قابلاً للقراءة ولم يكن. إن كان محتواه مهماً، أودعه كنص أيضاً.';
+
+  @override
+  String get filedBeforeExtraction => 'أُودع قبل أن تُقرأ المستندات.';
+
+  @override
+  String get decisionByReviewer => 'قرار من مراجع في TrustIQ';
+
+  @override
+  String get proposedResolution => 'التسوية المقترحة';
+
+  @override
+  String confidencePercent(int percent) {
+    return 'درجة ثقة $percent٪';
+  }
+
+  @override
+  String get whatThisIsBasedOn => 'على ماذا يستند هذا';
+
+  @override
+  String get groundedNote =>
+      'كل عبارة أعلاه كان عليها أن تستشهد بمستند أُودع فعلاً. أي استنتاج بلا سند يُرفض قبل أن تراه.';
+
+  @override
+  String toParty(String name) {
+    return 'إلى $name';
+  }
+
+  @override
+  String get splitDoesNotAddUp =>
+      'هذا التقسيم لا يساوي المبلغ محل النزاع. لا تتصرّف بناءً عليه؛ تواصل مع الدعم.';
+
+  @override
+  String get acceptThisResolution => 'قبول هذه التسوية';
+
+  @override
+  String get refuseAndAskForHuman => 'الرفض وطلب مراجع بشري';
+
+  @override
+  String get youHaveAccepted =>
+      'لقد قبلت. لا يسري شيء حتى يقبل الطرف الآخر أيضاً.';
+
+  @override
+  String get proposalNotDecisionNote =>
+      'هذا اقتراح وليس قراراً. لا يسري إلا إذا قبلتماه معاً، والرفض يحيل القضية إلى مراجع بشري دون أي تكلفة عليك.';
+
+  @override
+  String get refuseThisProposal => 'رفض هذا الاقتراح؟';
+
+  @override
+  String get refuseConfirmBody =>
+      'تنتقل القضية إلى مراجع بشري، سيقرأ البيانات والأدلة نفسها ويتواصل معكما.\n\nرفض واحد يكفي: لا يلزم أن يوافق الطرف الآخر.';
+
+  @override
+  String get goBack => 'رجوع';
+
+  @override
+  String get refuse => 'رفض';
+
+  @override
+  String get bothPartiesAccepted => 'قبل الطرفان. أُغلق النزاع.';
+
+  @override
+  String get whoHasAccepted => 'من قَبِل';
+
+  @override
+  String get hasAccepted => 'قَبِل';
+
+  @override
+  String get notYet => 'ليس بعد';
+
+  @override
+  String get openADispute => 'فتح نزاع';
+
+  @override
+  String get yourResponse => 'ردّك';
+
+  @override
+  String get theContract => 'العقد';
+
+  @override
+  String get amount => 'المبلغ';
+
+  @override
+  String whatPartySays(String name) {
+    return 'ما يقوله $name';
+  }
+
+  @override
+  String get yourAccount => 'بيانك';
+
+  @override
+  String get claimHint =>
+      'اذكر ما حدث وكيف يختلف عن الشروط أعلاه. أشِر إلى تواريخ ومخرجات محددة بدل النوايا: هذه هي ما يمكن التحقق منه مقابل الأدلة.';
+
+  @override
+  String get claimExample =>
+      'سُلّم مفهومان فقط من الثلاثة، والثالث تنويع لوني للثاني.';
+
+  @override
+  String claimMinimum(int min) {
+    return '$min حرفاً على الأقل. بيان من سطر واحد لا يترك للمراجع ما يعمل عليه.';
+  }
+
+  @override
+  String get submitYourResponse => 'إرسال ردّك';
+
+  @override
+  String get openTheDispute => 'فتح النزاع';
+
+  @override
+  String get disputeFlowNote =>
+      'يذهب بيان الطرفين وكل الأدلة إلى المكان نفسه. يقرأها وكيل ذكاء اصطناعي ويقترح تسوية، لا تسري إلا إذا قبلتماها معاً. ويستطيع أيٌّ منكما الرفض وطلب شخص.';
+
+  @override
+  String get claimVisibilityNote =>
+      'ما تكتبه هنا يُعرض على الطرف الآخر كاملاً. ولا يمكن تعديله بعد الإرسال.';
+
+  @override
+  String get theFile => 'الملف';
+
+  @override
+  String get chooseAFile => 'اختر ملفاً';
+
+  @override
+  String get readingTheFile => 'جارٍ قراءة الملف';
+
+  @override
+  String get fileTypesShort => 'PDF أو صورة أو مستند أو نص أو أرشيف مضغوط';
+
+  @override
+  String get fileTypesNote =>
+      'ملفات PDF والصور والمستندات والنص العادي والأرشيفات المضغوطة، حتى ٥٠ ميغابايت. يرى الطرف الآخر كل ما تودعه هنا.';
+
+  @override
+  String get noteOptional => 'ملاحظة (اختيارية)';
+
+  @override
+  String get noteHint => 'ما الذي يُظهره هذا، ولماذا يهم.';
+
+  @override
+  String get fileThisEvidence => 'إيداع هذا الدليل';
+
+  @override
+  String get evidencePermanentNote =>
+      'بعد الإيداع، لا يمكن تعديل المستند ولا سحبه. تُسجَّل بصمة له ليستطيع أيٌّ منكما أن يثبت لاحقاً أنه الملف الذي قُدّم.';
+
+  @override
+  String get change => 'تغيير';
+
+  @override
+  String get filed => 'تم الإيداع';
+
+  @override
+  String get done => 'تم';
+
+  @override
+  String get fingerprintRecorded => 'البصمة التي سجّلتها TrustIQ';
+
+  @override
+  String get fingerprintNote =>
+      'حُسبت من البايتات التي جرى تخزينها، لا مما أبلغ عنه جهازك. وهذا ما يجعلها ذات قيمة لاحقاً.';
+
+  @override
+  String fileCouldNotBeRead(String error) {
+    return 'تعذّرت قراءة هذا الملف: $error';
+  }
+
+  @override
+  String get verifyYourIdentity => 'وثّق هويتك';
+
+  @override
+  String get bindingBetweenVerified =>
+      'لا يصبح العقد ملزماً إلا بين هويتين موثّقتين.';
+
+  @override
+  String get canDraftWithoutVerifying =>
+      'يمكنك صياغة عقد وإرساله وإيداع الأدلة دون توثيق. ما لا يمكنك فعله هو قبول عقد، لأن الطرف الآخر لن يعرف من وافق.';
+
+  @override
+  String get whatTrustIqKeeps => 'ما تحتفظ به TrustIQ';
+
+  @override
+  String get keepsName => 'اسمك';
+
+  @override
+  String get keepsNameDetail =>
+      'يُعرض على الطرف الآخر في العقود التي تكون طرفاً فيها.';
+
+  @override
+  String get keepsReference => 'مُعرِّف من الهوية الرقمية';
+
+  @override
+  String get keepsReferenceDetail => 'مُعرِّف لا يعني شيئاً خارج TrustIQ.';
+
+  @override
+  String get notKeptEmiratesId => 'رقم هويتك الإماراتية';
+
+  @override
+  String get notKeptEmiratesIdDetail =>
+      'يكون متاحاً لنا أثناء التوثيق فقط ولا يُخزَّن. فهو يعرّفك في كل أنظمة الدولة، والاحتفاظ به يجعل قاعدة البيانات هذه هدفاً جديراً بالهجوم لأسباب لا علاقة لها بـ TrustIQ.';
+
+  @override
+  String get notKeptPersonal => 'عنوانك وجنسيتك وتاريخ ميلادك';
+
+  @override
+  String get notKeptPersonalDetail => 'لا تُطلب ولا تُخزَّن.';
+
+  @override
+  String continueWith(String provider) {
+    return 'المتابعة عبر $provider';
+  }
+
+  @override
+  String get uaePassNotConnected =>
+      'الهوية الرقمية غير موصولة في هذه النسخة. يجب أولاً تسجيل TrustIQ كمزوّد خدمة، وهي خطوة إدارية لا برمجية. المتابعة هنا تعلّمك كموثَّق محلياً فقط لتتمكن من استخدام بقية التطبيق؛ وهي لا تتحقق من شيء.';
+
+  @override
+  String get uaePassHandoffNote =>
+      'ستُحوَّل إلى الهوية الرقمية لتسجيل الدخول. ولا ترى TrustIQ كلمة مرورك هناك أبداً.';
+
+  @override
+  String get cannotBeAcceptedYet => 'لا يمكن قبوله بعد';
+
+  @override
+  String get identityGateNote =>
+      'لم توثّق هويتك بعد. ولا يصبح العقد ملزماً إلا بين هويتين موثّقتين.';
+
+  @override
+  String get verifyMyIdentity => 'توثيق هويتي';
+
+  @override
+  String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
+
+  @override
+  String get amountTwoDecimals =>
+      'المبالغ تُكتب بمنزلتين عشريتين. الدرهم الواحد ١٠٠ فلس، ولا يوجد أصغر من ذلك.';
+
+  @override
+  String get amountFormat => 'أدخل مبلغاً بالدرهم، مثل 500 أو 1250.50.';
+
+  @override
+  String get stepWhoWith => 'مع من هذا العقد';
+
+  @override
+  String get stepWhoWithBlurb =>
+      'سيرى كلاكما العقد نفسه، ولا يستطيع أيٌّ منكما تغييره بعد قبوله.';
+
+  @override
+  String get iAmPaying => 'أنا أدفع';
+
+  @override
+  String get iAmDelivering => 'أنا أسلّم';
+
+  @override
+  String get emailOfDeliverer => 'بريد الشخص الذي يسلّم';
+
+  @override
+  String get emailOfPayer => 'بريد الشخص الذي يدفع';
+
+  @override
+  String get counterpartyHelper =>
+      'يجب أن يكون لديه حساب في TrustIQ مسبقاً. دعوة شخص بلا حساب غير مدعومة بعد.';
+
+  @override
+  String get stepWhatAgreed => 'ما تم الاتفاق عليه';
+
+  @override
+  String get stepWhatAgreedBlurb =>
+      'هذا هو النص الذي سيُحكم عليه أي نزاع، فكن دقيقاً في تحديد ما يُعدّ تسليماً.';
+
+  @override
+  String get whatIsBeingDone => 'ما الذي سيُنجَز';
+
+  @override
+  String get exampleDescription => 'تصميم شعار لشركة ناشئة';
+
+  @override
+  String get exampleTerms =>
+      'تسليم ثلاثة مفاهيم مختلفة خلال سبعة أيام. جولتا تعديل. الملفات النهائية بصيغتي SVG و PNG.';
+
+  @override
+  String get stepHowMuch => 'بكم';
+
+  @override
+  String get stepHowMuchBlurb => 'يُسجَّل حتى الفلس. لا شيء هنا يُقرَّب.';
+
+  @override
+  String recordedAs(String amount) {
+    return 'سُجّل بـ $amount';
+  }
+
+  @override
+  String get noEscrowShort =>
+      'لا تأخذ TrustIQ هذا المال. هي تسجّل ما اتفقتما عليه ليكون هناك ما يُشار إليه لاحقاً؛ وتدفعان لبعضكما مباشرة.';
+
+  @override
+  String get createAsDraft => 'إنشاء كمسودة';
+
+  @override
+  String get draftNote =>
+      'المسودة لك وحدك حتى ترسلها. وبمجرد قبول الطرف الآخر، لا يستطيع أيٌّ منكما تغيير الشروط.';
+
+  @override
+  String get contractCouldNotBeCreated => 'تعذّر إنشاء العقد.';
+
+  @override
+  String characterCount(int count) {
+    return '$count حرفاً';
+  }
 }

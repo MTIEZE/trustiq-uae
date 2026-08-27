@@ -48,14 +48,13 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final c = context.c;
     final connected = widget.state.identityProviderConnected;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Verify your identity',
-        ),
+        title: Text(l.verifyYourIdentity),
       ),
       body: ListView(
         padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
@@ -64,15 +63,13 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'A contract only becomes binding between verified identities.',
+                Text(
+                  l.bindingBetweenVerified,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, height: 1.35),
                 ),
                 const SizedBox(height: Space.md),
                 Text(
-                  'You can draft a contract, send it, and file evidence without '
-                  'verifying. What you cannot do is accept one, because the other '
-                  'party has no way of knowing who agreed.',
+                  l.canDraftWithoutVerifying,
                   style: TextStyle(fontSize: 14, height: 1.55, color: c.inkSoft),
                 ),
               ],
@@ -83,34 +80,31 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('What TrustIQ keeps'),
+                SectionLabel(l.whatTrustIqKeeps),
                 const SizedBox(height: Space.md),
-                const _KeptRow(
+                _KeptRow(
                   kept: true,
-                  label: 'Your name',
-                  detail: 'Shown to the other party on contracts you are on.',
+                  label: l.keepsName,
+                  detail: l.keepsNameDetail,
                 ),
                 const SizedBox(height: Space.md),
-                const _KeptRow(
+                _KeptRow(
                   kept: true,
-                  label: 'A reference from UAE Pass',
-                  detail: 'An identifier that means nothing outside TrustIQ.',
+                  label: l.keepsReference,
+                  detail: l.keepsReferenceDetail,
                 ),
                 const SizedBox(height: Space.md),
-                const _KeptRow(
+                _KeptRow(
                   kept: false,
-                  label: 'Your Emirates ID number',
+                  label: l.notKeptEmiratesId,
                   detail:
-                      'Available to us during verification, and not stored. It '
-                      'identifies you across every system in the country, so '
-                      'keeping it would make this database worth attacking for '
-                      'reasons that have nothing to do with TrustIQ.',
+                      l.notKeptEmiratesIdDetail,
                 ),
                 const SizedBox(height: Space.md),
-                const _KeptRow(
+                _KeptRow(
                   kept: false,
-                  label: 'Your address, nationality and date of birth',
-                  detail: 'Not requested and not stored.',
+                  label: l.notKeptPersonal,
+                  detail: l.notKeptPersonalDetail,
                 ),
               ],
             ),
@@ -137,21 +131,17 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onAccent),
                   )
-                : Text('Continue with ${widget.state.identityProviderName}'),
+                : Text(l.continueWith(widget.state.identityProviderName)),
           ),
           const SizedBox(height: Space.md),
           if (!connected)
-            const RuleNote(
-              'UAE Pass is not connected in this build. TrustIQ has to be '
-              'registered as a Service Provider first, which is a paperwork step, '
-              'not a software one. Continuing here marks you verified locally so '
-              'the rest of the app can be used; it checks nothing.',
+            RuleNote(
+              l.uaePassNotConnected,
               icon: Icons.construction_outlined,
             )
           else
-            const RuleNote(
-              'You will be handed to UAE Pass to sign in. TrustIQ never sees your '
-              'UAE Pass password.',
+            RuleNote(
+              l.uaePassHandoffNote,
               icon: Icons.lock_outline,
             ),
         ],
@@ -246,7 +236,7 @@ class IdentityGateNotice extends StatelessWidget {
               children: [
                 Icon(Icons.gpp_maybe_outlined, size: IconSize.md, color: c.caution),
                 const SizedBox(width: 8),
-                const SectionLabel('Cannot be accepted yet'),
+                SectionLabel(context.l.cannotBeAcceptedYet),
               ],
             ),
             const SizedBox(height: Space.md),
@@ -255,8 +245,7 @@ class IdentityGateNotice extends StatelessWidget {
                   ? '$counterpartyName has not verified their identity yet. A '
                       'contract only becomes binding between verified identities, '
                       'so nothing can be accepted until they do.'
-                  : 'You have not verified your identity yet. A contract only '
-                      'becomes binding between verified identities.',
+                  : context.l.identityGateNote,
               style: const TextStyle(fontSize: 14, height: 1.55),
             ),
             if (!youAreVerified) ...[
@@ -267,7 +256,7 @@ class IdentityGateNotice extends StatelessWidget {
                     builder: (_) => VerifyIdentityScreen(state: state),
                   ),
                 ),
-                child: const Text('Verify my identity'),
+                child: Text(context.l.verifyMyIdentity),
               ),
             ],
           ],

@@ -1,7 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:trustiq_app/data/config.dart';
+import 'package:trustiq_app/data/language.dart';
+import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/data/rows.dart';
 import 'package:trustiq_app/screens/dispute_screen.dart' show unreadableNote;
@@ -178,13 +181,31 @@ void main() {
           throwsA(isA<RowMappingException>()));
     });
 
-    test('tells a person something they can act on only when there is something', () {
+    testWidgets('tells a person something they can act on only when there is something',
+        (tester) async {
       // An image having no text is not the reader's problem. A file that
-      // should have been readable is, and only they can fix it.
-      expect(unreadableNote(ExtractionStatus.failed), contains('file them as text'));
-      expect(unreadableNote(ExtractionStatus.unsupported), contains('cannot read this kind of file'));
-      expect(unreadableNote(ExtractionStatus.unsupported),
-          isNot(contains('file them as text')));
+      // should have been readable is, and only they can fix it. Checked in
+      // both languages, because a translation that flattens the two would
+      // undo the distinction without failing anything else.
+      for (final locale in LanguageController.supported) {
+        late L l;
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: L.localizationsDelegates,
+            supportedLocales: L.supportedLocales,
+            locale: locale,
+            home: Builder(builder: (context) {
+              l = L.of(context);
+              return const SizedBox();
+            }),
+          ),
+        );
+        final failed = unreadableNote(ExtractionStatus.failed, l);
+        final unsupported = unreadableNote(ExtractionStatus.unsupported, l);
+        expect(failed.trim(), isNotEmpty, reason: locale.languageCode);
+        expect(unsupported.trim(), isNotEmpty, reason: locale.languageCode);
+        expect(failed, isNot(unsupported), reason: locale.languageCode);
+      }
     });
   });
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
+import '../l10n/app_localizations.dart';
+
 import '../app_state.dart';
 import '../data/demo_data.dart';
 import '../theme.dart';
@@ -22,15 +24,14 @@ class DisputeScreen extends StatelessWidget {
       builder: (context, _) {
         final contract = state.contractById(contractId);
         final dispute = contract.dispute;
+        final l = context.l;
         if (dispute == null) {
-          return const Scaffold(body: Center(child: Text('No dispute on this contract.')));
+          return Scaffold(body: Center(child: Text(context.l.noDisputeOnContract)));
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
-              'Dispute',
-            ),
+            title: Text(l.dispute),
           ),
           body: ListView(
             padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 32),
@@ -46,7 +47,7 @@ class DisputeScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SectionLabel('Status'),
+                          SectionLabel(l.status),
                           const SizedBox(height: Space.sm),
                           Row(
                             children: [
@@ -74,7 +75,7 @@ class DisputeScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const SectionLabel('In dispute'),
+                        SectionLabel(l.inDispute),
                         const SizedBox(height: Space.xs),
                         MoneyText(
                           contract.totalAmount,
@@ -88,14 +89,14 @@ class DisputeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ClaimCard(
-                label: 'What the buyer says',
+                label: l.whatTheBuyerSays,
                 who: contract.buyer.name,
                 claim: dispute.buyerClaim,
                 isYou: state.roleOn(contract) == Role.buyer,
               ),
               const SizedBox(height: 12),
               _ClaimCard(
-                label: 'What the seller says',
+                label: l.whatTheSellerSays,
                 who: contract.seller.name,
                 claim: dispute.sellerClaim,
                 isYou: state.roleOn(contract) == Role.seller,
@@ -114,7 +115,7 @@ class DisputeScreen extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.add, size: IconSize.md),
-                  label: const Text('Add evidence'),
+                  label: Text(l.addEvidence),
                 ),
               ],
               if (_awaitingYourAccount(dispute, state.roleOn(contract))) ...[
@@ -123,12 +124,10 @@ class DisputeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabel('Your turn'),
+                      SectionLabel(l.yourTurn),
                       const SizedBox(height: 8),
-                      const Text(
-                        'The other party has given their account. Nothing is '
-                        'analysed until you give yours, so the case is waiting '
-                        'on you.',
+                      Text(
+                        l.yourTurnBlurb,
                         style: TextStyle(fontSize: 14, height: 1.5),
                       ),
                       const SizedBox(height: 14),
@@ -142,17 +141,15 @@ class DisputeScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        child: const Text('Give your account'),
+                        child: Text(l.giveYourAccount),
                       ),
                     ],
                   ),
                 ),
               ] else if (dispute.state == DisputeState.open) ...[
                 const SizedBox(height: 12),
-                const RuleNote(
-                  'Both accounts are in. The case goes to the resolution agent, '
-                  'which reads them against the evidence and proposes an outcome. '
-                  'You will be asked to accept or refuse it.',
+                RuleNote(
+                  l.bothAccountsIn,
                   icon: Icons.schedule_outlined,
                 ),
               ],
@@ -172,17 +169,16 @@ class DisputeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabel('With a human reviewer'),
+                      SectionLabel(l.disputeEscalated),
                       const SizedBox(height: 8),
                       Text(
                         dispute.escalationReason ??
-                            'This case needs a person to look at it.',
+                            l.needsAPerson,
                         style: const TextStyle(fontSize: 14, height: 1.5),
                       ),
                       const SizedBox(height: 12),
-                      const RuleNote(
-                        'A reviewer will read the same claims and evidence you can '
-                        'see here, and will contact you both before deciding.',
+                      RuleNote(
+                        l.reviewerWillRead,
                         icon: Icons.support_agent_outlined,
                       ),
                     ],
@@ -251,7 +247,7 @@ class _ClaimCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(Radii.sm - 2),
                   ),
                   child: Text(
-                    'YOU',
+                    context.l.youShort,
                     style: Type.label.copyWith(fontSize: 9.5, color: c.accentStrong),
                   ),
                 ),
@@ -262,7 +258,7 @@ class _ClaimCard extends StatelessWidget {
           // so it is set at reading size with reading leading, not at the size
           // of a caption.
           Text(
-            answered ? claim! : 'No account given yet.',
+            answered ? claim! : context.l.noAccountGivenYet,
             style: answered
                 ? Type.body.copyWith(fontSize: 15)
                 : Type.body.copyWith(
@@ -301,7 +297,7 @@ class _EvidenceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionLabel('Evidence (${evidence.length})'),
+          SectionLabel(context.l.evidenceCount(evidence.length)),
           const SizedBox(height: 12),
           for (var i = 0; i < evidence.length; i++) ...[
             _EvidenceRow(item: evidence[i]),
@@ -312,10 +308,8 @@ class _EvidenceCard extends StatelessWidget {
             ],
           ],
           const SizedBox(height: 12),
-          const RuleNote(
-            'The fingerprint under each file is calculated by TrustIQ from the '
-            'bytes it stored, not supplied by whoever uploaded it. Neither party '
-            'can replace a file after filing it.',
+          RuleNote(
+            context.l.fingerprintsNote,
             icon: Icons.fingerprint,
           ),
         ],
@@ -388,7 +382,7 @@ class _EvidenceRow extends StatelessWidget {
                 const SizedBox(width: Space.inline),
                 Expanded(
                   child: Text(
-                    unreadableNote(item.extractionStatus),
+                    unreadableNote(item.extractionStatus, context.l),
                     style: TextStyle(
                       fontSize: 11.5,
                       color: c.inkFaint,
@@ -411,14 +405,10 @@ class _EvidenceRow extends StatelessWidget {
 /// unhelpful in the one case where the person can act. An image is expected to
 /// have no text; a file that failed is a problem they can solve by filing a
 /// readable version.
-String unreadableNote(ExtractionStatus status) => switch (status) {
-      ExtractionStatus.unsupported =>
-        'The analysis cannot read this kind of file, so it will weigh the note '
-            'above rather than the contents.',
-      ExtractionStatus.failed =>
-        'This file should have been readable and was not. If its contents '
-            'matter, file them as text as well.',
-      ExtractionStatus.notAttempted => 'Filed before documents were read.',
+String unreadableNote(ExtractionStatus status, L l) => switch (status) {
+      ExtractionStatus.unsupported => l.unreadableUnsupported,
+      ExtractionStatus.failed => l.unreadableFailed,
+      ExtractionStatus.notAttempted => l.filedBeforeExtraction,
       _ => '',
     };
 
@@ -472,12 +462,12 @@ class _ProposalCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: SectionLabel(
-                    byHuman ? 'Decision by a TrustIQ reviewer' : 'Proposed resolution',
+                    byHuman ? context.l.decisionByReviewer : context.l.proposedResolution,
                   ),
                 ),
                 if (proposal.confidence != null)
                   Text(
-                    '${(proposal.confidence! * 100).round()}% confidence',
+                    context.l.confidencePercent((proposal.confidence! * 100).round()),
                     style: TextStyle(
                       fontSize: 11.5,
                       color: c.inkFaint,
@@ -501,7 +491,7 @@ class _ProposalCard extends StatelessWidget {
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 12),
-            const SectionLabel('What this is based on'),
+            SectionLabel(context.l.whatThisIsBasedOn),
             const SizedBox(height: 10),
             for (final finding in proposal.findings)
               Padding(
@@ -539,10 +529,8 @@ class _ProposalCard extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 6),
-            const RuleNote(
-              'Every statement above had to cite a document that was actually '
-              'filed. A finding with nothing behind it is refused before you ever '
-              'see it.',
+            RuleNote(
+              context.l.groundedNote,
               icon: Icons.verified_outlined,
             ),
             const SizedBox(height: 16),
@@ -557,15 +545,14 @@ class _ProposalCard extends StatelessWidget {
             if (!closed) ...[
               const SizedBox(height: 14),
               if (youAccepted)
-                const RuleNote(
-                  'You have accepted. Nothing takes effect until the other party '
-                  'accepts as well.',
+                RuleNote(
+                  context.l.youHaveAccepted,
                   icon: Icons.hourglass_bottom,
                 )
               else ...[
                 FilledButton(
                   onPressed: () => state.acceptProposal(contract.id),
-                  child: const Text('Accept this resolution'),
+                  child: Text(context.l.acceptThisResolution),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton(
@@ -574,13 +561,11 @@ class _ProposalCard extends StatelessWidget {
                     side: BorderSide(color: c.critical),
                   ),
                   onPressed: () => _confirmReject(context),
-                  child: const Text('Refuse and ask for a human'),
+                  child: Text(context.l.refuseAndAskForHuman),
                 ),
                 const SizedBox(height: 12),
-                const RuleNote(
-                  'This is a proposal, not a decision. It only takes effect if you '
-                  'both accept it, and refusing sends the case to a human reviewer '
-                  'at no cost to you.',
+                RuleNote(
+                  context.l.proposalNotDecisionNote,
                   icon: Icons.balance_outlined,
                 ),
               ],
@@ -601,16 +586,14 @@ class _ProposalCard extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Refuse this proposal?'),
-        content: const Text(
-          'The case goes to a human reviewer, who will read the same claims and '
-          'evidence and contact you both.\n\n'
-          'One refusal is enough: the other party does not have to agree.',
+        title: Text(dialogContext.l.refuseThisProposal),
+        content: Text(
+          dialogContext.l.refuseConfirmBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Go back'),
+            child: Text(dialogContext.l.goBack),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -621,7 +604,7 @@ class _ProposalCard extends StatelessWidget {
               Navigator.of(dialogContext).pop();
               state.rejectProposal(contract.id);
             },
-            child: const Text('Refuse'),
+            child: Text(dialogContext.l.refuse),
           ),
         ],
       ),
@@ -683,14 +666,14 @@ class _AllocationBar extends StatelessWidget {
             Expanded(
               child: _AllocationLeg(
                 colour: c.accent,
-                label: 'To ${contract.seller.name}',
+                label: context.l.toParty(contract.seller.name),
                 amount: proposal.sellerAmount,
               ),
             ),
             Expanded(
               child: _AllocationLeg(
                 colour: c.caution,
-                label: 'To ${contract.buyer.name}',
+                label: context.l.toParty(contract.buyer.name),
                 amount: proposal.buyerAmount,
                 alignEnd: true,
               ),
@@ -703,8 +686,7 @@ class _AllocationBar extends StatelessWidget {
           // not sum to the disputed amount. Shown rather than hidden, because a
           // silent mismatch on someone's money is worse than an ugly warning.
           Text(
-            'This split does not add up to the amount in dispute. '
-            'Do not act on it; contact support.',
+            context.l.splitDoesNotAddUp,
             style: TextStyle(fontSize: 12, color: c.critical),
           ),
         ],
@@ -776,7 +758,7 @@ class _AcceptanceState extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Both parties accepted. The dispute is closed.',
+              context.l.bothPartiesAccepted,
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
@@ -791,7 +773,7 @@ class _AcceptanceState extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionLabel('Who has accepted'),
+        SectionLabel(context.l.whoHasAccepted),
         const SizedBox(height: 10),
         _AcceptanceRow(name: 'You', accepted: youAccepted),
         const SizedBox(height: 8),
@@ -819,7 +801,7 @@ class _AcceptanceRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(child: Text(name, style: const TextStyle(fontSize: 13.5))),
         Text(
-          accepted ? 'Accepted' : 'Not yet',
+          accepted ? context.l.hasAccepted : context.l.notYet,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

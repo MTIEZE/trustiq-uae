@@ -52,12 +52,13 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
   Widget build(BuildContext context) {
     final c = context.c;
     final contract = widget.state.contractById(widget.contractId);
+    final l = context.l;
     final other = contract.counterpartyFor(widget.state.roleOn(contract));
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.answering ? 'Your response' : 'Open a dispute',
+          widget.answering ? l.yourResponse : l.openADispute,
         ),
       ),
       body: ListView(
@@ -67,7 +68,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('The contract'),
+                SectionLabel(l.theContract),
                 const SizedBox(height: 8),
                 Text(
                   contract.description,
@@ -85,7 +86,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                 const SizedBox(height: Space.md),
                 Row(
                   children: [
-                    const Expanded(child: SectionLabel('Amount')),
+                    Expanded(child: SectionLabel(l.amount)),
                     MoneyText(
                       contract.totalAmount,
                       style: const TextStyle(fontSize: 15),
@@ -102,7 +103,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SectionLabel('What ${other.name} says'),
+                  SectionLabel(l.whatPartySays(other.name)),
                   const SizedBox(height: 8),
                   Text(
                     widget.state.roleOn(contract) == Role.buyer
@@ -119,27 +120,17 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionLabel('Your account'),
+                SectionLabel(l.yourAccount),
                 const SizedBox(height: 8),
-                Text(
-                  'Say what happened and how it differs from the terms above. '
-                  'Point at dates and deliverables rather than intentions: those '
-                  'are what can be checked against the evidence.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.5,
-                    color: c.inkSoft,
-                  ),
-                ),
+                Text(l.claimHint, style: Type.small.copyWith(color: c.inkSoft)),
                 const SizedBox(height: Space.md),
                 TextField(
                   controller: _claim,
                   maxLines: 8,
                   maxLength: 5000,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText:
-                        'Only two of the three concepts were delivered, and the '
-                        'third is a colour variation of the second.',
+                        l.claimExample,
                     counterText: '',
                   ),
                   style: Type.body.copyWith(fontSize: 15),
@@ -147,9 +138,8 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _canSubmit
-                      ? '$_length characters'
-                      : 'At least $_minimumClaim characters. A one-line claim gives '
-                          'the reviewer nothing to work with.',
+                      ? l.characterCount(_length)
+                      : l.claimMinimum(_minimumClaim),
                   style: TextStyle(
                     fontSize: 12,
                     color: _canSubmit ? c.inkFaint : c.caution,
@@ -165,19 +155,16 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                   widget.answering ? c.accent : c.critical,
             ),
             onPressed: _canSubmit ? _submit : null,
-            child: Text(widget.answering ? 'Submit your response' : 'Open the dispute'),
+            child: Text(widget.answering ? l.submitYourResponse : l.openTheDispute),
           ),
           const SizedBox(height: Space.md),
-          const RuleNote(
-            'Both accounts and all the evidence go to the same place. An AI agent '
-            'reads them and proposes a resolution, which takes effect only if you '
-            'both accept it. Either of you can refuse and ask for a person.',
+          RuleNote(
+            l.disputeFlowNote,
             icon: Icons.balance_outlined,
           ),
           const SizedBox(height: Space.md),
-          const RuleNote(
-            'What you write here is shown to the other party in full. It cannot '
-            'be edited once submitted.',
+          RuleNote(
+            l.claimVisibilityNote,
             icon: Icons.visibility_outlined,
           ),
         ],

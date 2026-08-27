@@ -26,6 +26,7 @@ class ContractDetailScreen extends StatelessWidget {
       listenable: state,
       builder: (context, _) {
         final contract = state.contractById(contractId);
+        final l = context.l;
         final me = contract.partyFor(state.roleOn(contract));
         final other = contract.counterpartyFor(state.roleOn(contract));
         final actions = state.actionsFor(contract);
@@ -69,7 +70,7 @@ class ContractDetailScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SectionLabel('Amount agreed'),
+                              SectionLabel(l.amountAgreed),
                               const SizedBox(height: Space.xs),
                               MoneyText(
                                 contract.totalAmount,
@@ -93,8 +94,8 @@ class ContractDetailScreen extends StatelessWidget {
                           ),
                           child: Text(
                             state.roleOn(contract) == Role.buyer
-                                ? 'You are the buyer'
-                                : 'You are the seller',
+                                ? l.youAreTheBuyer
+                                : l.youAreTheSeller,
                             style: Type.caption.copyWith(color: c.inkSoft),
                           ),
                         ),
@@ -103,9 +104,9 @@ class ContractDetailScreen extends StatelessWidget {
                     const SizedBox(height: Space.xl),
                     const Divider(),
                     const SizedBox(height: Space.lg),
-                    _PartyRow(label: 'You', party: me),
+                    _PartyRow(label: l.you, party: me),
                     const SizedBox(height: Space.md),
-                    _PartyRow(label: 'Other party', party: other),
+                    _PartyRow(label: l.otherParty, party: other),
                   ],
                 ),
               ),
@@ -114,7 +115,7 @@ class ContractDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionLabel('Agreed terms'),
+                    SectionLabel(l.agreedTerms),
                     const SizedBox(height: 8),
                     Text(
                       contract.terms,
@@ -124,7 +125,7 @@ class ContractDetailScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       const Divider(),
                       const SizedBox(height: 12),
-                      const SectionLabel('Milestones'),
+                      SectionLabel(l.milestones),
                       const SizedBox(height: 8),
                       for (final m in contract.milestones)
                         Padding(
@@ -171,14 +172,12 @@ class ContractDetailScreen extends StatelessWidget {
               if (offerable.isEmpty && blocked.isEmpty)
                 RuleNote(
                   contract.state.isTerminal
-                      ? 'This contract is closed. Its record stays available to both '
-                          'parties and cannot be edited by either of you.'
-                      : 'Nothing for you to do right now. The next move belongs to '
-                          '${other.name}.',
+                      ? l.contractClosedNote
+                      : l.nothingToDoNote(other.name),
                   icon: contract.state.isTerminal ? Icons.lock_outline : Icons.hourglass_empty,
                 )
               else if (offerable.isNotEmpty) ...[
-                const SectionLabel('What you can do'),
+                SectionLabel(l.whatYouCanDo),
                 const SizedBox(height: 10),
                 for (final event in offerable) ...[
                   _ActionButton(
@@ -188,12 +187,7 @@ class ContractDetailScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                 ],
                 const SizedBox(height: 4),
-                const RuleNote(
-                  'These are the only moves allowed from this state for your role. '
-                  'The same rule table runs on the server and in the database, so a '
-                  'move that is not offered here would be refused there too.',
-                  icon: Icons.rule_outlined,
-                ),
+                RuleNote(l.movesRuleNote, icon: Icons.rule_outlined),
               ],
             ],
           ),
@@ -292,7 +286,7 @@ class _PartyRow extends StatelessWidget {
               ),
               const SizedBox(width: Space.inline),
               Text(
-                verified ? 'Verified' : 'Unverified',
+                verified ? context.l.verified : context.l.unverified,
                 style: Type.caption.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -343,7 +337,7 @@ class _DisputeBanner extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionLabel('Dispute'),
+                    SectionLabel(context.l.dispute),
                     const SizedBox(height: 6),
                     Text(
                       disputeStateLabel(dispute.state, context.l),
@@ -352,7 +346,7 @@ class _DisputeBanner extends StatelessWidget {
                     if (awaitingYou) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'A proposal is waiting for your answer',
+                        context.l.proposalWaitingForYou,
                         style: TextStyle(fontSize: 12.5, color: c.accent),
                       ),
                     ],
@@ -378,7 +372,7 @@ class _Timeline extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionLabel('History'),
+          SectionLabel(context.l.history),
           const SizedBox(height: 12),
           for (var i = 0; i < contract.timeline.length; i++)
             _TimelineRow(
@@ -386,11 +380,7 @@ class _Timeline extends StatelessWidget {
               isLast: i == contract.timeline.length - 1,
             ),
           const SizedBox(height: 4),
-          const RuleNote(
-            'Every entry is written once and cannot be edited or removed, by '
-            'either party or by TrustIQ.',
-            icon: Icons.history_toggle_off,
-          ),
+          RuleNote(context.l.historyNote, icon: Icons.history_toggle_off),
         ],
       ),
     );
