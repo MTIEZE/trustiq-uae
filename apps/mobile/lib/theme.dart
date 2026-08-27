@@ -244,6 +244,16 @@ abstract final class Radii {
   static const pill = 999.0;
 }
 
+/// The typeface.
+///
+/// IBM Plex Sans, bundled in assets rather than fetched at runtime. Two
+/// reasons, and neither is taste. A font downloaded on first launch means a
+/// flash of a different face and a request to a third party, which is a poor
+/// look for a product whose pitch is that it does not leak anything. And IBM
+/// Plex Sans Arabic exists and is drawn as its companion, so the day TrustIQ
+/// ships in Arabic the typography extends instead of being redone.
+const kFontFamily = 'IBMPlexSans';
+
 /// The type scale.
 ///
 /// Tracking tightens as size grows and opens up as it shrinks, which is what
@@ -267,8 +277,9 @@ abstract final class Type {
     height: 1.2,
   );
 
-  /// Money and fingerprints. Tabular so digits line up down a column, and a
-  /// fingerprint has to be comparable character by character.
+  /// Fingerprints. The platform monospace rather than a second bundled family:
+  /// a hash has to be comparable character by character, and any monospace
+  /// does that for 200 KB less.
   static const mono = TextStyle(
     fontFamily: 'monospace',
     fontSize: 11,
@@ -298,6 +309,9 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
+    // Set once, here. Every text style in the app inherits it, so there is no
+    // second place where a family could be forgotten.
+    fontFamily: kFontFamily,
     colorScheme: ColorScheme.fromSeed(
       seedColor: c.accent,
       brightness: brightness,

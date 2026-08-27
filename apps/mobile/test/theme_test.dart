@@ -143,6 +143,54 @@ void main() {
     });
   });
 
+  group('the typeface', () {
+    for (final palette in [TrustIqPalette.light, TrustIqPalette.dark]) {
+      final side = palette.isDark ? 'dark' : 'light';
+
+      test('$side: every text style in the theme carries the bundled family', () {
+        // Set in one place so there is no second place to forget it. A screen
+        // that quietly falls back to the platform font is the kind of thing
+        // nobody notices until a screenshot goes out.
+        final theme = buildTheme(palette);
+        expect(theme.textTheme.bodyMedium?.fontFamily, kFontFamily, reason: side);
+        expect(theme.textTheme.titleLarge?.fontFamily, kFontFamily, reason: side);
+        expect(theme.textTheme.labelSmall?.fontFamily, kFontFamily, reason: side);
+      });
+    }
+
+    testWidgets('a widget under the app inherits it', (tester) async {
+      late TextStyle style;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildTheme(TrustIqPalette.light),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                style = DefaultTextStyle.of(context).style;
+                return const Text('x');
+              },
+            ),
+          ),
+        ),
+      );
+      expect(style.fontFamily, kFontFamily);
+    });
+
+    test('amounts are set with tabular figures', () {
+      // Digits that do not line up down a column make a list of amounts hard
+      // to compare, which is most of what these screens are for.
+      for (final style in [Type.amount, Type.amountLarge]) {
+        expect(style.fontFeatures, contains(const FontFeature.tabularFigures()));
+      }
+    });
+
+    test('a fingerprint stays monospace', () {
+      // It has to be comparable character by character, which a proportional
+      // face makes needlessly hard.
+      expect(Type.mono.fontFamily, 'monospace');
+    });
+  });
+
   group('state styles', () {
     test('every transaction state has a label and a readable pair', () {
       for (final c in palettes.values) {
