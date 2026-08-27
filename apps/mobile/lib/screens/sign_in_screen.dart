@@ -121,7 +121,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final error = widget.state.error;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: TrustIqColors.critical),
+        SnackBar(content: Text(error), backgroundColor: context.c.critical),
       );
     }
   }
@@ -146,15 +146,16 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Scaffold(
       // A quiet wash behind the card rather than flat grey. It gives the form
       // somewhere to sit on a wide screen, where a bare column just floats.
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [TrustIqColors.accentGlow, TrustIqColors.ground],
+            colors: [c.accentGlow, c.ground],
             stops: [0, 0.55],
           ),
         ),
@@ -174,7 +175,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       subtitle: 'The record two people can both rely on.',
                     ),
                     const SizedBox(height: Space.xxl),
-                    _card(),
+                    _card(context),
                     const SizedBox(height: Space.xl),
                     const RuleNote(
                       'Your contracts are visible to you and to the other party, '
@@ -186,7 +187,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     Text(
                       widget.state.backendLabel,
                       textAlign: TextAlign.center,
-                      style: Type.caption.copyWith(color: TrustIqColors.inkFaint),
+                      style: Type.caption.copyWith(color: c.inkFaint),
                     ),
                   ],
                 ),
@@ -198,17 +199,18 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Widget _card() {
+  Widget _card(BuildContext context) {
+    final c = context.c;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.lg),
-        boxShadow: kSoftLift,
+        boxShadow: c.lift,
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: TrustIqColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(Radii.lg),
-          border: Border.all(color: TrustIqColors.rule),
+          border: Border.all(color: c.rule),
         ),
         padding: const EdgeInsets.all(Space.xl),
         child: Column(
@@ -217,7 +219,7 @@ class _SignInScreenState extends State<SignInScreen> {
           children: [
             Text(_title, style: Type.heading),
             const SizedBox(height: Space.xs),
-            Text(_subtitle, style: Type.small.copyWith(color: TrustIqColors.inkFaint)),
+            Text(_subtitle, style: Type.small.copyWith(color: c.inkFaint)),
             const SizedBox(height: Space.xl),
             if (_notice != null) ...[
               _Notice(_notice!),
@@ -260,7 +262,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     icon: Icon(
                       _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                       size: 19,
-                      color: TrustIqColors.inkFaint,
+                      color: c.inkFaint,
                     ),
                     onPressed: () => setState(() => _showPassword = !_showPassword),
                   ),
@@ -305,12 +307,13 @@ class _Link extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return TextButton(
       onPressed: onTap,
       style: TextButton.styleFrom(
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: Space.sm, vertical: Space.xs),
-        foregroundColor: TrustIqColors.accent,
+        foregroundColor: c.accent,
         textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
       ),
       child: Text(label),
@@ -325,21 +328,22 @@ class _Notice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.all(Space.md),
       decoration: BoxDecoration(
-        color: TrustIqColors.accentSoft,
+        color: c.accentSoft,
         borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.mark_email_unread_outlined, size: 18, color: TrustIqColors.accent),
+          Icon(Icons.mark_email_unread_outlined, size: 18, color: c.accent),
           const SizedBox(width: Space.md),
           Expanded(
             child: Text(
               message,
-              style: Type.small.copyWith(fontSize: 12.5, color: TrustIqColors.accentStrong),
+              style: Type.small.copyWith(fontSize: 12.5, color: c.accentStrong),
             ),
           ),
         ],

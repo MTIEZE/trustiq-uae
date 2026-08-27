@@ -88,6 +88,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -199,8 +200,8 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   decoration: InputDecoration(
                     hintText: '500',
                     prefixText: 'AED  ',
-                    prefixStyle: const TextStyle(
-                      color: TrustIqColors.inkFaint,
+                    prefixStyle: TextStyle(
+                      color: c.inkFaint,
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
                     ),
@@ -212,12 +213,12 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   const SizedBox(height: Space.md),
                   Row(
                     children: [
-                      const Icon(Icons.check_circle_outline, size: 15, color: TrustIqColors.ok),
+                      Icon(Icons.check_circle_outline, size: 15, color: c.ok),
                       const SizedBox(width: Space.sm),
                       Text(
                         'Recorded as ${formatAed(_parsedAmount!)}',
                         style: Type.caption.copyWith(
-                          color: TrustIqColors.ok,
+                          color: c.ok,
                           fontWeight: FontWeight.w600,
                           fontSize: 12.5,
                         ),
@@ -273,7 +274,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.state.error ?? 'The contract could not be created.'),
-          backgroundColor: TrustIqColors.critical,
+          backgroundColor: context.c.critical,
         ),
       );
       return;
@@ -303,6 +304,7 @@ class _Step extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.only(bottom: Space.md, left: Space.xs),
       child: Row(
@@ -312,14 +314,14 @@ class _Step extends StatelessWidget {
             width: 24,
             height: 24,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: TrustIqColors.accentSoft,
+            decoration: BoxDecoration(
+              color: c.accentSoft,
               shape: BoxShape.circle,
             ),
             child: Text(
               '$number',
               style: Type.caption.copyWith(
-                color: TrustIqColors.accentStrong,
+                color: c.accentStrong,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -332,7 +334,7 @@ class _Step extends StatelessWidget {
               children: [
                 Text(title, style: Type.heading.copyWith(fontSize: 15.5)),
                 const SizedBox(height: 3),
-                Text(blurb, style: Type.small.copyWith(color: TrustIqColors.inkFaint)),
+                Text(blurb, style: Type.small.copyWith(color: c.inkFaint)),
               ],
             ),
           ),

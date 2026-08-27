@@ -50,6 +50,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final contract = widget.state.contractById(widget.contractId);
     final other = contract.counterpartyFor(widget.state.roleOn(contract));
 
@@ -75,10 +76,10 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                 const SizedBox(height: Space.md),
                 Text(
                   contract.terms,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13.5,
                     height: 1.5,
-                    color: TrustIqColors.inkSoft,
+                    color: c.inkSoft,
                   ),
                 ),
                 const SizedBox(height: Space.md),
@@ -120,14 +121,14 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
               children: [
                 const SectionLabel('Your account'),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Say what happened and how it differs from the terms above. '
                   'Point at dates and deliverables rather than intentions: those '
                   'are what can be checked against the evidence.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.5,
-                    color: TrustIqColors.inkSoft,
+                    color: c.inkSoft,
                   ),
                 ),
                 const SizedBox(height: Space.md),
@@ -151,7 +152,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
                           'the reviewer nothing to work with.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: _canSubmit ? TrustIqColors.inkFaint : TrustIqColors.caution,
+                    color: _canSubmit ? c.inkFaint : c.caution,
                   ),
                 ),
               ],
@@ -161,7 +162,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor:
-                  widget.answering ? TrustIqColors.accent : TrustIqColors.critical,
+                  widget.answering ? c.accent : c.critical,
             ),
             onPressed: _canSubmit ? _submit : null,
             child: Text(widget.answering ? 'Submit your response' : 'Open the dispute'),
@@ -200,7 +201,7 @@ class _OpenDisputeScreenState extends State<OpenDisputeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: TrustIqColors.critical,
+          backgroundColor: context.c.critical,
         ),
       );
       return;

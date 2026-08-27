@@ -158,11 +158,9 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
               const SizedBox(height: 6),
               SelectableText(
                 item.sha256,
-                style: const TextStyle(
+                style: Type.mono.copyWith(
                   fontSize: 10.5,
-                  fontFamily: 'monospace',
-                  height: 1.4,
-                  color: TrustIqColors.inkSoft,
+                  color: context.c.inkSoft,
                 ),
               ),
               const SizedBox(height: Space.md),
@@ -199,6 +197,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final chosen = _chosen;
 
     return Scaffold(
@@ -227,26 +226,26 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: Space.xxl),
                       decoration: BoxDecoration(
-                        color: TrustIqColors.surfaceSunken,
+                        color: c.surfaceSunken,
                         borderRadius: BorderRadius.circular(Radii.md),
-                        border: Border.all(color: TrustIqColors.ruleStrong),
+                        border: Border.all(color: c.ruleStrong),
                       ),
                       child: Column(
                         children: [
                           Icon(
                             _busy ? Icons.hourglass_empty : Icons.upload_file_outlined,
                             size: 26,
-                            color: TrustIqColors.accent,
+                            color: c.accent,
                           ),
                           const SizedBox(height: Space.md),
                           Text(
                             _busy ? 'Reading the file' : 'Choose a file',
-                            style: Type.bodyStrong.copyWith(color: TrustIqColors.accentStrong),
+                            style: Type.bodyStrong.copyWith(color: c.accentStrong),
                           ),
                           const SizedBox(height: Space.xs),
                           Text(
                             'PDF, image, document, text or zip',
-                            style: Type.caption.copyWith(color: TrustIqColors.inkFaint),
+                            style: Type.caption.copyWith(color: c.inkFaint),
                           ),
                         ],
                       ),
@@ -341,9 +340,10 @@ class _ChosenFile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Row(
       children: [
-        const Icon(Icons.description_outlined, size: 20, color: TrustIqColors.accent),
+        Icon(Icons.description_outlined, size: 20, color: c.accent),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -357,7 +357,7 @@ class _ChosenFile extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 humanSize(chosen.size),
-                style: const TextStyle(fontSize: 12, color: TrustIqColors.inkFaint),
+                style: TextStyle(fontSize: 12, color: c.inkFaint),
               ),
             ],
           ),
@@ -374,21 +374,22 @@ class _ErrorNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: TrustIqColors.criticalSoft,
+        color: c.criticalSoft,
         borderRadius: BorderRadius.circular(8),
-        border: const Border(
-          left: BorderSide(color: TrustIqColors.critical, width: 2.5),
+        border: Border(
+          left: BorderSide(color: c.critical, width: 2.5),
         ),
       ),
       child: Text(
         message,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           height: 1.45,
-          color: TrustIqColors.critical,
+          color: c.critical,
         ),
       ),
     );

@@ -19,31 +19,211 @@ import 'package:trustiq_core/trustiq_core.dart';
 /// **A scale, not a guess.** Type, spacing and radius each come from a fixed
 /// set. Arbitrary values are how an interface stops looking made by one
 /// person.
-abstract final class TrustIqColors {
-  /// The brand. The only saturated colour on screen.
-  static const accent = Color(0xFF0D5F66);
-  static const accentStrong = Color(0xFF094248);
-  static const accentSoft = Color(0xFFE3EFEF);
-  static const accentGlow = Color(0xFFF3F8F8);
+/// The palette, as a theme extension so it can differ by brightness.
+///
+/// The names are TrustIQ's own rather than Material's, because Material has no
+/// slot for "caution" or "ok" and forcing them into tertiary and secondary
+/// would make every call site lie about what it is asking for.
+///
+/// Read it as `context.c`. Doing that means most colours are no longer
+/// compile-time constants, which is the real cost of supporting two themes and
+/// is why `const` disappears from a lot of widgets below.
+@immutable
+class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
+  const TrustIqPalette({
+    required this.isDark,
+    required this.accent,
+    required this.accentStrong,
+    required this.accentSoft,
+    required this.accentGlow,
+    required this.ink,
+    required this.inkSoft,
+    required this.inkFaint,
+    required this.rule,
+    required this.ruleStrong,
+    required this.ground,
+    required this.surface,
+    required this.surfaceSunken,
+    required this.ok,
+    required this.okSoft,
+    required this.caution,
+    required this.cautionSoft,
+    required this.critical,
+    required this.criticalSoft,
+  });
 
-  static const ink = Color(0xFF0E1518);
-  static const inkSoft = Color(0xFF4A575E);
-  static const inkFaint = Color(0xFF7C8890);
+  /// Which side of the theme this is. Only the lift reads it: a shadow that
+  /// works on white is invisible on near-black, and one that works on
+  /// near-black is a smear on white.
+  final bool isDark;
 
-  /// Hairlines. `rule` separates, `ruleStrong` divides.
-  static const rule = Color(0xFFE4E9E9);
-  static const ruleStrong = Color(0xFFD1DADA);
+  final Color accent;
+  final Color accentStrong;
+  final Color accentSoft;
+  final Color accentGlow;
+  final Color ink;
+  final Color inkSoft;
+  final Color inkFaint;
+  final Color rule;
+  final Color ruleStrong;
+  final Color ground;
+  final Color surface;
+  final Color surfaceSunken;
+  final Color ok;
+  final Color okSoft;
+  final Color caution;
+  final Color cautionSoft;
+  final Color critical;
+  final Color criticalSoft;
 
-  static const ground = Color(0xFFF5F7F7);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceSunken = Color(0xFFF7F9F9);
+  /// Petrol teal on cool neutrals. The accent is the only saturated colour.
+  static const light = TrustIqPalette(
+    isDark: false,
+    accent: Color(0xFF0D5F66),
+    accentStrong: Color(0xFF094248),
+    accentSoft: Color(0xFFE3EFEF),
+    accentGlow: Color(0xFFF3F8F8),
+    ink: Color(0xFF0E1518),
+    inkSoft: Color(0xFF4A575E),
+    inkFaint: Color(0xFF7C8890),
+    rule: Color(0xFFE4E9E9),
+    ruleStrong: Color(0xFFD1DADA),
+    ground: Color(0xFFF5F7F7),
+    surface: Color(0xFFFFFFFF),
+    surfaceSunken: Color(0xFFF7F9F9),
+    ok: Color(0xFF3B6438),
+    okSoft: Color(0xFFE7F0E5),
+    caution: Color(0xFF8A6110),
+    cautionSoft: Color(0xFFF8F1DE),
+    critical: Color(0xFF9E3323),
+    criticalSoft: Color(0xFFF8E9E6),
+  );
 
-  static const ok = Color(0xFF3B6438);
-  static const okSoft = Color(0xFFE7F0E5);
-  static const caution = Color(0xFF8A6110);
-  static const cautionSoft = Color(0xFFF8F1DE);
-  static const critical = Color(0xFF9E3323);
-  static const criticalSoft = Color(0xFFF8E9E6);
+  /// Not an inversion.
+  ///
+  /// The light accent is too dark to read on a dark ground, so the accent
+  /// lifts rather than flips, and `accentStrong` becomes lighter than `accent`
+  /// instead of darker: on a dark surface, emphasis means more light.
+  ///
+  /// The ground is a desaturated blue-green rather than black. Pure black
+  /// against light text is harsh for long reading, and these screens carry
+  /// contract terms and someone's account of what went wrong.
+  ///
+  /// The state colours are lifted and desaturated together, so a dispute still
+  /// reads as sober rather than as a neon warning.
+  static const dark = TrustIqPalette(
+    isDark: true,
+    accent: Color(0xFF4FBFC7),
+    accentStrong: Color(0xFF86D8DE),
+    accentSoft: Color(0xFF10312F),
+    accentGlow: Color(0xFF101A1B),
+    ink: Color(0xFFE9EEEE),
+    inkSoft: Color(0xFFA6B3B5),
+    inkFaint: Color(0xFF78868A),
+    rule: Color(0xFF222B2D),
+    ruleStrong: Color(0xFF2F3B3D),
+    ground: Color(0xFF0D1214),
+    surface: Color(0xFF151C1E),
+    surfaceSunken: Color(0xFF1A2325),
+    ok: Color(0xFF7FBE7A),
+    okSoft: Color(0xFF17281A),
+    caution: Color(0xFFD9A94E),
+    cautionSoft: Color(0xFF2A2314),
+    critical: Color(0xFFE38878),
+    criticalSoft: Color(0xFF2E1A17),
+  );
+
+  /// The one shadow in the system, and it barely registers.
+  ///
+  /// Heavier and tighter in the dark, where a soft wide shadow does nothing
+  /// at all and only a close dark one reads as separation.
+  List<BoxShadow> get lift => isDark
+      ? const [
+          BoxShadow(color: Color(0x40000000), blurRadius: 3, offset: Offset(0, 1)),
+          BoxShadow(color: Color(0x33000000), blurRadius: 12, offset: Offset(0, 5)),
+        ]
+      : const [
+          BoxShadow(color: Color(0x0A0E1518), blurRadius: 2, offset: Offset(0, 1)),
+          BoxShadow(color: Color(0x0D0E1518), blurRadius: 10, offset: Offset(0, 4)),
+        ];
+
+  @override
+  TrustIqPalette copyWith({
+    bool? isDark,
+    Color? accent,
+    Color? accentStrong,
+    Color? accentSoft,
+    Color? accentGlow,
+    Color? ink,
+    Color? inkSoft,
+    Color? inkFaint,
+    Color? rule,
+    Color? ruleStrong,
+    Color? ground,
+    Color? surface,
+    Color? surfaceSunken,
+    Color? ok,
+    Color? okSoft,
+    Color? caution,
+    Color? cautionSoft,
+    Color? critical,
+    Color? criticalSoft,
+  }) {
+    return TrustIqPalette(
+      isDark: isDark ?? this.isDark,
+      accent: accent ?? this.accent,
+      accentStrong: accentStrong ?? this.accentStrong,
+      accentSoft: accentSoft ?? this.accentSoft,
+      accentGlow: accentGlow ?? this.accentGlow,
+      ink: ink ?? this.ink,
+      inkSoft: inkSoft ?? this.inkSoft,
+      inkFaint: inkFaint ?? this.inkFaint,
+      rule: rule ?? this.rule,
+      ruleStrong: ruleStrong ?? this.ruleStrong,
+      ground: ground ?? this.ground,
+      surface: surface ?? this.surface,
+      surfaceSunken: surfaceSunken ?? this.surfaceSunken,
+      ok: ok ?? this.ok,
+      okSoft: okSoft ?? this.okSoft,
+      caution: caution ?? this.caution,
+      cautionSoft: cautionSoft ?? this.cautionSoft,
+      critical: critical ?? this.critical,
+      criticalSoft: criticalSoft ?? this.criticalSoft,
+    );
+  }
+
+  @override
+  TrustIqPalette lerp(TrustIqPalette? other, double t) {
+    if (other == null) return this;
+    Color mix(Color a, Color b) => Color.lerp(a, b, t)!;
+    return TrustIqPalette(
+      isDark: t < 0.5 ? isDark : other.isDark,
+      accent: mix(accent, other.accent),
+      accentStrong: mix(accentStrong, other.accentStrong),
+      accentSoft: mix(accentSoft, other.accentSoft),
+      accentGlow: mix(accentGlow, other.accentGlow),
+      ink: mix(ink, other.ink),
+      inkSoft: mix(inkSoft, other.inkSoft),
+      inkFaint: mix(inkFaint, other.inkFaint),
+      rule: mix(rule, other.rule),
+      ruleStrong: mix(ruleStrong, other.ruleStrong),
+      ground: mix(ground, other.ground),
+      surface: mix(surface, other.surface),
+      surfaceSunken: mix(surfaceSunken, other.surfaceSunken),
+      ok: mix(ok, other.ok),
+      okSoft: mix(okSoft, other.okSoft),
+      caution: mix(caution, other.caution),
+      cautionSoft: mix(cautionSoft, other.cautionSoft),
+      critical: mix(critical, other.critical),
+      criticalSoft: mix(criticalSoft, other.criticalSoft),
+    );
+  }
+}
+
+extension TrustIqPaletteContext on BuildContext {
+  /// The palette for the current theme. Short because it appears everywhere.
+  TrustIqPalette get c =>
+      Theme.of(this).extension<TrustIqPalette>() ?? TrustIqPalette.light;
 }
 
 /// The spacing scale. Nothing between these values.
@@ -111,72 +291,73 @@ abstract final class Type {
   );
 }
 
-/// The one shadow in the system, and it barely registers.
-const kSoftLift = [
-  BoxShadow(color: Color(0x0A0E1518), blurRadius: 2, offset: Offset(0, 1)),
-  BoxShadow(color: Color(0x0D0E1518), blurRadius: 10, offset: Offset(0, 4)),
-];
+ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
+  final c = palette;
+  final brightness = c.isDark ? Brightness.dark : Brightness.light;
 
-ThemeData buildTheme() {
   final base = ThemeData(
     useMaterial3: true,
+    brightness: brightness,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: TrustIqColors.accent,
-      primary: TrustIqColors.accent,
-      surface: TrustIqColors.surface,
-      error: TrustIqColors.critical,
+      seedColor: c.accent,
+      brightness: brightness,
+      primary: c.accent,
+      surface: c.surface,
+      error: c.critical,
     ),
-    scaffoldBackgroundColor: TrustIqColors.ground,
+    scaffoldBackgroundColor: c.ground,
     splashFactory: InkSparkle.splashFactory,
+    extensions: [c],
   );
 
   return base.copyWith(
-    appBarTheme: const AppBarTheme(
-      backgroundColor: TrustIqColors.ground,
+    appBarTheme: AppBarTheme(
+      backgroundColor: c.ground,
       surfaceTintColor: Colors.transparent,
-      foregroundColor: TrustIqColors.ink,
+      foregroundColor: c.ink,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(color: TrustIqColors.ink, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.4),
-      iconTheme: IconThemeData(color: TrustIqColors.inkSoft, size: 22),
+      titleTextStyle: TextStyle(
+        color: c.ink,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
+      ),
+      iconTheme: IconThemeData(color: c.inkSoft, size: 22),
     ),
 
     cardTheme: CardThemeData(
-      color: TrustIqColors.surface,
+      color: c.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.lg),
-        side: const BorderSide(color: TrustIqColors.rule),
+        side: BorderSide(color: c.rule),
       ),
     ),
 
-    dividerTheme: const DividerThemeData(color: TrustIqColors.rule, space: 1, thickness: 1),
+    dividerTheme: DividerThemeData(color: c.rule, space: 1, thickness: 1),
 
     // Filled rather than underlined. An underline field reads as a form to be
     // processed; a filled one reads as a place to write, which is what these
     // are: someone's account of a job that went wrong.
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: TrustIqColors.surfaceSunken,
+      fillColor: c.surfaceSunken,
       contentPadding: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.lg),
-      hintStyle: const TextStyle(color: TrustIqColors.inkFaint, fontSize: 14.5),
-      labelStyle: const TextStyle(color: TrustIqColors.inkFaint, fontSize: 14.5),
-      floatingLabelStyle: const TextStyle(
-        color: TrustIqColors.accent,
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
-      helperStyle: const TextStyle(color: TrustIqColors.inkFaint, fontSize: 12, height: 1.4),
-      errorStyle: const TextStyle(color: TrustIqColors.critical, fontSize: 12, height: 1.4),
-      border: _field(TrustIqColors.rule),
-      enabledBorder: _field(TrustIqColors.rule),
-      focusedBorder: _field(TrustIqColors.accent, width: 1.6),
-      errorBorder: _field(TrustIqColors.critical),
-      focusedErrorBorder: _field(TrustIqColors.critical, width: 1.6),
-      disabledBorder: _field(TrustIqColors.rule),
+      hintStyle: TextStyle(color: c.inkFaint, fontSize: 14.5),
+      labelStyle: TextStyle(color: c.inkFaint, fontSize: 14.5),
+      floatingLabelStyle: TextStyle(color: c.accent, fontSize: 13, fontWeight: FontWeight.w600),
+      helperStyle: TextStyle(color: c.inkFaint, fontSize: 12, height: 1.4),
+      errorStyle: TextStyle(color: c.critical, fontSize: 12, height: 1.4),
+      border: _field(c.rule),
+      enabledBorder: _field(c.rule),
+      focusedBorder: _field(c.accent, width: 1.6),
+      errorBorder: _field(c.critical),
+      focusedErrorBorder: _field(c.critical, width: 1.6),
+      disabledBorder: _field(c.rule),
     ),
 
     filledButtonTheme: FilledButtonThemeData(
@@ -190,11 +371,17 @@ ThemeData buildTheme() {
         ),
         // A disabled primary action should look like it is waiting, not like a
         // dead slab of grey. Tinted, not extinguished.
-        backgroundColor: WidgetStateProperty.resolveWith((states) =>
-            states.contains(WidgetState.disabled) ? TrustIqColors.accentSoft : TrustIqColors.accent),
-        foregroundColor: WidgetStateProperty.resolveWith((states) =>
-            states.contains(WidgetState.disabled) ? TrustIqColors.inkFaint : Colors.white),
-        overlayColor: const WidgetStatePropertyAll(Color(0x1AFFFFFF)),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled) ? c.accentSoft : c.accent,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled)
+              ? c.inkFaint
+              : (c.isDark ? const Color(0xFF06191B) : Colors.white),
+        ),
+        overlayColor: WidgetStatePropertyAll(
+          (c.isDark ? Colors.black : Colors.white).withValues(alpha: 0.12),
+        ),
         elevation: const WidgetStatePropertyAll(0),
       ),
     ),
@@ -202,9 +389,9 @@ ThemeData buildTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(52),
-        foregroundColor: TrustIqColors.ink,
-        backgroundColor: TrustIqColors.surface,
-        side: const BorderSide(color: TrustIqColors.ruleStrong),
+        foregroundColor: c.ink,
+        backgroundColor: c.surface,
+        side: BorderSide(color: c.ruleStrong),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
         textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: -0.1),
       ),
@@ -212,14 +399,14 @@ ThemeData buildTheme() {
 
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: TrustIqColors.accent,
+        foregroundColor: c.accent,
         textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
     ),
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: TrustIqColors.accent,
-      foregroundColor: Colors.white,
+      backgroundColor: c.accent,
+      foregroundColor: c.isDark ? const Color(0xFF06191B) : Colors.white,
       elevation: 2,
       highlightElevation: 3,
       extendedTextStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
@@ -233,16 +420,13 @@ ThemeData buildTheme() {
     ),
 
     dialogTheme: DialogThemeData(
-      backgroundColor: TrustIqColors.surface,
+      backgroundColor: c.surface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.lg)),
-      titleTextStyle: Type.heading.copyWith(color: TrustIqColors.ink),
+      titleTextStyle: Type.heading.copyWith(color: c.ink),
     ),
 
-    textTheme: base.textTheme.apply(
-      bodyColor: TrustIqColors.ink,
-      displayColor: TrustIqColors.ink,
-    ),
+    textTheme: base.textTheme.apply(bodyColor: c.ink, displayColor: c.ink),
   );
 }
 
@@ -255,28 +439,22 @@ OutlineInputBorder _field(Color color, {double width = 1}) => OutlineInputBorder
 ///
 /// The label is the plain-language one, not the wire value: a party should
 /// never be shown `pending_acceptance`.
-({String label, Color fg, Color bg}) transactionStateStyle(TransactionState state) {
+({String label, Color fg, Color bg}) transactionStateStyle(
+  TransactionState state,
+  TrustIqPalette c,
+) {
   return switch (state) {
-    TransactionState.draft =>
-      (label: 'Draft', fg: TrustIqColors.inkFaint, bg: TrustIqColors.ground),
+    TransactionState.draft => (label: 'Draft', fg: c.inkFaint, bg: c.surfaceSunken),
     TransactionState.pendingAcceptance =>
-      (label: 'Awaiting acceptance', fg: TrustIqColors.caution, bg: TrustIqColors.cautionSoft),
-    TransactionState.active =>
-      (label: 'In progress', fg: TrustIqColors.accent, bg: TrustIqColors.accentSoft),
-    TransactionState.delivered =>
-      (label: 'Awaiting review', fg: TrustIqColors.caution, bg: TrustIqColors.cautionSoft),
-    TransactionState.completed =>
-      (label: 'Completed', fg: TrustIqColors.ok, bg: TrustIqColors.okSoft),
-    TransactionState.disputed =>
-      (label: 'Disputed', fg: TrustIqColors.critical, bg: TrustIqColors.criticalSoft),
-    TransactionState.resolved =>
-      (label: 'Resolved', fg: TrustIqColors.ok, bg: TrustIqColors.okSoft),
-    TransactionState.declined =>
-      (label: 'Declined', fg: TrustIqColors.inkFaint, bg: TrustIqColors.ground),
-    TransactionState.cancelled =>
-      (label: 'Cancelled', fg: TrustIqColors.inkFaint, bg: TrustIqColors.ground),
-    TransactionState.expired =>
-      (label: 'Expired', fg: TrustIqColors.inkFaint, bg: TrustIqColors.ground),
+      (label: 'Awaiting acceptance', fg: c.caution, bg: c.cautionSoft),
+    TransactionState.active => (label: 'In progress', fg: c.accent, bg: c.accentSoft),
+    TransactionState.delivered => (label: 'Awaiting review', fg: c.caution, bg: c.cautionSoft),
+    TransactionState.completed => (label: 'Completed', fg: c.ok, bg: c.okSoft),
+    TransactionState.disputed => (label: 'Disputed', fg: c.critical, bg: c.criticalSoft),
+    TransactionState.resolved => (label: 'Resolved', fg: c.ok, bg: c.okSoft),
+    TransactionState.declined => (label: 'Declined', fg: c.inkFaint, bg: c.surfaceSunken),
+    TransactionState.cancelled => (label: 'Cancelled', fg: c.inkFaint, bg: c.surfaceSunken),
+    TransactionState.expired => (label: 'Expired', fg: c.inkFaint, bg: c.surfaceSunken),
   };
 }
 

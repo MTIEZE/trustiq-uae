@@ -14,6 +14,7 @@ class ContractsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final needsYou = state.contracts
         .where((c) => state.actionsFor(c).any(_isWaitingOnYou))
         .toList();
@@ -45,7 +46,7 @@ class ContractsScreen extends StatelessWidget {
             builder: (_) => NewContractScreen(state: state),
           ),
         ),
-        backgroundColor: TrustIqColors.accent,
+        backgroundColor: c.accent,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('New contract'),
@@ -157,15 +158,16 @@ class _ContractTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final counterparty = contract.counterpartyFor(state.roleOn(contract));
 
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.lg),
-        boxShadow: kSoftLift,
+        boxShadow: c.lift,
       ),
       child: Material(
-        color: TrustIqColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(Radii.lg),
         child: InkWell(
           borderRadius: BorderRadius.circular(Radii.lg),
@@ -177,7 +179,7 @@ class _ContractTile extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(Radii.lg),
-              border: Border.all(color: TrustIqColors.rule),
+              border: Border.all(color: c.rule),
             ),
             // A Stack, not a Row with a stretched rail. A Row that stretches
             // inside a list has no height to stretch to, and asking for one is
@@ -214,18 +216,18 @@ class _ContractTile extends StatelessWidget {
                       const SizedBox(height: Space.md),
                       Row(
                         children: [
-                          const Icon(Icons.person_outline, size: 14, color: TrustIqColors.inkFaint),
+                          Icon(Icons.person_outline, size: 14, color: c.inkFaint),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
                               counterparty.name,
-                              style: Type.small.copyWith(color: TrustIqColors.inkSoft),
+                              style: Type.small.copyWith(color: c.inkSoft),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (counterparty.verified) ...[
                             const SizedBox(width: 5),
-                            const Icon(Icons.verified, size: 13, color: TrustIqColors.accent),
+                            Icon(Icons.verified, size: 13, color: c.accent),
                           ],
                           const Spacer(),
                           const SizedBox(width: Space.sm),
@@ -238,14 +240,14 @@ class _ContractTile extends StatelessWidget {
                 // Marks the row without turning the whole card into a warning,
                 // which a coloured border all the way round does.
                 if (highlight)
-                  const Positioned(
+                  Positioned(
                     left: 0,
                     top: 0,
                     bottom: 0,
                     width: 3,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: TrustIqColors.accent,
+                        color: c.accent,
                         borderRadius: BorderRadius.horizontal(left: Radius.circular(Radii.lg)),
                       ),
                     ),
@@ -269,29 +271,30 @@ class _ErrorNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
       decoration: BoxDecoration(
-        color: TrustIqColors.critical.withValues(alpha: 0.08),
+        color: c.critical.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: TrustIqColors.critical.withValues(alpha: 0.3)),
+        border: Border.all(color: c.critical.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, size: 18, color: TrustIqColors.critical),
+          Icon(Icons.error_outline, size: 18, color: c.critical),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(fontSize: 13, color: TrustIqColors.critical),
+              style: TextStyle(fontSize: 13, color: c.critical),
             ),
           ),
           IconButton(
             onPressed: onDismiss,
             iconSize: 18,
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.close, color: TrustIqColors.critical),
+            icon: Icon(Icons.close, color: c.critical),
           ),
         ],
       ),
@@ -325,25 +328,26 @@ class _NoContractsYet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.only(top: 48, bottom: 24),
       child: Column(
         children: [
-          Icon(Icons.description_outlined, size: 40, color: TrustIqColors.inkFaint.withValues(alpha: 0.5)),
+          Icon(Icons.description_outlined, size: 40, color: c.inkFaint.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           const Text(
             'No contracts yet',
             style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               'Write down what was agreed, who is doing it and for how much. '
               'Both sides sign, and from then on there is a record neither of '
               'you can quietly change.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.5, color: TrustIqColors.inkFaint, height: 1.5),
+              style: TextStyle(fontSize: 13.5, color: c.inkFaint, height: 1.5),
             ),
           ),
         ],

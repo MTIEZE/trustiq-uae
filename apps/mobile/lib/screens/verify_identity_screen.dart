@@ -48,6 +48,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final connected = widget.state.identityProviderConnected;
 
     return Scaffold(
@@ -68,11 +69,11 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, height: 1.35),
                 ),
                 const SizedBox(height: Space.md),
-                const Text(
+                Text(
                   'You can draft a contract, send it, and file evidence without '
                   'verifying. What you cannot do is accept one, because the other '
                   'party has no way of knowing who agreed.',
-                  style: TextStyle(fontSize: 14, height: 1.55, color: TrustIqColors.inkSoft),
+                  style: TextStyle(fontSize: 14, height: 1.55, color: c.inkSoft),
                 ),
               ],
             ),
@@ -119,10 +120,10 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
             InfoCard(
               child: Text(
                 _error!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
                   height: 1.5,
-                  color: TrustIqColors.critical,
+                  color: c.critical,
                 ),
               ),
             ),
@@ -168,6 +169,7 @@ class _KeptRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -176,7 +178,7 @@ class _KeptRow extends StatelessWidget {
           child: Icon(
             kept ? Icons.check_circle_outline : Icons.block,
             size: 17,
-            color: kept ? TrustIqColors.ok : TrustIqColors.inkFaint,
+            color: kept ? c.ok : c.inkFaint,
           ),
         ),
         const SizedBox(width: 10),
@@ -189,17 +191,17 @@ class _KeptRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: kept ? TrustIqColors.ink : TrustIqColors.inkSoft,
+                  color: kept ? c.ink : c.inkSoft,
                   decoration: kept ? null : TextDecoration.none,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 detail,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   height: 1.45,
-                  color: TrustIqColors.inkFaint,
+                  color: c.inkFaint,
                 ),
               ),
             ],
@@ -225,6 +227,7 @@ class IdentityGateNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final youAreVerified = state.viewingAs == Role.buyer
         ? verification.buyerVerified
         : verification.sellerVerified;
@@ -232,7 +235,7 @@ class IdentityGateNotice extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: TrustIqColors.caution),
+        side: BorderSide(color: c.caution),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -241,7 +244,7 @@ class IdentityGateNotice extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.gpp_maybe_outlined, size: 18, color: TrustIqColors.caution),
+                Icon(Icons.gpp_maybe_outlined, size: 18, color: c.caution),
                 const SizedBox(width: 8),
                 const SectionLabel('Cannot be accepted yet'),
               ],

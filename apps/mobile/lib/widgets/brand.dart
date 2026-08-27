@@ -13,6 +13,10 @@ import '../theme.dart';
 ///
 /// Drawn rather than shipped as an image so it stays sharp at any size and
 /// costs nothing to load. It is one path and a stroke.
+///
+/// Its teal does not follow the theme. A mark that changes colour with the
+/// interface is not a mark, and the light accent has enough contrast against
+/// both grounds to stay legible on either.
 class TrustIqMark extends StatelessWidget {
   const TrustIqMark({super.key, this.size = 44});
 
@@ -32,7 +36,7 @@ class _MarkPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.shortestSide;
-    final c = Offset(s / 2, s / 2);
+    final centre = Offset(s / 2, s / 2);
     final r = s / 2;
 
     // An octagon, drawn from its circumscribed circle so it stays regular at
@@ -42,7 +46,7 @@ class _MarkPainter extends CustomPainter {
       // Rotated an eighth of a turn so the mark sits on a flat edge rather
       // than balancing on a point.
       final angle = (i * 2 * pi / 8) - (pi / 8);
-      final point = Offset(c.dx + r * cos(angle), c.dy + r * sin(angle));
+      final point = Offset(centre.dx + r * cos(angle), centre.dy + r * sin(angle));
       i == 0 ? seal.moveTo(point.dx, point.dy) : seal.lineTo(point.dx, point.dy);
     }
     seal.close();
@@ -50,10 +54,10 @@ class _MarkPainter extends CustomPainter {
     canvas.drawPath(
       seal,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [TrustIqColors.accent, TrustIqColors.accentStrong],
+          colors: [TrustIqPalette.light.accent, TrustIqPalette.light.accentStrong],
         ).createShader(Offset.zero & size),
     );
 
@@ -91,18 +95,19 @@ class TrustIqWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Text.rich(
       TextSpan(
         children: [
           const TextSpan(text: 'Trust'),
-          TextSpan(text: 'IQ', style: const TextStyle(color: TrustIqColors.accent)),
+          TextSpan(text: 'IQ', style: TextStyle(color: c.accent)),
         ],
       ),
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: FontWeight.w700,
         letterSpacing: -fontSize * 0.032,
-        color: TrustIqColors.ink,
+        color: c.ink,
         height: 1.1,
       ),
     );
@@ -119,6 +124,7 @@ class TrustIqLockup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -131,7 +137,7 @@ class TrustIqLockup extends StatelessWidget {
           Text(
             subtitle!,
             textAlign: TextAlign.center,
-            style: Type.small.copyWith(color: TrustIqColors.inkFaint),
+            style: Type.small.copyWith(color: c.inkFaint),
           ),
         ],
       ],

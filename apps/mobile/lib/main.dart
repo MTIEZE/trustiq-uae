@@ -65,7 +65,11 @@ class _TrustIqAppState extends State<TrustIqApp> {
     return MaterialApp(
       title: 'TrustIQ',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
+      // Follows the device. Nobody wants to set this twice, and a trust
+      // product opening bright white at midnight is its own small betrayal.
+      theme: buildTheme(TrustIqPalette.light),
+      darkTheme: buildTheme(TrustIqPalette.dark),
+      themeMode: ThemeMode.system,
       home: ListenableBuilder(
         listenable: _state,
         builder: (context, _) => _state.isLive && !_state.signedIn

@@ -21,6 +21,7 @@ class ContractDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return ListenableBuilder(
       listenable: state,
       builder: (context, _) {
@@ -86,15 +87,15 @@ class ContractDetailScreen extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: TrustIqColors.surfaceSunken,
+                            color: c.surfaceSunken,
                             borderRadius: BorderRadius.circular(Radii.pill),
-                            border: Border.all(color: TrustIqColors.rule),
+                            border: Border.all(color: c.rule),
                           ),
                           child: Text(
                             state.roleOn(contract) == Role.buyer
                                 ? 'You are the buyer'
                                 : 'You are the seller',
-                            style: Type.caption.copyWith(color: TrustIqColors.inkSoft),
+                            style: Type.caption.copyWith(color: c.inkSoft),
                           ),
                         ),
                       ],
@@ -136,8 +137,8 @@ class ContractDetailScreen extends StatelessWidget {
                                     : Icons.radio_button_unchecked,
                                 size: 17,
                                 color: m.deliveredAt != null
-                                    ? TrustIqColors.ok
-                                    : TrustIqColors.inkFaint,
+                                    ? c.ok
+                                    : c.inkFaint,
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -217,7 +218,7 @@ class ContractDetailScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: TrustIqColors.critical,
+          backgroundColor: context.c.critical,
         ),
       );
     }
@@ -241,6 +242,7 @@ class _PartyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final verified = party.verified;
     return Row(
       children: [
@@ -248,14 +250,14 @@ class _PartyRow extends StatelessWidget {
           width: 34,
           height: 34,
           alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: TrustIqColors.accentSoft,
+          decoration: BoxDecoration(
+            color: c.accentSoft,
             shape: BoxShape.circle,
           ),
           child: Text(
             _initials,
             style: Type.caption.copyWith(
-              color: TrustIqColors.accentStrong,
+              color: c.accentStrong,
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
             ),
@@ -267,7 +269,7 @@ class _PartyRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(party.name, style: Type.bodyStrong, overflow: TextOverflow.ellipsis),
-              Text(label, style: Type.caption.copyWith(color: TrustIqColors.inkFaint)),
+              Text(label, style: Type.caption.copyWith(color: c.inkFaint)),
             ],
           ),
         ),
@@ -277,7 +279,7 @@ class _PartyRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: Space.sm + 2, vertical: 4),
           decoration: BoxDecoration(
-            color: verified ? TrustIqColors.okSoft : TrustIqColors.cautionSoft,
+            color: verified ? c.okSoft : c.cautionSoft,
             borderRadius: BorderRadius.circular(Radii.pill),
           ),
           child: Row(
@@ -286,7 +288,7 @@ class _PartyRow extends StatelessWidget {
               Icon(
                 verified ? Icons.verified_user_outlined : Icons.gpp_maybe_outlined,
                 size: 13,
-                color: verified ? TrustIqColors.ok : TrustIqColors.caution,
+                color: verified ? c.ok : c.caution,
               ),
               const SizedBox(width: 5),
               Text(
@@ -294,7 +296,7 @@ class _PartyRow extends StatelessWidget {
                 style: Type.caption.copyWith(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: verified ? TrustIqColors.ok : TrustIqColors.caution,
+                  color: verified ? c.ok : c.caution,
                 ),
               ),
             ],
@@ -312,6 +314,7 @@ class _DisputeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final dispute = contract.dispute!;
     final awaitingYou = dispute.state == DisputeState.proposalIssued &&
         dispute.proposal != null &&
@@ -321,7 +324,7 @@ class _DisputeBanner extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: awaitingYou ? TrustIqColors.accent : TrustIqColors.rule,
+          color: awaitingYou ? c.accent : c.rule,
           width: awaitingYou ? 1.5 : 1,
         ),
       ),
@@ -348,15 +351,15 @@ class _DisputeBanner extends StatelessWidget {
                     ),
                     if (awaitingYou) ...[
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'A proposal is waiting for your answer',
-                        style: TextStyle(fontSize: 12.5, color: TrustIqColors.accent),
+                        style: TextStyle(fontSize: 12.5, color: c.accent),
                       ),
                     ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: TrustIqColors.inkFaint),
+              Icon(Icons.chevron_right, color: c.inkFaint),
             ],
           ),
         ),
@@ -401,6 +404,7 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,15 +415,15 @@ class _TimelineRow extends StatelessWidget {
                 width: 9,
                 height: 9,
                 margin: const EdgeInsets.only(top: 5),
-                decoration: const BoxDecoration(
-                  color: TrustIqColors.accent,
+                decoration: BoxDecoration(
+                  color: c.accent,
                   shape: BoxShape.circle,
                 ),
               ),
               if (!isLast)
-                const Expanded(
+                Expanded(
                   child: VerticalDivider(
-                    color: TrustIqColors.rule,
+                    color: c.rule,
                     thickness: 1,
                     width: 9,
                   ),
@@ -440,9 +444,9 @@ class _TimelineRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _formatDate(entry.at),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
-                      color: TrustIqColors.inkFaint,
+                      color: c.inkFaint,
                       fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -474,13 +478,14 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final label = transactionEventLabel(event);
     return switch (transactionEventTone(event)) {
       ActionTone.primary => FilledButton(onPressed: onPressed, child: Text(label)),
       ActionTone.destructive => OutlinedButton(
           style: OutlinedButton.styleFrom(
-            foregroundColor: TrustIqColors.critical,
-            side: const BorderSide(color: TrustIqColors.critical),
+            foregroundColor: c.critical,
+            side: BorderSide(color: c.critical),
           ),
           onPressed: onPressed,
           child: Text(label),

@@ -16,6 +16,7 @@ class DisputeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return ListenableBuilder(
       listenable: state,
       builder: (context, _) {
@@ -54,7 +55,7 @@ class DisputeScreen extends StatelessWidget {
                                 height: 7,
                                 margin: const EdgeInsets.only(right: Space.sm),
                                 decoration: BoxDecoration(
-                                  color: _statusColour(dispute.state),
+                                  color: _statusColour(dispute.state, c),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -207,13 +208,13 @@ bool _awaitingYourAccount(Dispute dispute, Role you) {
 ///
 /// Deliberately dull. A dispute is somebody's bad week, and a bright status
 /// light would read as a game.
-Color _statusColour(DisputeState state) => switch (state) {
-      DisputeState.open => TrustIqColors.caution,
-      DisputeState.aiReview => TrustIqColors.accent,
-      DisputeState.proposalIssued => TrustIqColors.accent,
-      DisputeState.escalated || DisputeState.humanReview => TrustIqColors.critical,
-      DisputeState.accepted || DisputeState.resolvedByHuman => TrustIqColors.ok,
-      DisputeState.withdrawn => TrustIqColors.inkFaint,
+Color _statusColour(DisputeState state, TrustIqPalette c) => switch (state) {
+      DisputeState.open => c.caution,
+      DisputeState.aiReview => c.accent,
+      DisputeState.proposalIssued => c.accent,
+      DisputeState.escalated || DisputeState.humanReview => c.critical,
+      DisputeState.accepted || DisputeState.resolvedByHuman => c.ok,
+      DisputeState.withdrawn => c.inkFaint,
     };
 
 class _ClaimCard extends StatelessWidget {
@@ -231,6 +232,7 @@ class _ClaimCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final answered = claim != null && claim!.trim().isNotEmpty;
 
     return InfoCard(
@@ -245,12 +247,12 @@ class _ClaimCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: TrustIqColors.accentSoft,
+                    color: c.accentSoft,
                     borderRadius: BorderRadius.circular(Radii.sm - 2),
                   ),
                   child: Text(
                     'YOU',
-                    style: Type.label.copyWith(fontSize: 9.5, color: TrustIqColors.accentStrong),
+                    style: Type.label.copyWith(fontSize: 9.5, color: c.accentStrong),
                   ),
                 ),
             ],
@@ -266,18 +268,18 @@ class _ClaimCard extends StatelessWidget {
                 : Type.body.copyWith(
                     fontSize: 15,
                     fontStyle: FontStyle.italic,
-                    color: TrustIqColors.inkFaint,
+                    color: c.inkFaint,
                   ),
           ),
           const SizedBox(height: Space.md),
           Row(
             children: [
-              const Icon(Icons.person_outline, size: 13, color: TrustIqColors.inkFaint),
+              Icon(Icons.person_outline, size: 13, color: c.inkFaint),
               const SizedBox(width: 5),
               Flexible(
                 child: Text(
                   who,
-                  style: Type.caption.copyWith(color: TrustIqColors.inkFaint),
+                  style: Type.caption.copyWith(color: c.inkFaint),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -328,12 +330,13 @@ class _EvidenceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.description_outlined, size: 18, color: TrustIqColors.inkSoft),
+            Icon(Icons.description_outlined, size: 18, color: c.inkSoft),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -343,7 +346,7 @@ class _EvidenceRow extends StatelessWidget {
             ),
             Text(
               'from the ${item.uploadedByRole.wireName}',
-              style: const TextStyle(fontSize: 11.5, color: TrustIqColors.inkFaint),
+              style: TextStyle(fontSize: 11.5, color: c.inkFaint),
             ),
           ],
         ),
@@ -353,7 +356,7 @@ class _EvidenceRow extends StatelessWidget {
             padding: const EdgeInsets.only(left: 28),
             child: Text(
               item.note!,
-              style: const TextStyle(fontSize: 13, height: 1.45, color: TrustIqColors.inkSoft),
+              style: TextStyle(fontSize: 13, height: 1.45, color: c.inkSoft),
             ),
           ),
         ],
@@ -362,9 +365,9 @@ class _EvidenceRow extends StatelessWidget {
           padding: const EdgeInsets.only(left: 28),
           child: SelectableText(
             item.sha256,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10.5,
-              color: TrustIqColors.inkFaint,
+              color: c.inkFaint,
               fontFamily: 'monospace',
               height: 1.4,
             ),
@@ -381,14 +384,14 @@ class _EvidenceRow extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.visibility_off_outlined, size: 13, color: TrustIqColors.inkFaint),
+                Icon(Icons.visibility_off_outlined, size: 13, color: c.inkFaint),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     unreadableNote(item.extractionStatus),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
-                      color: TrustIqColors.inkFaint,
+                      color: c.inkFaint,
                       height: 1.4,
                     ),
                   ),
@@ -434,6 +437,7 @@ class _ProposalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final youAccepted = proposal.acceptedBy.contains(state.roleOn(contract));
     final otherAccepted = proposal.acceptedBy.contains(state.roleOn(contract).counterparty);
     final closed = dispute.state.isTerminal;
@@ -442,12 +446,12 @@ class _ProposalCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.lg),
-        boxShadow: kSoftLift,
+        boxShadow: c.lift,
       ),
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.lg),
-          side: const BorderSide(color: TrustIqColors.accent, width: 1.5),
+          side: BorderSide(color: c.accent, width: 1.5),
         ),
         child: Padding(
           padding: const EdgeInsets.all(Space.xl),
@@ -463,7 +467,7 @@ class _ProposalCard extends StatelessWidget {
                 Icon(
                   byHuman ? Icons.gavel_outlined : Icons.auto_awesome_outlined,
                   size: 17,
-                  color: TrustIqColors.accent,
+                  color: c.accent,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -474,9 +478,9 @@ class _ProposalCard extends StatelessWidget {
                 if (proposal.confidence != null)
                   Text(
                     '${(proposal.confidence! * 100).round()}% confidence',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
-                      color: TrustIqColors.inkFaint,
+                      color: c.inkFaint,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -505,9 +509,9 @@ class _ProposalCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(top: 3),
-                      child: Icon(Icons.link, size: 14, color: TrustIqColors.inkFaint),
+                      child: Icon(Icons.link, size: 14, color: c.inkFaint),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -523,9 +527,9 @@ class _ProposalCard extends StatelessWidget {
                             finding.evidenceIds
                                 .map((id) => _filenameFor(id))
                                 .join(', '),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.5,
-                              color: TrustIqColors.inkFaint,
+                              color: c.inkFaint,
                             ),
                           ),
                         ],
@@ -566,8 +570,8 @@ class _ProposalCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: TrustIqColors.critical,
-                    side: const BorderSide(color: TrustIqColors.critical),
+                    foregroundColor: c.critical,
+                    side: BorderSide(color: c.critical),
                   ),
                   onPressed: () => _confirmReject(context),
                   child: const Text('Refuse and ask for a human'),
@@ -610,7 +614,7 @@ class _ProposalCard extends StatelessWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: TrustIqColors.critical,
+              backgroundColor: dialogContext.c.critical,
               minimumSize: const Size(120, 44),
             ),
             onPressed: () {
@@ -636,6 +640,7 @@ class _AllocationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final seller = proposal.sellerAmount.value;
     final buyer = proposal.buyerAmount.value;
     final total = seller + buyer;
@@ -651,7 +656,7 @@ class _AllocationBar extends StatelessWidget {
                   flex: seller,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: TrustIqColors.accent,
+                      color: c.accent,
                       borderRadius: BorderRadius.circular(Radii.pill),
                     ),
                   ),
@@ -664,7 +669,7 @@ class _AllocationBar extends StatelessWidget {
                   flex: buyer,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: TrustIqColors.caution,
+                      color: c.caution,
                       borderRadius: BorderRadius.circular(Radii.pill),
                     ),
                   ),
@@ -677,14 +682,14 @@ class _AllocationBar extends StatelessWidget {
           children: [
             Expanded(
               child: _AllocationLeg(
-                colour: TrustIqColors.accent,
+                colour: c.accent,
                 label: 'To ${contract.seller.name}',
                 amount: proposal.sellerAmount,
               ),
             ),
             Expanded(
               child: _AllocationLeg(
-                colour: TrustIqColors.caution,
+                colour: c.caution,
                 label: 'To ${contract.buyer.name}',
                 amount: proposal.buyerAmount,
                 alignEnd: true,
@@ -700,7 +705,7 @@ class _AllocationBar extends StatelessWidget {
           Text(
             'This split does not add up to the amount in dispute. '
             'Do not act on it; contact support.',
-            style: const TextStyle(fontSize: 12, color: TrustIqColors.critical),
+            style: TextStyle(fontSize: 12, color: c.critical),
           ),
         ],
       ],
@@ -723,6 +728,7 @@ class _AllocationLeg extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Column(
       crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
@@ -734,7 +740,7 @@ class _AllocationLeg extends StatelessWidget {
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 11.5, color: TrustIqColors.inkFaint),
+                style: TextStyle(fontSize: 11.5, color: c.inkFaint),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -762,18 +768,19 @@ class _AcceptanceState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     if (closed) {
       return Row(
         children: [
-          const Icon(Icons.check_circle, size: 18, color: TrustIqColors.ok),
+          Icon(Icons.check_circle, size: 18, color: c.ok),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
               'Both parties accepted. The dispute is closed.',
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
-                color: TrustIqColors.ok,
+                color: c.ok,
               ),
             ),
           ),
@@ -801,12 +808,13 @@ class _AcceptanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Row(
       children: [
         Icon(
           accepted ? Icons.check_circle : Icons.radio_button_unchecked,
           size: 17,
-          color: accepted ? TrustIqColors.ok : TrustIqColors.inkFaint,
+          color: accepted ? c.ok : c.inkFaint,
         ),
         const SizedBox(width: 10),
         Expanded(child: Text(name, style: const TextStyle(fontSize: 13.5))),
@@ -815,7 +823,7 @@ class _AcceptanceRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: accepted ? TrustIqColors.ok : TrustIqColors.inkFaint,
+            color: accepted ? c.ok : c.inkFaint,
           ),
         ),
       ],

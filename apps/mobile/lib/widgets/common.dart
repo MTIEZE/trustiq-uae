@@ -16,7 +16,8 @@ class StateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = transactionStateStyle(state);
+    final c = context.c;
+    final style = transactionStateStyle(state, c);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10, vertical: compact ? 3 : 5),
       decoration: BoxDecoration(
@@ -60,9 +61,10 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final base = (style ?? Type.amount).copyWith(
       fontFeatures: const [FontFeature.tabularFigures()],
-      color: emphasis ? TrustIqColors.ink : (style?.color ?? TrustIqColors.ink),
+      color: emphasis ? c.ink : (style?.color ?? c.ink),
     );
     final text = formatAed(amount);
     final split = text.lastIndexOf(' ');
@@ -77,7 +79,7 @@ class MoneyText extends StatelessWidget {
             style: base.copyWith(
               fontSize: (base.fontSize ?? 15) * 0.68,
               fontWeight: FontWeight.w600,
-              color: TrustIqColors.inkFaint,
+              color: c.inkFaint,
               letterSpacing: 0,
             ),
           ),
@@ -95,9 +97,10 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Text(
       text.toUpperCase(),
-      style: Type.label.copyWith(color: color ?? TrustIqColors.inkFaint),
+      style: Type.label.copyWith(color: color ?? c.inkFaint),
     );
   }
 }
@@ -113,10 +116,11 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.lg),
-        boxShadow: lift ? kSoftLift : null,
+        boxShadow: lift ? c.lift : null,
       ),
       child: Card(
         child: Padding(
@@ -160,7 +164,8 @@ class RuleNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colour = tone ?? TrustIqColors.accent;
+    final c = context.c;
+    final colour = tone ?? c.accent;
     return Container(
       padding: const EdgeInsets.fromLTRB(Space.md, Space.md, Space.md, Space.md),
       decoration: BoxDecoration(
@@ -175,7 +180,7 @@ class RuleNote extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: Type.small.copyWith(fontSize: 12.5, color: TrustIqColors.inkSoft),
+              style: Type.small.copyWith(fontSize: 12.5, color: c.inkSoft),
             ),
           ),
         ],
