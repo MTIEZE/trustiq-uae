@@ -1483,5 +1483,159 @@ select pg_temp.check(
 
 select set_config('request.jwt.claims', '', false);
 
+
+\echo ''
+\echo '== Inviting somebody who has no account =='
+
+-- Nothing about the transactions table changes for this. The draft waits in
+-- app.contract_invitations, and a transaction appears only when there are two
+-- real people to hang it on, so everything downstream is an ordinary contract.
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+select pg_temp.expect_error(
+  $q$ select public.invite_counterparty('ahmed@startup.ae', 'seller', 'Nope', 'Terms.', 10000) $q$,
+  'inviting your own address is refused');
+
+select pg_temp.expect_error(
+  $q$ select public.invite_counterparty('sara@design.ae', 'seller', 'Nope', 'Terms.', 10000) $q$,
+  'inviting somebody who already has an account is refused, rather than making a code they never need');
+
+-- select * from f(...), not (f(...)).*, which evaluates a volatile function
+-- once per output column and would create fourteen invitations here.
+create temporary table invite_under_test as
+select * from public.invite_counterparty(
+  'newcomer@example.ae', 'seller',
+  'Arabic copy for a landing page',
+  'Six sections, delivered within five days. One round of revision.',
+  75000
+);
+
+select pg_temp.check(
+  (select code ~ '^[A-Z2-9]{4}-[A-Z2-9]{4}$' from invite_under_test),
+  'the code is readable down a phone: no vowels, no zero or one');
+
+select pg_temp.check(
+  (select transaction_id is null and claimed_at is null from invite_under_test),
+  'no transaction exists yet, because there is still only one person');
+
+select pg_temp.check(
+  (select count(*)::int from public.my_invitations()) = 1,
+  'the inviter can see what they sent');
+
+reset role;
+
+\echo ''
+\echo '-- the code is not a bearer token --'
+
+-- The person it was addressed to now signs up. Created after the invitation
+-- on purpose: invite_counterparty refuses an address that already has one.
+insert into auth.users (id, email) values ('66666666-6666-6666-6666-666666666666', 'newcomer@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('66666666-6666-6666-6666-666666666666', 'Newcomer', 'newcomer@example.ae');
+
+set role authenticated;
+
+-- Somebody else holding the right code. This is the case a code alone would
+-- have let through: taking the other side of a contract meant for a stranger.
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+select pg_temp.expect_error(
+  format($q$ select public.claim_invitation(%L) $q$, (select code from invite_under_test)),
+  'the wrong person cannot claim a code that is not addressed to them');
+
+select pg_temp.expect_error(
+  $q$ select public.claim_invitation('ZZZZ-ZZZZ') $q$,
+  'a code that does not exist gets the same answer as one that is not yours, so this is not a way to hunt for live invitations');
+
+select set_config('request.jwt.claim.sub', '66666666-6666-6666-6666-666666666666', false);
+
+create temporary table claimed_txn as
+select public.claim_invitation((select code from invite_under_test)) as id;
+
+select pg_temp.check(
+  (select state from public.transactions where id = (select id from claimed_txn))
+    = 'pending_acceptance',
+  'claiming sends the contract rather than leaving it drafted: the inviter already did their part');
+
+select pg_temp.check(
+  (select seller_id from public.transactions where id = (select id from claimed_txn))
+    = '66666666-6666-6666-6666-666666666666',
+  'the invitee lands on the side the invitation named');
+
+select pg_temp.check(
+  (select created_by from public.transactions where id = (select id from claimed_txn))
+    = '11111111-1111-1111-1111-111111111111',
+  'the contract records the inviter as its author, which is who wrote the terms');
+
+select pg_temp.expect_error(
+  format($q$ select public.claim_invitation(%L) $q$, (select code from invite_under_test)),
+  'a code works once');
+
+reset role;
+
+\echo ''
+\echo '-- withdrawing, and running out of time --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+select pg_temp.expect_error(
+  format($q$ select public.revoke_invitation(%L) $q$, (select id from invite_under_test)),
+  'an invitation that became a contract cannot be withdrawn, because withdrawing it would not undo the contract');
+
+create temporary table second_invite as
+select * from public.invite_counterparty(
+  'later@example.ae', 'buyer', 'Something else', 'Terms.', 20000
+);
+
+select public.revoke_invitation((select id from second_invite));
+
+reset role;
+insert into auth.users (id, email) values ('77777777-7777-7777-7777-777777777777', 'later@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('77777777-7777-7777-7777-777777777777', 'Later', 'later@example.ae');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '77777777-7777-7777-7777-777777777777', false);
+select pg_temp.expect_error(
+  format($q$ select public.claim_invitation(%L) $q$, (select code from second_invite)),
+  'a withdrawn invitation cannot be claimed');
+
+reset role;
+
+-- Expiry, forced rather than waited for.
+update app.contract_invitations
+set revoked_at = null, expires_at = now() - interval '1 day'
+where id = (select id from second_invite);
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '77777777-7777-7777-7777-777777777777', false);
+select pg_temp.expect_error(
+  format($q$ select public.claim_invitation(%L) $q$, (select code from second_invite)),
+  'an expired invitation cannot be claimed');
+
+select pg_temp.check(
+  (select count(*)::int from public.my_invitations()) = 0,
+  'somebody who has sent nothing sees nothing, including invitations addressed to them');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
+\echo '-- the invitation list is not a client table --'
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.contract_invitations', 'SELECT'),
+  'a signed-in user cannot read the addresses other people have invited');
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.contract_invitations', 'INSERT'),
+  'a signed-in user cannot write an invitation directly, bypassing the checks');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'app.new_invitation_code()', 'EXECUTE'),
+  'a signed-in user cannot mint codes on their own');
+
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

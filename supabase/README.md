@@ -32,10 +32,11 @@ migrations/
   0014_system_functions_are_not_public.sql
                         taking back the EXECUTE grants Supabase hands out
                         automatically, and a guard that names who may pass
+  0015_invitations.sql  addressing a contract to somebody who has no account
 
 tests/
   00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
-  schema.test.sql        158 assertions run against a real Postgres
+  schema.test.sql        176 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -140,6 +141,23 @@ grants back and replaces that guard with one that names who may pass. The
 schema tests missed it because a bare Postgres container has no such default
 privileges; `00_supabase_stubs.sql` now sets them, so the harness is no longer
 safer than production.
+
+**A contract can start with somebody who has never heard of TrustIQ.** Until
+0015 both parties needed accounts, which meant the person who wanted to use it
+had to recruit the other side first with nothing to show them. The draft now
+waits in `app.contract_invitations` and becomes a transaction at the moment
+there are two people to hang it on, so nothing downstream of that moment
+changes: `buyer_id` and `seller_id` stay not null, and every policy, gate and
+state machine still assumes two real people.
+
+Claiming checks the code **and** the address it was issued to. A code alone
+would be a bearer token, and whoever it was forwarded to could take the other
+side of somebody else's contract. A wrong code and a code that is not yours get
+the same answer, so this is not a way to hunt for live invitations.
+
+No email is sent. TrustIQ writing to a stranger is a different product with
+different obligations, and the inviter shares the code themselves over whatever
+they already use.
 
 **The record cannot be rewritten.** Evidence, both audit logs, proposals and
 acceptances are append-only, enforced by a trigger that fires even for roles

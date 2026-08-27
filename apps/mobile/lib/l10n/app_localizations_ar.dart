@@ -706,6 +706,117 @@ class LAr extends L {
       'غير موثّقة بعد. يمكنك صياغة العقود وإرسالها، لكن لا يمكنك قبول عقد.';
 
   @override
+  String get noAccountTitle => 'ليس لديه حساب في TrustIQ';
+
+  @override
+  String noAccountBody(String email) {
+    return 'لا أحد يملك $email. يمكنك إرسال دعوة له بدلاً من ذلك: يحصل على رمز، وعندما ينضم يجد هذا العقد بانتظاره ومُرسلاً بالفعل.';
+  }
+
+  @override
+  String get sendAnInvitation => 'إرسال دعوة';
+
+  @override
+  String get cancel => 'إلغاء';
+
+  @override
+  String get invitationSent => 'الدعوة جاهزة';
+
+  @override
+  String get invitationCodeIs => 'رمزه';
+
+  @override
+  String get invitationShareNote =>
+      'لا ترسل TrustIQ إليه بريداً. أرسل هذا بنفسك، بالوسيلة التي تتواصلان بها أصلاً.';
+
+  @override
+  String get copyTheMessage => 'نسخ الرسالة';
+
+  @override
+  String get copied => 'تم النسخ';
+
+  @override
+  String invitationMessage(
+    String description,
+    String amount,
+    String email,
+    String code,
+  ) {
+    return 'أعددتُ اتفاقنا على TrustIQ: $description، $amount. حمّل TrustIQ، وسجّل بـ $email، وأدخل الرمز $code لرؤيته.';
+  }
+
+  @override
+  String invitationBoundNote(String email) {
+    return 'الرمز يعمل لـ $email فقط. ولا يستطيع أي شخص آخر يراه استخدامه.';
+  }
+
+  @override
+  String get invitationExpiryNote =>
+      'يتوقف عن العمل بعد ٣٠ يوماً، ويمكنك سحبه قبل ذلك.';
+
+  @override
+  String get invitations => 'الدعوات';
+
+  @override
+  String get invitationsSent => 'المُرسَلة';
+
+  @override
+  String get noInvitationsYet => 'لم تدعُ أحداً بعد.';
+
+  @override
+  String get noInvitationsYetBody =>
+      'عندما توجّه عقداً إلى شخص بلا حساب، تظهر الدعوة هنا.';
+
+  @override
+  String get haveACode => 'لديّ رمز';
+
+  @override
+  String get enterTheCode => 'أدخل الرمز';
+
+  @override
+  String get codeHint => 'ABCD-EFGH';
+
+  @override
+  String get useTheCode => 'فتح العقد';
+
+  @override
+  String get codeNote =>
+      'أعطاك الرمز من كتب العقد. وهو يعمل فقط للعنوان المسجّل في حسابك.';
+
+  @override
+  String get invitationClaimed => 'مستخدَم';
+
+  @override
+  String get invitationRevoked => 'مسحوب';
+
+  @override
+  String get invitationExpired => 'منتهي';
+
+  @override
+  String get invitationOpen => 'بانتظار';
+
+  @override
+  String get withdraw => 'سحب';
+
+  @override
+  String get withdrawInvitation => 'سحب هذه الدعوة؟';
+
+  @override
+  String get withdrawInvitationBody =>
+      'يتوقف الرمز عن العمل. لم يُتفق على شيء بعد، فلا شيء يُلغى.';
+
+  @override
+  String theyWillBe(String role) {
+    return 'سيكون $role';
+  }
+
+  @override
+  String get buyerWord => 'المشتري';
+
+  @override
+  String get sellerWord => 'البائع';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

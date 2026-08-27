@@ -16,12 +16,37 @@ class StateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.c;
-    final style = transactionStateStyle(state, c, context.l);
+    final style = transactionStateStyle(state, context.c, context.l);
+    return TonedChip(
+      label: style.label,
+      fg: style.fg,
+      bg: style.bg,
+      compact: compact,
+    );
+  }
+}
+
+/// The pill itself, for anything with a state worth naming in two words.
+class TonedChip extends StatelessWidget {
+  const TonedChip({
+    super.key,
+    required this.label,
+    required this.fg,
+    required this.bg,
+    this.compact = false,
+  });
+
+  final String label;
+  final Color fg;
+  final Color bg;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10, vertical: compact ? 3 : 5),
       decoration: BoxDecoration(
-        color: style.bg,
+        color: bg,
         borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Row(
@@ -31,12 +56,12 @@ class StateChip extends StatelessWidget {
             width: 5,
             height: 5,
             margin: const EdgeInsetsDirectional.only(end: 6),
-            decoration: BoxDecoration(color: style.fg, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
           ),
           Text(
-            style.label,
+            label,
             style: TextStyle(
-              color: style.fg,
+              color: fg,
               fontSize: compact ? 11 : 11.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.1,

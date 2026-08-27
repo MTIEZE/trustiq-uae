@@ -286,6 +286,68 @@ class DemoBackend implements Backend {
     }
   }
 
+  final _invitations = <Invitation>[];
+  var _codeSeed = 0;
+
+  @override
+  Future<Invitation> inviteCounterparty({
+    required String description,
+    required String terms,
+    required Fils amount,
+    required Role youAre,
+    required String counterpartyEmail,
+  }) async {
+    _codeSeed += 1;
+    final invitation = Invitation(
+      id: 'inv_$_codeSeed',
+      code: 'DEMO-${_codeSeed.toString().padLeft(4, '0')}',
+      email: counterpartyEmail,
+      inviteeIs: youAre == Role.buyer ? Role.seller : Role.buyer,
+      description: description,
+      amount: amount,
+      expiresAt: DateTime.now().add(const Duration(days: 30)),
+    );
+    _invitations.add(invitation);
+    return invitation;
+  }
+
+  @override
+  Future<String> claimInvitation(String code) async {
+    // Deliberately permissive: the demo has one person in it, so refusing a
+    // code because it was not addressed to you would make the flow
+    // impossible to show. The live backend checks both the code and the
+    // address, and the schema tests pin that.
+    final at = _invitations.indexWhere(
+      (i) => i.code.toUpperCase() == code.trim().toUpperCase() && i.open,
+    );
+    if (at == -1) throw BackendException('No open invitation with that code.');
+    throw BackendException(
+      'Claiming a code needs a real project. On demo data there is only one '
+      'person, and both sides of a contract cannot be them.',
+    );
+  }
+
+  @override
+  Future<List<Invitation>> myInvitations() async =>
+      List.unmodifiable(_invitations.reversed);
+
+  @override
+  Future<void> revokeInvitation(String id) async {
+    final at = _invitations.indexWhere((i) => i.id == id);
+    if (at == -1) throw BackendException('No such invitation.');
+    final was = _invitations[at];
+    _invitations[at] = Invitation(
+      id: was.id,
+      code: was.code,
+      email: was.email,
+      inviteeIs: was.inviteeIs,
+      description: was.description,
+      amount: was.amount,
+      expiresAt: was.expiresAt,
+      revokedAt: DateTime.now(),
+    );
+  }
+
   @override
   bool get canRecordVerification => true;
 

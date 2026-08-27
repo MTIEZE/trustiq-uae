@@ -2,7 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:trustiq_app/app_state.dart';
+import 'package:trustiq_app/data/backend.dart';
 import 'package:trustiq_app/data/config.dart';
+import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/data/language.dart';
 import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/data/demo_data.dart';
@@ -351,4 +354,66 @@ void main() {
       }
     });
   });
+
+  group('inviting somebody who is not here yet', () {
+    Invitation at(DateTime expires, {DateTime? claimed, DateTime? revoked}) => Invitation(
+          id: 'i', code: 'ABCD-EFGH', email: 'someone@example.ae',
+          inviteeIs: Role.seller, description: 'Work', amount: Fils(1000),
+          expiresAt: expires, claimedAt: claimed, revokedAt: revoked,
+        );
+
+    final future = DateTime.now().add(const Duration(days: 1));
+    final past = DateTime.now().subtract(const Duration(days: 1));
+
+    test('an invitation is open only while all three things are true', () {
+      expect(at(future).open, isTrue);
+      expect(at(past).open, isFalse);
+      expect(at(future, claimed: DateTime.now()).open, isFalse);
+      expect(at(future, revoked: DateTime.now()).open, isFalse);
+    });
+
+    test('the three ways it closes stay apart', () {
+      // The screen says which one happened. Collapsing them into "not
+      // available" would leave somebody wondering whether to send it again.
+      expect(at(past).expired, isTrue);
+      expect(at(past).claimed, isFalse);
+      expect(at(future, claimed: DateTime.now()).claimed, isTrue);
+      expect(at(future, revoked: DateTime.now()).revoked, isTrue);
+      // A claimed invitation is not also expired, whatever the clock says.
+      expect(at(past, claimed: DateTime.now()).expired, isFalse);
+    });
+
+    test('a missing counterparty reaches the screen as itself', () async {
+      // It travels through AppState._guard, which turns a BackendException
+      // into a banner. This one has to survive that, because the screen turns
+      // it into an offer to invite them rather than a dead end.
+      final state = AppState(backend: _NoSuchPersonBackend());
+
+      await expectLater(
+        state.createContract(
+          description: 'Work', terms: 'Terms.', amount: Fils(1000),
+          youAre: Role.buyer, counterparty: 'nobody@example.ae',
+        ),
+        throwsA(isA<CounterpartyHasNoAccount>()
+            .having((e) => e.email, 'email', 'nobody@example.ae')),
+      );
+
+      expect(state.error, isNull,
+          reason: 'it is an offer, not a failure, so nothing should be in the banner');
+    });
+  });
+}
+
+/// Stands in for a project where the address belongs to nobody.
+class _NoSuchPersonBackend extends DemoBackend {
+  @override
+  Future<Contract> createContract({
+    required String description,
+    required String terms,
+    required Fils amount,
+    required Role youAre,
+    required String counterpartyEmail,
+  }) async {
+    throw CounterpartyHasNoAccount(counterpartyEmail);
+  }
 }

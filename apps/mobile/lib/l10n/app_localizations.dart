@@ -1339,6 +1339,197 @@ abstract class L {
   /// **'Not verified yet. You can draft and send contracts, but not accept one.'**
   String get identityNotVerifiedYet;
 
+  /// No description provided for @noAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'They have no TrustIQ account'**
+  String get noAccountTitle;
+
+  /// No description provided for @noAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody holds {email}. You can send them an invitation instead: they get a code, and when they join, this contract is waiting for them already sent.'**
+  String noAccountBody(String email);
+
+  /// No description provided for @sendAnInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Send an invitation'**
+  String get sendAnInvitation;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @invitationSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation ready'**
+  String get invitationSent;
+
+  /// No description provided for @invitationCodeIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Their code'**
+  String get invitationCodeIs;
+
+  /// No description provided for @invitationShareNote.
+  ///
+  /// In en, this message translates to:
+  /// **'TrustIQ does not email them. Send this yourself, however you already talk to them.'**
+  String get invitationShareNote;
+
+  /// No description provided for @copyTheMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the message'**
+  String get copyTheMessage;
+
+  /// No description provided for @copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copied;
+
+  /// No description provided for @invitationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'I have set up our agreement on TrustIQ: {description}, {amount}. Download TrustIQ, sign up with {email}, and enter code {code} to see it.'**
+  String invitationMessage(
+    String description,
+    String amount,
+    String email,
+    String code,
+  );
+
+  /// No description provided for @invitationBoundNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The code only works for {email}. Anyone else who sees it cannot use it.'**
+  String invitationBoundNote(String email);
+
+  /// No description provided for @invitationExpiryNote.
+  ///
+  /// In en, this message translates to:
+  /// **'It stops working after 30 days, and you can withdraw it before then.'**
+  String get invitationExpiryNote;
+
+  /// No description provided for @invitations.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitations'**
+  String get invitations;
+
+  /// No description provided for @invitationsSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get invitationsSent;
+
+  /// No description provided for @noInvitationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'You have not invited anyone.'**
+  String get noInvitationsYet;
+
+  /// No description provided for @noInvitationsYetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When you address a contract to someone with no account, the invitation appears here.'**
+  String get noInvitationsYetBody;
+
+  /// No description provided for @haveACode.
+  ///
+  /// In en, this message translates to:
+  /// **'I have a code'**
+  String get haveACode;
+
+  /// No description provided for @enterTheCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code'**
+  String get enterTheCode;
+
+  /// No description provided for @codeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'ABCD-EFGH'**
+  String get codeHint;
+
+  /// No description provided for @useTheCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the contract'**
+  String get useTheCode;
+
+  /// No description provided for @codeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The code was given to you by whoever wrote the contract. It only works for the address on your account.'**
+  String get codeNote;
+
+  /// No description provided for @invitationClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used'**
+  String get invitationClaimed;
+
+  /// No description provided for @invitationRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawn'**
+  String get invitationRevoked;
+
+  /// No description provided for @invitationExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get invitationExpired;
+
+  /// No description provided for @invitationOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get invitationOpen;
+
+  /// No description provided for @withdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get withdraw;
+
+  /// No description provided for @withdrawInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw this invitation?'**
+  String get withdrawInvitation;
+
+  /// No description provided for @withdrawInvitationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The code stops working. Nothing has been agreed yet, so there is nothing to undo.'**
+  String get withdrawInvitationBody;
+
+  /// No description provided for @theyWillBe.
+  ///
+  /// In en, this message translates to:
+  /// **'They will be the {role}'**
+  String theyWillBe(String role);
+
+  /// No description provided for @buyerWord.
+  ///
+  /// In en, this message translates to:
+  /// **'buyer'**
+  String get buyerWord;
+
+  /// No description provided for @sellerWord.
+  ///
+  /// In en, this message translates to:
+  /// **'seller'**
+  String get sellerWord;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

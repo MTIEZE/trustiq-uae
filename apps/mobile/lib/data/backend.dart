@@ -68,6 +68,9 @@ abstract interface class Backend {
   /// disagree with itself.
   Future<List<Contract>> loadContracts();
 
+  /// Throws [CounterpartyHasNoAccount] when the address belongs to nobody.
+  /// A typed failure rather than a message the caller has to read, because
+  /// the screen turns that one case into an offer to invite them instead.
   Future<Contract> createContract({
     required String description,
     required String terms,
@@ -75,6 +78,28 @@ abstract interface class Backend {
     required Role youAre,
     required String counterpartyEmail,
   });
+
+  /// Records the same contract for somebody who has no account, and returns
+  /// the code to send them.
+  ///
+  /// No contract exists yet. One appears when they claim the code, which is
+  /// the first moment there are two people to hang it on.
+  Future<Invitation> inviteCounterparty({
+    required String description,
+    required String terms,
+    required Fils amount,
+    required Role youAre,
+    required String counterpartyEmail,
+  });
+
+  /// Turns a code into a contract. Returns its id.
+  Future<String> claimInvitation(String code);
+
+  /// What you have sent. Never what was sent to you: an invitation reaches you
+  /// as a code somebody hands you, not as a list you can browse.
+  Future<List<Invitation>> myInvitations();
+
+  Future<void> revokeInvitation(String id);
 
   /// Fires a transition. Returns null on success, or why it was refused.
   Future<TransitionError?> fire(String contractId, TransactionEvent event);
@@ -135,6 +160,55 @@ class BackendSession {
   final DateTime? identityVerifiedAt;
 
   bool get identityVerified => identityVerifiedAt != null;
+}
+
+/// A contract draft waiting for somebody who has not joined yet.
+class Invitation {
+  const Invitation({
+    required this.id,
+    required this.code,
+    required this.email,
+    required this.inviteeIs,
+    required this.description,
+    required this.amount,
+    required this.expiresAt,
+    this.claimedAt,
+    this.revokedAt,
+    this.contractId,
+  });
+
+  final String id;
+  final String code;
+  final String email;
+
+  /// Which side the invited person is on, not which side you are.
+  final Role inviteeIs;
+  final String description;
+  final Fils amount;
+  final DateTime expiresAt;
+  final DateTime? claimedAt;
+  final DateTime? revokedAt;
+  final String? contractId;
+
+  bool get claimed => claimedAt != null;
+  bool get revoked => revokedAt != null;
+  bool get expired => !claimed && !revoked && expiresAt.isBefore(DateTime.now());
+
+  /// Still worth sending. The three ways it stops being so are separate on
+  /// purpose: the screen says which one happened rather than just going grey.
+  bool get open => !claimed && !revoked && !expired;
+}
+
+/// The address on a new contract belongs to nobody yet.
+///
+/// Its own type because it is the one failure with a way forward: the screen
+/// offers to invite them rather than telling somebody to go and recruit a
+/// counterparty by themselves.
+class CounterpartyHasNoAccount extends BackendException {
+  CounterpartyHasNoAccount(this.email)
+      : super('Nobody on TrustIQ holds $email yet.');
+
+  final String email;
 }
 
 /// A backend call that failed for a reason worth showing someone.

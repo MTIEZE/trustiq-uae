@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import '../widgets/language_button.dart';
 import 'contract_detail_screen.dart';
 import 'new_contract_screen.dart';
+import 'invitations_screen.dart';
 import 'onboarding_screen.dart';
 import 'verify_identity_screen.dart';
 
@@ -129,9 +130,11 @@ class _Menu extends StatelessWidget {
       icon: const Icon(Icons.more_vert, size: IconSize.lg),
       onSelected: (choice) => Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => choice == 0
-              ? const OnboardingScreen()
-              : VerifyIdentityScreen(state: state),
+          builder: (_) => switch (choice) {
+            0 => const OnboardingScreen(),
+            1 => VerifyIdentityScreen(state: state),
+            _ => InvitationsScreen(state: state),
+          },
         ),
       ),
       itemBuilder: (_) => [
@@ -142,6 +145,10 @@ class _Menu extends StatelessWidget {
         PopupMenuItem(
           value: 1,
           child: _MenuRow(icon: Icons.badge_outlined, label: l.yourIdentity),
+        ),
+        PopupMenuItem(
+          value: 2,
+          child: _MenuRow(icon: Icons.mail_outline, label: l.invitations),
         ),
       ],
     );

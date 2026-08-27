@@ -711,6 +711,117 @@ class LEn extends L {
       'Not verified yet. You can draft and send contracts, but not accept one.';
 
   @override
+  String get noAccountTitle => 'They have no TrustIQ account';
+
+  @override
+  String noAccountBody(String email) {
+    return 'Nobody holds $email. You can send them an invitation instead: they get a code, and when they join, this contract is waiting for them already sent.';
+  }
+
+  @override
+  String get sendAnInvitation => 'Send an invitation';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get invitationSent => 'Invitation ready';
+
+  @override
+  String get invitationCodeIs => 'Their code';
+
+  @override
+  String get invitationShareNote =>
+      'TrustIQ does not email them. Send this yourself, however you already talk to them.';
+
+  @override
+  String get copyTheMessage => 'Copy the message';
+
+  @override
+  String get copied => 'Copied';
+
+  @override
+  String invitationMessage(
+    String description,
+    String amount,
+    String email,
+    String code,
+  ) {
+    return 'I have set up our agreement on TrustIQ: $description, $amount. Download TrustIQ, sign up with $email, and enter code $code to see it.';
+  }
+
+  @override
+  String invitationBoundNote(String email) {
+    return 'The code only works for $email. Anyone else who sees it cannot use it.';
+  }
+
+  @override
+  String get invitationExpiryNote =>
+      'It stops working after 30 days, and you can withdraw it before then.';
+
+  @override
+  String get invitations => 'Invitations';
+
+  @override
+  String get invitationsSent => 'Sent';
+
+  @override
+  String get noInvitationsYet => 'You have not invited anyone.';
+
+  @override
+  String get noInvitationsYetBody =>
+      'When you address a contract to someone with no account, the invitation appears here.';
+
+  @override
+  String get haveACode => 'I have a code';
+
+  @override
+  String get enterTheCode => 'Enter the code';
+
+  @override
+  String get codeHint => 'ABCD-EFGH';
+
+  @override
+  String get useTheCode => 'Open the contract';
+
+  @override
+  String get codeNote =>
+      'The code was given to you by whoever wrote the contract. It only works for the address on your account.';
+
+  @override
+  String get invitationClaimed => 'Used';
+
+  @override
+  String get invitationRevoked => 'Withdrawn';
+
+  @override
+  String get invitationExpired => 'Expired';
+
+  @override
+  String get invitationOpen => 'Waiting';
+
+  @override
+  String get withdraw => 'Withdraw';
+
+  @override
+  String get withdrawInvitation => 'Withdraw this invitation?';
+
+  @override
+  String get withdrawInvitationBody =>
+      'The code stops working. Nothing has been agreed yet, so there is nothing to undo.';
+
+  @override
+  String theyWillBe(String role) {
+    return 'They will be the $role';
+  }
+
+  @override
+  String get buyerWord => 'buyer';
+
+  @override
+  String get sellerWord => 'seller';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

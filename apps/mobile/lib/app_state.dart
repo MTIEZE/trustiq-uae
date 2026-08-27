@@ -240,6 +240,44 @@ class AppState extends ChangeNotifier {
    * Identity
    * ---------------------------------------------------------------- */
 
+  /* ---------------------------------------------------------------- *
+   * Invitations
+   * ---------------------------------------------------------------- */
+
+  /// Records a contract for somebody with no account, and returns the code.
+  ///
+  /// Deliberately not wrapped in the shared error handling: the screen that
+  /// calls this shows the code it gets back, so it has to see the failure
+  /// too rather than find a banner somewhere else.
+  Future<Invitation> invite({
+    required String description,
+    required String terms,
+    required Fils amount,
+    required Role youAre,
+    required String counterpartyEmail,
+  }) {
+    return _backend.inviteCounterparty(
+      description: description,
+      terms: terms,
+      amount: amount,
+      youAre: youAre,
+      counterpartyEmail: counterpartyEmail,
+    );
+  }
+
+  Future<List<Invitation>> invitations() => _backend.myInvitations();
+
+  Future<void> withdrawInvitation(String id) => _backend.revokeInvitation(id);
+
+  /// Turns a code into a contract and reloads, so the caller can pop straight
+  /// to a list that already has it.
+  Future<String> useInvitationCode(String code) async {
+    final id = await _backend.claimInvitation(code);
+    _contracts = await _backend.loadContracts();
+    notifyListeners();
+    return id;
+  }
+
   /// Runs identity verification and records it on success.
   Future<VerificationOutcome> verifyIdentity() async {
     final outcome = await _identity.verify(role: _viewingAs);
@@ -276,17 +314,29 @@ class AppState extends ChangeNotifier {
     required String counterparty,
   }) async {
     Contract? created;
+    CounterpartyHasNoAccount? noAccount;
+
     final ok = await _guard(() async {
-      created = await _backend.createContract(
-        description: description,
-        terms: terms,
-        amount: amount,
-        youAre: youAre,
-        counterpartyEmail: counterparty,
-      );
+      try {
+        created = await _backend.createContract(
+          description: description,
+          terms: terms,
+          amount: amount,
+          youAre: youAre,
+          counterpartyEmail: counterparty,
+        );
+      } on CounterpartyHasNoAccount catch (e) {
+        // Not a banner. This is the one failure with a way forward, and the
+        // screen turns it into an offer to invite them, so it has to arrive
+        // as itself rather than as a sentence in the error slot.
+        noAccount = e;
+        return;
+      }
       _setViewingAs(youAre);
       _contracts = await _backend.loadContracts();
     });
+
+    if (noAccount != null) throw noAccount!;
     return ok ? created : null;
   }
 

@@ -381,12 +381,9 @@ class SupabaseBackend implements Backend {
       {'p_email': counterpartyEmail},
       'looking up $counterpartyEmail',
     );
-    if (counterpartyId == null) {
-      throw BackendException(
-        'Nobody on TrustIQ holds $counterpartyEmail. They need an account '
-        'before a contract can be addressed to them.',
-      );
-    }
+    // Typed, because this is the one failure the screen can do something
+    // about: it offers to invite them instead.
+    if (counterpartyId == null) throw CounterpartyHasNoAccount(counterpartyEmail);
 
     late final Map<String, dynamic> created;
     try {
@@ -491,6 +488,74 @@ class SupabaseBackend implements Backend {
       throw BackendException(e.message);
     }
   }
+
+  @override
+  Future<Invitation> inviteCounterparty({
+    required String description,
+    required String terms,
+    required Fils amount,
+    required Role youAre,
+    required String counterpartyEmail,
+  }) async {
+    final row = await _rpc<Map<String, dynamic>>(
+      'invite_counterparty',
+      {
+        'p_email': counterpartyEmail,
+        // The invitation names the side the invited person is on, which is
+        // the opposite of the side the person filling the form is on.
+        'p_invitee_is': youAre == Role.buyer ? 'seller' : 'buyer',
+        'p_description': description,
+        'p_terms': terms,
+        'p_total_amount_fils': amount.value,
+      },
+      'inviting $counterpartyEmail',
+    );
+    return _invitationFrom(row);
+  }
+
+  @override
+  Future<String> claimInvitation(String code) async {
+    return _rpc<String>('claim_invitation', {'p_code': code}, 'using that code');
+  }
+
+  @override
+  Future<List<Invitation>> myInvitations() async {
+    final rows = await _rpc<List<dynamic>>('my_invitations', {}, 'your invitations');
+    return rows
+        .cast<Map<String, dynamic>>()
+        .map(_invitationFrom)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> revokeInvitation(String id) async {
+    await _rpc<void>('revoke_invitation', {'p_id': id}, 'withdrawing that invitation');
+  }
+
+  Invitation _invitationFrom(Map<String, dynamic> row) => Invitation(
+        id: row['id'] as String,
+        code: row['code'] as String,
+        email: row['invited_email'] as String,
+        inviteeIs: (row['invitee_is'] as String) == 'buyer' ? Role.buyer : Role.seller,
+        description: row['description'] as String,
+        amount: Fils(_asInt(row['total_amount_fils'])),
+        expiresAt: DateTime.parse(row['expires_at'] as String),
+        claimedAt: _asDate(row['claimed_at']),
+        revokedAt: _asDate(row['revoked_at']),
+        contractId: row['transaction_id'] as String?,
+      );
+
+  // bigint comes back as an int from PostgREST, but a large one arrives as a
+  // string. Money is never parsed loosely anywhere else in this codebase and
+  // is not going to start here.
+  static int _asInt(Object? v) => switch (v) {
+        final int i => i,
+        final String s => int.parse(s),
+        _ => throw BackendException('An amount came back as $v, which is not a number.'),
+      };
+
+  static DateTime? _asDate(Object? v) =>
+      v == null ? null : DateTime.parse(v as String);
 
   @override
   bool get canRecordVerification => false;

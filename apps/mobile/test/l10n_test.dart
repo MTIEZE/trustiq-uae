@@ -56,8 +56,12 @@ void main() {
 
     test('the Arabic file is actually in Arabic', () {
       // Catches a key copied across and never translated. The exceptions are
-      // deliberate: the brand, and each language naming itself.
-      const untranslated = {'appName', 'languageEnglish', 'languageArabic'};
+      // deliberate: the brand, each language naming itself, and codeHint,
+      // which is an example of an invitation code rather than a sentence.
+      // Codes are generated from a Latin alphabet chosen for being unambiguous
+      // when read aloud, so an Arabic example would show somebody characters
+      // they will never be asked to type.
+      const untranslated = {'appName', 'languageEnglish', 'languageArabic', 'codeHint'};
       final arabic = RegExp(r'[؀-ۿ]');
       for (final key in keys(ar)) {
         if (untranslated.contains(key)) continue;

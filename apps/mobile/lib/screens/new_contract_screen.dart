@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:trustiq_core/trustiq_core.dart';
+import 'package:flutter/services.dart';
 
 import '../app_state.dart';
+import '../data/backend.dart';
+import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'contract_detail_screen.dart';
+import 'invitation_created_screen.dart';
 
 /// Creating a contract: the product's front door.
 ///
@@ -239,20 +242,28 @@ class _NewContractScreenState extends State<NewContractScreen> {
     final amount = _parsedAmount;
     if (amount == null) return;
 
-    final contract = await widget.state.createContract(
-      description: _description.text.trim(),
-      terms: _terms.text.trim(),
-      amount: amount,
-      youAre: _youAre,
-      counterparty: _counterparty.text.trim(),
-    );
+    Contract? contract;
+    try {
+      contract = await widget.state.createContract(
+        description: _description.text.trim(),
+        terms: _terms.text.trim(),
+        amount: amount,
+        youAre: _youAre,
+        counterparty: _counterparty.text.trim(),
+      );
+    } on CounterpartyHasNoAccount catch (e) {
+      if (!mounted) return;
+      await _offerAnInvitation(e.email, amount);
+      return;
+    }
 
     if (!mounted) return;
 
     // Null means the backend refused. The reason is on the state, and showing
     // it here beats opening a contract screen for a contract that does not
     // exist.
-    if (contract == null) {
+    final made = contract;
+    if (made == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.state.error ?? context.l.contractCouldNotBeCreated),
@@ -265,11 +276,62 @@ class _NewContractScreenState extends State<NewContractScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => ContractDetailScreen(
-          contractId: contract.id,
+          contractId: made.id,
           state: widget.state,
         ),
       ),
     );
+  }
+
+  /// The address belongs to nobody. Offer to invite them rather than stopping.
+  ///
+  /// Asked rather than done: an invitation puts somebody's email in TrustIQ's
+  /// records and produces a code they will be sent, and neither of those
+  /// should happen because a form was submitted with a typo in it.
+  Future<void> _offerAnInvitation(String email, Fils amount) async {
+    final l = context.l;
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.noAccountTitle),
+        content: Text(l.noAccountBody(email)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l.sendAnInvitation),
+          ),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+
+    try {
+      final invitation = await widget.state.invite(
+        description: _description.text.trim(),
+        terms: _terms.text.trim(),
+        amount: amount,
+        youAre: _youAre,
+        counterpartyEmail: email,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => InvitationCreatedScreen(
+            invitation: invitation,
+            state: widget.state,
+          ),
+        ),
+      );
+    } on BackendException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: context.c.critical),
+      );
+    }
   }
 }
 
