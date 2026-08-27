@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+
 import 'app_state.dart';
 import 'data/backend.dart';
 import 'data/config.dart';
 import 'data/demo_backend.dart';
+import 'data/language.dart';
 import 'data/supabase_backend.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/contracts_screen.dart';
 import 'screens/sign_in_screen.dart';
+import 'widgets/language_button.dart';
 import 'theme.dart';
 
 /// Reads the build-time configuration and starts against whatever it names.
@@ -31,12 +35,17 @@ Future<void> main() async {
     backend = DemoBackend();
   }
 
-  runApp(TrustIqApp(backend: backend));
+  final language = await LanguageController.load();
+
+  runApp(TrustIqApp(backend: backend, language: language));
 }
 
 class TrustIqApp extends StatefulWidget {
-  const TrustIqApp({super.key, required this.backend});
+  TrustIqApp({super.key, required this.backend, LanguageController? language})
+      : language = language ?? LanguageController.forTests();
+
   final Backend backend;
+  final LanguageController language;
 
   @override
   State<TrustIqApp> createState() => _TrustIqAppState();
@@ -62,6 +71,13 @@ class _TrustIqAppState extends State<TrustIqApp> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.language,
+      builder: (context, _) => _app(),
+    );
+  }
+
+  Widget _app() {
     return MaterialApp(
       title: 'TrustIQ',
       debugShowCheckedModeBanner: false,
@@ -70,11 +86,18 @@ class _TrustIqAppState extends State<TrustIqApp> {
       theme: buildTheme(TrustIqPalette.light),
       darkTheme: buildTheme(TrustIqPalette.dark),
       themeMode: ThemeMode.system,
-      home: ListenableBuilder(
-        listenable: _state,
-        builder: (context, _) => _state.isLive && !_state.signedIn
-            ? SignInScreen(state: _state)
-            : ContractsScreen(state: _state),
+      // Right to left comes with the Arabic locale; nothing else has to ask.
+      localizationsDelegates: L.localizationsDelegates,
+      supportedLocales: L.supportedLocales,
+      locale: widget.language.locale,
+      home: LanguageScope(
+        controller: widget.language,
+        child: ListenableBuilder(
+          listenable: _state,
+          builder: (context, _) => _state.isLive && !_state.signedIn
+              ? SignInScreen(state: _state)
+              : ContractsScreen(state: _state),
+        ),
       ),
     );
   }

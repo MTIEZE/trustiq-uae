@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../data/backend.dart';
+import '../l10n/app_localizations.dart';
 import '../theme.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
+import '../widgets/language_button.dart';
 
 /// Getting into a real project: signing in, signing up, and getting back in
 /// after forgetting a password.
@@ -56,7 +58,7 @@ class _SignInScreenState extends State<SignInScreen> {
   String? get _passwordComplaint {
     if (_mode != _Mode.signUp) return null;
     if (_password.text.isEmpty) return null;
-    if (_password.text.length < 8) return 'At least 8 characters.';
+    if (_password.text.length < 8) return _l.passwordTooShort;
     return null;
   }
 
@@ -97,8 +99,7 @@ class _SignInScreenState extends State<SignInScreen> {
         );
         if (outcome == SignUpOutcome.confirmationRequired && mounted) {
           setState(() {
-            _notice = 'Account created. Open the link we sent to '
-                '${_email.text.trim()}, then sign in.';
+            _notice = _l.confirmEmailNotice(_email.text.trim());
             _mode = _Mode.signIn;
           });
         }
@@ -108,8 +109,7 @@ class _SignInScreenState extends State<SignInScreen> {
           // Says the same thing whether or not the address has an account. The
           // other answer turns this form into a way to find out who is a user.
           setState(() {
-            _notice = 'If an account exists for ${_email.text.trim()}, a reset '
-                'link is on its way.';
+            _notice = _l.resetSentNotice(_email.text.trim());
             _mode = _Mode.signIn;
           });
         }
@@ -126,27 +126,39 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-  String get _title => switch (_mode) {
-        _Mode.signIn => 'Sign in',
-        _Mode.signUp => 'Create your account',
-        _Mode.reset => 'Reset your password',
-      };
+  L get _l => context.l;
 
-  String get _action => switch (_mode) {
-        _Mode.signIn => 'Sign in',
-        _Mode.signUp => 'Create account',
-        _Mode.reset => 'Send the link',
-      };
+  String get _title {
+    final l = _l;
+    return switch (_mode) {
+        _Mode.signIn => l.signInTitle,
+        _Mode.signUp => l.signUpTitle,
+        _Mode.reset => l.resetTitle,
+    };
+  }
 
-  String get _subtitle => switch (_mode) {
-        _Mode.signIn => 'Your contracts and disputes, where you left them.',
-        _Mode.signUp => 'Two minutes, and the next handshake is on the record.',
-        _Mode.reset => 'We will send a link to set a new one.',
-      };
+  String get _action {
+    final l = _l;
+    return switch (_mode) {
+        _Mode.signIn => l.signInAction,
+        _Mode.signUp => l.signUpAction,
+        _Mode.reset => l.resetAction,
+    };
+  }
+
+  String get _subtitle {
+    final l = _l;
+    return switch (_mode) {
+        _Mode.signIn => l.signInSubtitle,
+        _Mode.signUp => l.signUpSubtitle,
+        _Mode.reset => l.resetSubtitle,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.c;
+    final l = context.l;
     return Scaffold(
       // A quiet wash behind the card rather than flat grey. It gives the form
       // somewhere to sit on a wide screen, where a bare column just floats.
@@ -171,18 +183,13 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const TrustIqLockup(
-                      subtitle: 'The record two people can both rely on.',
-                    ),
-                    const SizedBox(height: Space.xxl),
+                    TrustIqLockup(subtitle: l.brandPromise),
+                    const SizedBox(height: Space.md),
+                    const LanguageButton(),
+                    const SizedBox(height: Space.lg),
                     _card(context),
                     const SizedBox(height: Space.xl),
-                    const RuleNote(
-                      'Your contracts are visible to you and to the other party, '
-                      'and to nobody else. That is enforced by the database, not '
-                      'by this app.',
-                      icon: Icons.lock_outline,
-                    ),
+                    RuleNote(l.privacyNote, icon: Icons.lock_outline),
                     const SizedBox(height: Space.lg),
                     Text(
                       widget.state.backendLabel,
@@ -201,6 +208,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Widget _card(BuildContext context) {
     final c = context.c;
+    final l = context.l;
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.lg),
@@ -230,9 +238,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 controller: _name,
                 textCapitalization: TextCapitalization.words,
                 autofillHints: const [AutofillHints.name],
-                decoration: const InputDecoration(
-                  labelText: 'Your name',
-                  helperText: 'What the other party sees on a contract.',
+                decoration: InputDecoration(
+                  labelText: l.fieldName,
+                  helperText: l.fieldNameHelper,
                 ),
                 onChanged: (_) => setState(() {}),
               ),
@@ -243,7 +251,7 @@ class _SignInScreenState extends State<SignInScreen> {
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
               autofillHints: const [AutofillHints.email],
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: l.fieldEmail),
               onChanged: (_) => setState(() {}),
             ),
             if (_mode != _Mode.reset) ...[
@@ -255,10 +263,10 @@ class _SignInScreenState extends State<SignInScreen> {
                   _mode == _Mode.signUp ? AutofillHints.newPassword : AutofillHints.password,
                 ],
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: l.fieldPassword,
                   errorText: _passwordComplaint,
                   suffixIcon: IconButton(
-                    tooltip: _showPassword ? 'Hide password' : 'Show password',
+                    tooltip: _showPassword ? l.hidePassword : l.showPassword,
                     icon: Icon(
                       _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                       size: IconSize.md,
@@ -287,12 +295,12 @@ class _SignInScreenState extends State<SignInScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _Link('Create an account', () => _switchTo(_Mode.signUp)),
-                  _Link('Forgot password', () => _switchTo(_Mode.reset)),
+                  _Link(l.createAnAccount, () => _switchTo(_Mode.signUp)),
+                  _Link(l.forgotPassword, () => _switchTo(_Mode.reset)),
                 ],
               )
             else
-              Center(child: _Link('Back to signing in', () => _switchTo(_Mode.signIn))),
+              Center(child: _Link(l.backToSigningIn, () => _switchTo(_Mode.signIn))),
           ],
         ),
       ),

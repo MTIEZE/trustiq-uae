@@ -58,7 +58,7 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
+        padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           InfoCard(
             child: Column(
@@ -174,7 +174,7 @@ class _KeptRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 2),
+          padding: const EdgeInsetsDirectional.only(top: 2),
           child: Icon(
             kept ? Icons.check_circle_outline : Icons.block,
             size: IconSize.md,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
+import 'l10n/app_localizations.dart';
+
 /// The app's visual language.
 ///
 /// TrustIQ is a record people reach for when a deal has gone wrong, so the
@@ -296,6 +298,11 @@ abstract final class Radii {
 /// ships in Arabic the typography extends instead of being redone.
 const kFontFamily = 'IBMPlexSans';
 
+/// The Arabic companion. Reached through the fallback chain rather than
+/// selected by locale, so it also covers an Arabic name inside an English
+/// sentence, which is the common case here.
+const kFontFamilyArabic = 'IBMPlexSansArabic';
+
 /// The type scale.
 ///
 /// Tracking tightens as size grows and opens up as it shrinks, which is what
@@ -354,6 +361,11 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
     // Set once, here. Every text style in the app inherits it, so there is no
     // second place where a family could be forgotten.
     fontFamily: kFontFamily,
+    // Arabic glyphs fall through to the companion face automatically, per
+    // glyph. That means a sentence mixing both scripts renders correctly
+    // without the theme having to know which language is on, and the two faces
+    // are drawn to sit at the same weight and rhythm.
+    fontFamilyFallback: const [kFontFamilyArabic],
     colorScheme: ColorScheme.fromSeed(
       seedColor: c.accent,
       brightness: brightness,
@@ -491,42 +503,44 @@ OutlineInputBorder _field(Color color, {double width = 1}) => OutlineInputBorder
 
 /// How a state looks and reads to a person.
 ///
-/// The label is the plain-language one, not the wire value: a party should
-/// never be shown `pending_acceptance`.
+/// The label is the plain-language one in the reader's language, never the
+/// wire value: a party should not be shown `pending_acceptance` in any script.
 ({String label, Color fg, Color bg}) transactionStateStyle(
   TransactionState state,
   TrustIqPalette c,
+  L l,
 ) {
   return switch (state) {
-    TransactionState.draft => (label: 'Draft', fg: c.inkFaint, bg: c.surfaceSunken),
+    TransactionState.draft => (label: l.stateDraft, fg: c.inkFaint, bg: c.surfaceSunken),
     TransactionState.pendingAcceptance =>
-      (label: 'Awaiting acceptance', fg: c.caution, bg: c.cautionSoft),
-    TransactionState.active => (label: 'In progress', fg: c.accent, bg: c.accentSoft),
-    TransactionState.delivered => (label: 'Awaiting review', fg: c.caution, bg: c.cautionSoft),
-    TransactionState.completed => (label: 'Completed', fg: c.ok, bg: c.okSoft),
-    TransactionState.disputed => (label: 'Disputed', fg: c.critical, bg: c.criticalSoft),
-    TransactionState.resolved => (label: 'Resolved', fg: c.ok, bg: c.okSoft),
-    TransactionState.declined => (label: 'Declined', fg: c.inkFaint, bg: c.surfaceSunken),
-    TransactionState.cancelled => (label: 'Cancelled', fg: c.inkFaint, bg: c.surfaceSunken),
-    TransactionState.expired => (label: 'Expired', fg: c.inkFaint, bg: c.surfaceSunken),
+      (label: l.stateAwaitingAcceptance, fg: c.caution, bg: c.cautionSoft),
+    TransactionState.active => (label: l.stateInProgress, fg: c.accent, bg: c.accentSoft),
+    TransactionState.delivered =>
+      (label: l.stateAwaitingReview, fg: c.caution, bg: c.cautionSoft),
+    TransactionState.completed => (label: l.stateCompleted, fg: c.ok, bg: c.okSoft),
+    TransactionState.disputed => (label: l.stateDisputed, fg: c.critical, bg: c.criticalSoft),
+    TransactionState.resolved => (label: l.stateResolved, fg: c.ok, bg: c.okSoft),
+    TransactionState.declined => (label: l.stateDeclined, fg: c.inkFaint, bg: c.surfaceSunken),
+    TransactionState.cancelled => (label: l.stateCancelled, fg: c.inkFaint, bg: c.surfaceSunken),
+    TransactionState.expired => (label: l.stateExpired, fg: c.inkFaint, bg: c.surfaceSunken),
   };
 }
 
 /// The label on the button that fires an event, phrased for the person
 /// pressing it rather than after the enum member.
-String transactionEventLabel(TransactionEvent event) {
+String transactionEventLabel(TransactionEvent event, L l) {
   return switch (event) {
-    TransactionEvent.submit => 'Send to the other party',
-    TransactionEvent.withdraw => 'Withdraw',
-    TransactionEvent.accept => 'Accept the terms',
-    TransactionEvent.decline => 'Decline',
-    TransactionEvent.expire => 'Expire',
-    TransactionEvent.markDelivered => 'Mark as delivered',
-    TransactionEvent.requestRevision => 'Request changes',
-    TransactionEvent.confirmDelivery => 'Confirm and close',
-    TransactionEvent.openDispute => 'Open a dispute',
-    TransactionEvent.resolveDispute => 'Resolve',
-    TransactionEvent.cancelByAgreement => 'Cancel by agreement',
+    TransactionEvent.submit => l.eventSubmit,
+    TransactionEvent.withdraw => l.eventWithdraw,
+    TransactionEvent.accept => l.eventAccept,
+    TransactionEvent.decline => l.eventDecline,
+    TransactionEvent.expire => l.eventExpire,
+    TransactionEvent.markDelivered => l.eventMarkDelivered,
+    TransactionEvent.requestRevision => l.eventRequestRevision,
+    TransactionEvent.confirmDelivery => l.eventConfirmDelivery,
+    TransactionEvent.openDispute => l.eventOpenDispute,
+    TransactionEvent.resolveDispute => l.eventResolveDispute,
+    TransactionEvent.cancelByAgreement => l.eventCancelByAgreement,
   };
 }
 
@@ -549,23 +563,31 @@ ActionTone transactionEventTone(TransactionEvent event) {
   };
 }
 
-String disputeStateLabel(DisputeState state) {
+String disputeStateLabel(DisputeState state, L l) {
   return switch (state) {
-    DisputeState.open => 'Open',
-    DisputeState.aiReview => 'Being analysed',
-    DisputeState.proposalIssued => 'Proposal issued',
-    DisputeState.accepted => 'Closed by agreement',
-    DisputeState.escalated => 'With a human reviewer',
-    DisputeState.humanReview => 'Under human review',
-    DisputeState.resolvedByHuman => 'Decided by a reviewer',
-    DisputeState.withdrawn => 'Withdrawn',
+    DisputeState.open => l.disputeOpen,
+    DisputeState.aiReview => l.disputeBeingAnalysed,
+    DisputeState.proposalIssued => l.disputeProposalIssued,
+    DisputeState.accepted => l.disputeClosedByAgreement,
+    DisputeState.escalated => l.disputeEscalated,
+    DisputeState.humanReview => l.disputeUnderHumanReview,
+    DisputeState.resolvedByHuman => l.disputeDecidedByReviewer,
+    DisputeState.withdrawn => l.disputeWithdrawn,
   };
 }
 
-String decisionLabel(ResolutionDecision decision) {
+String decisionLabel(ResolutionDecision decision, L l) {
   return switch (decision) {
-    ResolutionDecision.releaseToSeller => 'Everything to the seller',
-    ResolutionDecision.refundToBuyer => 'Everything refunded to the buyer',
-    ResolutionDecision.split => 'Split between both parties',
+    ResolutionDecision.releaseToSeller => l.decisionReleaseToSeller,
+    ResolutionDecision.refundToBuyer => l.decisionRefundToBuyer,
+    ResolutionDecision.split => l.decisionSplit,
   };
+}
+
+/// The localisations for the current context.
+///
+/// Paired with `context.c` for the palette, so a build method opens with the
+/// two things that vary by who is looking: their theme and their language.
+extension TrustIqL10nContext on BuildContext {
+  L get l => L.of(this);
 }

@@ -96,7 +96,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
+        padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           // A form of three questions rather than one wall of fields. The
           // numbers are not decoration: they tell someone how much is left.
@@ -306,7 +306,7 @@ class _Step extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     return Padding(
-      padding: const EdgeInsets.only(bottom: Space.md, left: Space.xs),
+      padding: const EdgeInsetsDirectional.only(bottom: Space.md, start: Space.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

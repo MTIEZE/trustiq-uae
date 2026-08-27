@@ -33,7 +33,7 @@ class DisputeScreen extends StatelessWidget {
             ),
           ),
           body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 32),
             children: [
               // The two facts that frame everything below: where the case
               // stands, and how much is riding on it.
@@ -53,7 +53,7 @@ class DisputeScreen extends StatelessWidget {
                               Container(
                                 width: 7,
                                 height: 7,
-                                margin: const EdgeInsets.only(right: Space.sm),
+                                margin: const EdgeInsetsDirectional.only(end: Space.sm),
                                 decoration: BoxDecoration(
                                   color: _statusColour(dispute.state, c),
                                   shape: BoxShape.circle,
@@ -61,7 +61,7 @@ class DisputeScreen extends StatelessWidget {
                               ),
                               Flexible(
                                 child: Text(
-                                  disputeStateLabel(dispute.state),
+                                  disputeStateLabel(dispute.state, context.l),
                                   style: Type.heading.copyWith(fontSize: 15.5),
                                 ),
                               ),
@@ -353,7 +353,7 @@ class _EvidenceRow extends StatelessWidget {
         if (item.note != null) ...[
           const SizedBox(height: 6),
           Padding(
-            padding: const EdgeInsets.only(left: 28),
+            padding: const EdgeInsetsDirectional.only(start: 28),
             child: Text(
               item.note!,
               style: TextStyle(fontSize: 13, height: 1.45, color: c.inkSoft),
@@ -362,7 +362,7 @@ class _EvidenceRow extends StatelessWidget {
         ],
         const SizedBox(height: 6),
         Padding(
-          padding: const EdgeInsets.only(left: 28),
+          padding: const EdgeInsetsDirectional.only(start: 28),
           child: SelectableText(
             item.sha256,
             style: TextStyle(
@@ -380,7 +380,7 @@ class _EvidenceRow extends StatelessWidget {
         if (!item.extractionStatus.wasRead) ...[
           const SizedBox(height: 6),
           Padding(
-            padding: const EdgeInsets.only(left: 28),
+            padding: const EdgeInsetsDirectional.only(start: 28),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -488,7 +488,7 @@ class _ProposalCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              decisionLabel(proposal.decision),
+              decisionLabel(proposal.decision, context.l),
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
@@ -505,12 +505,12 @@ class _ProposalCard extends StatelessWidget {
             const SizedBox(height: 10),
             for (final finding in proposal.findings)
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsetsDirectional.only(bottom: 10),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(top: 3),
+                      padding: EdgeInsetsDirectional.only(top: 3),
                       child: Icon(Icons.link, size: IconSize.sm, color: c.inkFaint),
                     ),
                     const SizedBox(width: 10),

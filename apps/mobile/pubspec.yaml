@@ -43,6 +43,10 @@ dependencies:
   crypto: ^3.0.7
   supabase_flutter: ^2.17.2
   http: ^1.6.0
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.3
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +75,9 @@ flutter:
   # is drawn as its companion. When TrustIQ ships in Arabic the typography
   # extends rather than gets redone. Licensed under the SIL OFL 1.1, whose text
   # is in assets/fonts/OFL.txt as the licence requires.
+  # Turns lib/l10n/*.arb into a typed class at build time.
+  generate: true
+
   fonts:
     - family: IBMPlexSans
       fonts:
@@ -81,6 +88,21 @@ flutter:
         - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
           weight: 600
         - asset: assets/fonts/IBMPlexSans-Bold.ttf
+          weight: 700
+
+    # The companion Arabic face, drawn alongside the Latin one. This is the
+    # reason IBM Plex was chosen over Inter: the two are designed to sit at the
+    # same weight and rhythm, so a bilingual screen does not look like two
+    # different products stitched together.
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
           weight: 700
 
 

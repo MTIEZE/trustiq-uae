@@ -5,6 +5,7 @@ import '../app_state.dart';
 import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/language_button.dart';
 import 'contract_detail_screen.dart';
 import 'new_contract_screen.dart';
 
@@ -15,6 +16,7 @@ class ContractsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
+    final l = context.l;
     final needsYou = state.contracts
         .where((c) => state.actionsFor(c).any(_isWaitingOnYou))
         .toList();
@@ -22,18 +24,16 @@ class ContractsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Contracts',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
-        ),
+        title: Text(l.contracts),
         actions: [
           // Only in the demo. Against a real project the side you are on comes
           // from your session and cannot be chosen, and offering the control
           // anyway would suggest otherwise.
+          const LanguageButton(compact: true),
           if (!state.isLive) _RoleSwitch(state: state),
           if (state.isLive)
             IconButton(
-              tooltip: 'Sign out of ${state.backendLabel}',
+              tooltip: l.signOutOf(state.backendLabel),
               onPressed: state.signOut,
               icon: const Icon(Icons.logout, size: IconSize.lg),
             ),
@@ -49,19 +49,15 @@ class ContractsScreen extends StatelessWidget {
         backgroundColor: c.accent,
         foregroundColor: c.onAccent,
         icon: const Icon(Icons.add),
-        label: const Text('New contract'),
+        label: Text(l.newContract),
       ),
       body: RefreshIndicator(
         onRefresh: state.refresh,
         child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 32),
         children: [
           if (!state.isLive) ...[
-            const RuleNote(
-              'Demo data. Nothing on this screen is stored anywhere, and no '
-              'contract here exists outside this app.',
-              icon: Icons.science_outlined,
-            ),
+            RuleNote(l.demoDataNote, icon: Icons.science_outlined),
             const SizedBox(height: 14),
           ],
           if (state.error != null) ...[
@@ -77,7 +73,7 @@ class ContractsScreen extends StatelessWidget {
             const _NoContractsYet()
           else ...[
             if (needsYou.isNotEmpty) ...[
-              const SectionLabel('Waiting on you'),
+              SectionLabel(l.waitingOnYou),
               const SizedBox(height: 10),
               for (final c in needsYou) ...[
                 _ContractTile(contract: c, state: state, highlight: true),
@@ -85,7 +81,7 @@ class ContractsScreen extends StatelessWidget {
               ],
               const SizedBox(height: 14),
             ],
-            SectionLabel(needsYou.isEmpty ? 'Your contracts' : 'Everything else'),
+            SectionLabel(needsYou.isEmpty ? l.yourContracts : l.everythingElse),
             const SizedBox(height: 10),
             for (final c in rest) ...[
               _ContractTile(contract: c, state: state),
@@ -93,12 +89,7 @@ class ContractsScreen extends StatelessWidget {
             ],
           ],
           const SizedBox(height: 8),
-          const RuleNote(
-            'TrustIQ does not hold your money in v1. Payment happens directly '
-            'between you and the other party; what is tracked here is the '
-            'agreement, the delivery and the evidence.',
-            icon: Icons.account_balance_outlined,
-          ),
+          RuleNote(l.noEscrowNote, icon: Icons.account_balance_outlined),
         ],
         ),
       ),
@@ -125,15 +116,15 @@ class _RoleSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Demo only: switch which side of the contracts you are viewing',
+      message: context.l.demoRoleSwitchTooltip,
       child: SegmentedButton<Role>(
         style: SegmentedButton.styleFrom(
           visualDensity: VisualDensity.compact,
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
-        segments: const [
-          ButtonSegment(value: Role.buyer, label: Text('Buyer')),
-          ButtonSegment(value: Role.seller, label: Text('Seller')),
+        segments: [
+          ButtonSegment(value: Role.buyer, label: Text(context.l.viewAsBuyer)),
+          ButtonSegment(value: Role.seller, label: Text(context.l.viewAsSeller)),
         ],
         selected: {state.viewingAs},
         showSelectedIcon: false,
@@ -187,7 +178,7 @@ class _ContractTile extends StatelessWidget {
             child: Stack(
               children: [
                 Padding(
-                  padding: EdgeInsets.fromLTRB(
+                  padding: EdgeInsetsDirectional.fromSTEB(
                     highlight ? Space.xl : Space.lg,
                     Space.lg,
                     Space.lg,
@@ -240,15 +231,17 @@ class _ContractTile extends StatelessWidget {
                 // Marks the row without turning the whole card into a warning,
                 // which a coloured border all the way round does.
                 if (highlight)
-                  Positioned(
-                    left: 0,
+                  // Directional, so in Arabic the rail runs down the right
+                  // edge, which is where a reader's eye starts.
+                  PositionedDirectional(
+                    start: 0,
                     top: 0,
                     bottom: 0,
                     width: 3,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: c.accent,
-                        borderRadius: BorderRadius.horizontal(left: Radius.circular(Radii.lg)),
+                        borderRadius: BorderRadiusDirectional.horizontal(start: Radius.circular(Radii.lg)),
                       ),
                     ),
                   ),
@@ -273,7 +266,7 @@ class _ErrorNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+      padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 6, 10),
       decoration: BoxDecoration(
         color: c.critical.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
@@ -330,24 +323,19 @@ class _NoContractsYet extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     return Padding(
-      padding: const EdgeInsets.only(top: 48, bottom: 24),
+      padding: const EdgeInsetsDirectional.only(top: 48, bottom: 24),
       child: Column(
         children: [
           Icon(Icons.description_outlined, size: IconSize.hero, color: c.inkFaint.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          const Text(
-            'No contracts yet',
-            style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.lg),
+          Text(context.l.noContractsYet, style: Type.heading),
+          const SizedBox(height: Space.sm),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: Space.xxl),
             child: Text(
-              'Write down what was agreed, who is doing it and for how much. '
-              'Both sides sign, and from then on there is a record neither of '
-              'you can quietly change.',
+              context.l.noContractsBlurb,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.5, color: c.inkFaint, height: 1.5),
+              style: Type.small.copyWith(color: c.inkFaint),
             ),
           ),
         ],

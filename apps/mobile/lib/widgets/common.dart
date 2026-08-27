@@ -17,7 +17,7 @@ class StateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
-    final style = transactionStateStyle(state, c);
+    final style = transactionStateStyle(state, c, context.l);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10, vertical: compact ? 3 : 5),
       decoration: BoxDecoration(
@@ -30,7 +30,7 @@ class StateChip extends StatelessWidget {
           Container(
             width: 5,
             height: 5,
-            margin: const EdgeInsets.only(right: 6),
+            margin: const EdgeInsetsDirectional.only(end: 6),
             decoration: BoxDecoration(color: style.fg, shape: BoxShape.circle),
           ),
           Text(
@@ -167,7 +167,7 @@ class RuleNote extends StatelessWidget {
     final c = context.c;
     final colour = tone ?? c.accent;
     return Container(
-      padding: const EdgeInsets.fromLTRB(Space.md, Space.md, Space.md, Space.md),
+      padding: const EdgeInsetsDirectional.fromSTEB(Space.md, Space.md, Space.md, Space.md),
       decoration: BoxDecoration(
         color: colour.withValues(alpha: 0.045),
         borderRadius: BorderRadius.circular(Radii.md),
@@ -199,7 +199,7 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: Space.md, left: Space.xs),
+      padding: const EdgeInsetsDirectional.only(bottom: Space.md, start: Space.xs),
       child: Row(
         children: [
           Expanded(child: SectionLabel(label)),

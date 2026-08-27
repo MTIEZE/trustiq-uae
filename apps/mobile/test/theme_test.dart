@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trustiq_app/data/language.dart';
+import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/theme.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -292,10 +294,29 @@ void main() {
   });
 
   group('state styles', () {
-    test('every transaction state has a label and a readable pair', () {
-      for (final c in palettes.values) {
+    testWidgets('every transaction state has a label and a readable pair',
+        (tester) async {
+      // Needs a context now that the labels are translated, and it is worth
+      // running for both languages: a state whose Arabic label is empty would
+      // otherwise ship as a blank chip.
+      for (final locale in LanguageController.supported) {
+        late BuildContext ctx;
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: L.localizationsDelegates,
+            supportedLocales: L.supportedLocales,
+            locale: locale,
+            home: Builder(builder: (context) {
+              ctx = context;
+              return const SizedBox();
+            }),
+          ),
+        );
+        final l = L.of(ctx);
+
+        for (final c in palettes.values) {
         for (final state in TransactionState.values) {
-          final style = transactionStateStyle(state, c);
+          final style = transactionStateStyle(state, c, l);
           expect(style.label, isNotEmpty, reason: state.name);
           // Never the wire value: a party should not be shown
           // `pending_acceptance`.
@@ -305,6 +326,38 @@ void main() {
             greaterThanOrEqualTo(3.0),
             reason: '${c.isDark ? 'dark' : 'light'} ${state.name}',
           );
+        }
+        }
+      }
+    });
+
+    testWidgets('every label in both languages is filled in', (tester) async {
+      // A missing translation renders as an empty chip rather than as an
+      // error, which is the kind of thing that ships.
+      for (final locale in LanguageController.supported) {
+        late BuildContext ctx;
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: L.localizationsDelegates,
+            supportedLocales: L.supportedLocales,
+            locale: locale,
+            home: Builder(builder: (context) {
+              ctx = context;
+              return const SizedBox();
+            }),
+          ),
+        );
+        final l = L.of(ctx);
+        final code = locale.languageCode;
+
+        for (final e in TransactionEvent.values) {
+          expect(transactionEventLabel(e, l).trim(), isNotEmpty, reason: '$code ${e.name}');
+        }
+        for (final d in DisputeState.values) {
+          expect(disputeStateLabel(d, l).trim(), isNotEmpty, reason: '$code ${d.name}');
+        }
+        for (final d in ResolutionDecision.values) {
+          expect(decisionLabel(d, l).trim(), isNotEmpty, reason: '$code ${d.name}');
         }
       }
     });

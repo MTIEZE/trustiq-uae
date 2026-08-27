@@ -207,7 +207,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.section),
+        padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
           InfoCard(
             child: Column(

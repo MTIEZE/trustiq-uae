@@ -45,13 +45,13 @@ class ContractDetailScreen extends StatelessWidget {
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsetsDirectional.only(end: 16),
                 child: Center(child: StateChip(contract.state)),
               ),
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 32),
             children: [
               // The hero. What was agreed, for how much, and who with, in the
               // order somebody actually asks those questions.
@@ -128,7 +128,7 @@ class ContractDetailScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       for (final m in contract.milestones)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsetsDirectional.only(bottom: 8),
                           child: Row(
                             children: [
                               Icon(
@@ -346,7 +346,7 @@ class _DisputeBanner extends StatelessWidget {
                     const SectionLabel('Dispute'),
                     const SizedBox(height: 6),
                     Text(
-                      disputeStateLabel(dispute.state),
+                      disputeStateLabel(dispute.state, context.l),
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                     ),
                     if (awaitingYou) ...[
@@ -414,7 +414,7 @@ class _TimelineRow extends StatelessWidget {
               Container(
                 width: 9,
                 height: 9,
-                margin: const EdgeInsets.only(top: 5),
+                margin: const EdgeInsetsDirectional.only(top: 5),
                 decoration: BoxDecoration(
                   color: c.accent,
                   shape: BoxShape.circle,
@@ -433,7 +433,7 @@ class _TimelineRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 8 : 18),
+              padding: EdgeInsetsDirectional.only(bottom: isLast ? 8 : 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -479,7 +479,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
-    final label = transactionEventLabel(event);
+    final label = transactionEventLabel(event, context.l);
     return switch (transactionEventTone(event)) {
       ActionTone.primary => FilledButton(onPressed: onPressed, child: Text(label)),
       ActionTone.destructive => OutlinedButton(

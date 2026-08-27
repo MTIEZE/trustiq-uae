@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
 import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/data/demo_data.dart';
+import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/screens/contracts_screen.dart';
 import 'package:trustiq_app/main.dart';
 import 'package:trustiq_core/trustiq_core.dart';
@@ -205,6 +206,10 @@ void main() {
 /// ListenableBuilder above it. A test that mounts it bare gets one frame and
 /// then nothing, which looks exactly like a screen that failed to update.
 Widget _hosted(AppState state) => MaterialApp(
+      // The delegates come from main.dart in the app, so a test that mounts a
+      // screen directly has to supply them or every label throws.
+      localizationsDelegates: L.localizationsDelegates,
+      supportedLocales: L.supportedLocales,
       home: ListenableBuilder(
         listenable: state,
         builder: (_, _) => ContractsScreen(state: state),

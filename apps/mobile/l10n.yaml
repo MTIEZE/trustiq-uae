@@ -1,0 +1,7 @@
+# Flutter's own localisation generator. ARB in, a typed class out, so a missing
+# translation is a compile error rather than a blank label in production.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: L
+nullable-getter: false
