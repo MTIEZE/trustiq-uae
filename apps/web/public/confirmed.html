@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TrustIQ</title>
+<!--
+  Where Supabase sends somebody after they click the link in their email.
+
+  It was pointed at http://localhost:3000, which is the machine of whoever set
+  the project up, so every confirmation link sent to a real person led nowhere.
+
+  A static file rather than a route in the React app: GitHub Pages serves it
+  directly, with no SPA fallback to get right, and this page has to work on the
+  worst day of the funnel. It is deliberately self-contained.
+
+  It reads the fragment Supabase appends to decide what actually happened,
+  because a page that says "confirmed" to somebody whose link had expired is
+  worse than no page.
+-->
+<style>
+  :root {
+    --bg: #060908;
+    --surface: #121C19;
+    --border: #24332F;
+    --accent: #2DD4A7;
+    --amber: #E8B36A;
+    --coral: #E8716A;
+    --text: #EAF2EF;
+    --text-dim: #8FA39D;
+    --text-faint: #5A6E68;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 32px;
+  }
+  .mark {
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 12px;
+    background: rgba(45, 212, 167, 0.12);
+    color: var(--accent);
+    font-size: 22px;
+    margin-bottom: 22px;
+  }
+  h1 { font-size: 22px; line-height: 1.3; margin: 0 0 12px; letter-spacing: -0.4px; }
+  p { font-size: 15px; line-height: 1.65; color: var(--text-dim); margin: 0 0 14px; }
+  .note {
+    margin-top: 22px; padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13.5px; color: var(--text-faint);
+  }
+  .brand { margin-top: 26px; font-size: 13px; color: var(--text-faint); letter-spacing: 0.4px; }
+  .lang {
+    background: none; border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 999px; padding: 5px 13px; font: inherit; font-size: 13px;
+    cursor: pointer; float: right; margin-top: -6px;
+  }
+  .lang:hover { color: var(--text); border-color: var(--text-faint); }
+  [dir="rtl"] .lang { float: left; }
+  [data-tone="ok"] .mark { color: var(--accent); background: rgba(45, 212, 167, 0.12); }
+  [data-tone="warn"] .mark { color: var(--amber); background: rgba(232, 179, 106, 0.12); }
+  [data-tone="bad"] .mark { color: var(--coral); background: rgba(232, 113, 106, 0.12); }
+</style>
+</head>
+<body>
+  <main class="card" id="card" data-tone="ok">
+    <button class="lang" id="lang" type="button">العربية</button>
+    <div class="mark" id="mark">✓</div>
+    <h1 id="title"></h1>
+    <p id="body"></p>
+    <div class="note" id="note"></div>
+    <div class="brand">TrustIQ</div>
+  </main>
+
+<script>
+(function () {
+  var COPY = {
+    en: {
+      lang: 'العربية',
+      dir: 'ltr',
+      signup: {
+        tone: 'ok', mark: '✓',
+        title: 'Your email is confirmed',
+        body: 'That is all this page does. Go back to the TrustIQ app and sign in with the same address.',
+        note: 'You can close this tab.'
+      },
+      recovery: {
+        tone: 'warn', mark: '!',
+        title: 'Password reset is not finished yet',
+        body: 'Your link was valid, but setting a new password from it is not built into this version. Nothing has changed on your account.',
+        note: 'Contact TrustIQ and we will reset it with you.'
+      },
+      expired: {
+        tone: 'bad', mark: '!',
+        title: 'This link no longer works',
+        body: 'Confirmation links expire, and they only work once. Nothing is wrong with your account.',
+        note: 'Open the app and ask for a new one.'
+      },
+      plain: {
+        tone: 'ok', mark: '✓',
+        title: 'TrustIQ',
+        body: 'There is nothing to do on this page. It is where email links land.',
+        note: 'Open the app to carry on.'
+      }
+    },
+    ar: {
+      lang: 'English',
+      dir: 'rtl',
+      signup: {
+        tone: 'ok', mark: '✓',
+        title: 'تم تأكيد بريدك الإلكتروني',
+        body: 'هذا كل ما تفعله هذه الصفحة. عُد إلى تطبيق TrustIQ وسجّل الدخول بالعنوان نفسه.',
+        note: 'يمكنك إغلاق هذه الصفحة.'
+      },
+      recovery: {
+        tone: 'warn', mark: '!',
+        title: 'إعادة تعيين كلمة المرور غير مكتملة بعد',
+        body: 'رابطك كان صالحاً، لكن تعيين كلمة مرور جديدة منه غير متوفر في هذه النسخة. لم يتغيّر شيء في حسابك.',
+        note: 'تواصل مع TrustIQ وسنعيد تعيينها معك.'
+      },
+      expired: {
+        tone: 'bad', mark: '!',
+        title: 'هذا الرابط لم يعد يعمل',
+        body: 'روابط التأكيد تنتهي صلاحيتها، وتعمل مرة واحدة فقط. لا يوجد خطأ في حسابك.',
+        note: 'افتح التطبيق واطلب رابطاً جديداً.'
+      },
+      plain: {
+        tone: 'ok', mark: '✓',
+        title: 'TrustIQ',
+        body: 'لا يوجد ما تفعله في هذه الصفحة. هنا تصل روابط البريد الإلكتروني.',
+        note: 'افتح التطبيق للمتابعة.'
+      }
+    }
+  };
+
+  // Supabase puts the outcome in the fragment, and on success that fragment
+  // carries a real access token. Read it, then take it out of the address bar:
+  // it does not belong in browser history or in a screenshot.
+  var params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  var type = params.get('type');
+  var error = params.get('error') || params.get('error_code');
+  if (location.hash) {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  var which = error ? 'expired'
+            : type === 'recovery' ? 'recovery'
+            : (type === 'signup' || type === 'email_change' || type === 'magiclink') ? 'signup'
+            : 'plain';
+
+  var lang = (navigator.language || 'en').toLowerCase().indexOf('ar') === 0 ? 'ar' : 'en';
+
+  function render() {
+    var copy = COPY[lang];
+    var panel = copy[which];
+    document.documentElement.lang = lang;
+    document.documentElement.dir = copy.dir;
+    document.getElementById('card').dataset.tone = panel.tone;
+    document.getElementById('mark').textContent = panel.mark;
+    document.getElementById('title').textContent = panel.title;
+    document.getElementById('body').textContent = panel.body;
+    document.getElementById('note').textContent = panel.note;
+    document.getElementById('lang').textContent = copy.lang;
+  }
+
+  document.getElementById('lang').addEventListener('click', function () {
+    lang = lang === 'en' ? 'ar' : 'en';
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
