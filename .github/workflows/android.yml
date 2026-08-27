@@ -20,8 +20,14 @@
 #   ANDROID_KEY_ALIAS
 #   ANDROID_KEY_PASSWORD
 #
-# On Windows: certutil -encode trustiq-upload.jks keystore.txt
-# On macOS or Linux: base64 -i trustiq-upload.jks | tr -d '\n'
+# Windows, straight onto the clipboard and already clean:
+#   [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\trustiq-upload.jks")) | Set-Clipboard
+# macOS or Linux:
+#   base64 -i trustiq-upload.jks | tr -d '\n'
+#
+# Not certutil -encode: it wraps the output in BEGIN and END lines that have
+# to be stripped by hand, and a stray one reaches the runner and fails at
+# base64 -d with an error that says nothing about where it came from.
 #
 # SUPABASE_URL and SUPABASE_ANON_KEY are repository variables, not secrets. The
 # publishable key is designed to be readable: it ships inside the APK either
