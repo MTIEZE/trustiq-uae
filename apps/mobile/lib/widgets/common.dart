@@ -175,7 +175,7 @@ class RuleNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: colour),
+          Icon(icon, size: IconSize.md, color: colour),
           const SizedBox(width: Space.md),
           Expanded(
             child: Text(

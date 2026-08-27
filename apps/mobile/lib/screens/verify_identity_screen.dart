@@ -132,10 +132,10 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
           FilledButton(
             onPressed: _busy ? null : _verify,
             child: _busy
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onAccent),
                   )
                 : Text('Continue with ${widget.state.identityProviderName}'),
           ),
@@ -177,7 +177,7 @@ class _KeptRow extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Icon(
             kept ? Icons.check_circle_outline : Icons.block,
-            size: 17,
+            size: IconSize.md,
             color: kept ? c.ok : c.inkFaint,
           ),
         ),
@@ -238,13 +238,13 @@ class IdentityGateNotice extends StatelessWidget {
         side: BorderSide(color: c.caution),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Space.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.gpp_maybe_outlined, size: 18, color: c.caution),
+                Icon(Icons.gpp_maybe_outlined, size: IconSize.md, color: c.caution),
                 const SizedBox(width: 8),
                 const SectionLabel('Cannot be accepted yet'),
               ],

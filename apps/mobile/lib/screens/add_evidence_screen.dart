@@ -234,7 +234,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
                         children: [
                           Icon(
                             _busy ? Icons.hourglass_empty : Icons.upload_file_outlined,
-                            size: 26,
+                            size: IconSize.xl,
                             color: c.accent,
                           ),
                           const SizedBox(height: Space.md),
@@ -291,10 +291,10 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
           FilledButton(
             onPressed: (chosen == null || _busy) ? null : _upload,
             child: _busy
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onAccent),
                   )
                 : const Text('File this evidence'),
           ),
@@ -343,7 +343,7 @@ class _ChosenFile extends StatelessWidget {
     final c = context.c;
     return Row(
       children: [
-        Icon(Icons.description_outlined, size: 20, color: c.accent),
+        Icon(Icons.description_outlined, size: IconSize.lg, color: c.accent),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -376,7 +376,7 @@ class _ErrorNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(Space.lg),
       decoration: BoxDecoration(
         color: c.criticalSoft,
         borderRadius: BorderRadius.circular(8),

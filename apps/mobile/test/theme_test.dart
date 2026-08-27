@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -188,6 +189,105 @@ void main() {
       // It has to be comparable character by character, which a proportional
       // face makes needlessly hard.
       expect(Type.mono.fontFamily, 'monospace');
+    });
+  });
+
+  group('nothing paints a colour of its own', () {
+    // The drift guard. A hardcoded colour looks right in whichever theme its
+    // author had open and wrong in the other, and nobody notices until someone
+    // switches. Four spinners were painting themselves white, which reads as
+    // white-on-light-teal the moment the dark theme is on.
+    //
+    // The mark is exempt: a logo that changes colour with the interface is not
+    // a logo.
+    final screens = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'))
+        .where((f) => !f.path.endsWith('theme.dart'))
+        .where((f) => !f.path.endsWith('brand.dart'))
+        .toList();
+
+    test('there are screens to check', () {
+      expect(screens.length, greaterThan(5));
+    });
+
+    for (final file in screens) {
+      test('${file.uri.pathSegments.last} uses only the palette', () {
+        final offenders = <String>[];
+        final lines = file.readAsLinesSync();
+        for (var i = 0; i < lines.length; i += 1) {
+          final line = lines[i];
+          if (line.trimLeft().startsWith('//')) continue;
+          // Colors.transparent has no light or dark version to get wrong.
+          final cleaned = line.replaceAll('Colors.transparent', '');
+          if (RegExp(r'Colors\.[a-z]').hasMatch(cleaned) ||
+              RegExp(r'Color\(0x').hasMatch(cleaned)) {
+            offenders.add('  line ${i + 1}: ${line.trim()}');
+          }
+        }
+        expect(
+          offenders,
+          isEmpty,
+          reason: 'use context.c instead of a literal colour: '
+              '${offenders.join(" | ")}',
+        );
+      });
+    }
+  });
+
+  group('what sits on the accent', () {
+    for (final c in [TrustIqPalette.light, TrustIqPalette.dark]) {
+      final side = c.isDark ? 'dark' : 'light';
+      test('$side: a label on a filled button is readable', () {
+        // The dark accent is a light teal. White on it fails, which is exactly
+        // what four widgets were doing before onAccent existed.
+        expect(contrast(c.onAccent, c.accent), greaterThanOrEqualTo(4.5), reason: side);
+      });
+    }
+  });
+
+  group('the scales are actually used', () {
+    // The other half of the drift guard. A design system nobody follows is a
+    // file, not a system, and the way it stops being followed is one hardcoded
+    // 13 at a time.
+    final sources = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'))
+        .where((f) => !f.path.endsWith('theme.dart'))
+        .where((f) => !f.path.endsWith('brand.dart'))
+        .toList();
+
+    for (final file in sources) {
+      test('${file.uri.pathSegments.last} sizes its icons off the scale', () {
+        // There were ten icon sizes across the screens. The differences
+        // between most of them are invisible and the inconsistency is not.
+        final offenders = <String>[];
+        final lines = file.readAsLinesSync();
+        for (var i = 0; i < lines.length; i += 1) {
+          if (lines[i].trimLeft().startsWith('//')) continue;
+          if (RegExp(r'size: [0-9]').hasMatch(lines[i])) {
+            offenders.add('line ${i + 1}');
+          }
+        }
+        expect(offenders, isEmpty, reason: 'use IconSize: ${offenders.join(', ')}');
+      });
+    }
+
+    test('the scales have no accidental duplicates', () {
+      final spacing = [Space.xs, Space.inline, Space.sm, Space.md, Space.lg, Space.xl, Space.xxl, Space.section];
+      expect(spacing.toSet().length, spacing.length);
+      // And they climb, so picking "the next one up" is meaningful.
+      for (var i = 1; i < spacing.length; i += 1) {
+        expect(spacing[i], greaterThan(spacing[i - 1]));
+      }
+
+      final icons = [IconSize.sm, IconSize.md, IconSize.lg, IconSize.xl, IconSize.hero];
+      expect(icons.toSet().length, icons.length);
+      for (var i = 1; i < icons.length; i += 1) {
+        expect(icons[i], greaterThan(icons[i - 1]));
+      }
     });
   });
 

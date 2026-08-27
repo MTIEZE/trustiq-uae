@@ -120,12 +120,12 @@ class _NewContractScreenState extends State<NewContractScreen> {
                     ButtonSegment(
                       value: Role.buyer,
                       label: Text('I am paying'),
-                      icon: Icon(Icons.south_west, size: 16),
+                      icon: Icon(Icons.south_west, size: IconSize.md),
                     ),
                     ButtonSegment(
                       value: Role.seller,
                       label: Text('I am delivering'),
-                      icon: Icon(Icons.north_east, size: 16),
+                      icon: Icon(Icons.north_east, size: IconSize.md),
                     ),
                   ],
                   selected: {_youAre},
@@ -213,7 +213,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   const SizedBox(height: Space.md),
                   Row(
                     children: [
-                      Icon(Icons.check_circle_outline, size: 15, color: c.ok),
+                      Icon(Icons.check_circle_outline, size: IconSize.sm, color: c.ok),
                       const SizedBox(width: Space.sm),
                       Text(
                         'Recorded as ${formatAed(_parsedAmount!)}',

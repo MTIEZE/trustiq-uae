@@ -113,7 +113,7 @@ class DisputeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(Icons.add, size: IconSize.md),
                   label: const Text('Add evidence'),
                 ),
               ],
@@ -274,8 +274,8 @@ class _ClaimCard extends StatelessWidget {
           const SizedBox(height: Space.md),
           Row(
             children: [
-              Icon(Icons.person_outline, size: 13, color: c.inkFaint),
-              const SizedBox(width: 5),
+              Icon(Icons.person_outline, size: IconSize.sm, color: c.inkFaint),
+              const SizedBox(width: Space.inline),
               Flexible(
                 child: Text(
                   who,
@@ -336,7 +336,7 @@ class _EvidenceRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.description_outlined, size: 18, color: c.inkSoft),
+            Icon(Icons.description_outlined, size: IconSize.md, color: c.inkSoft),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -384,8 +384,8 @@ class _EvidenceRow extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.visibility_off_outlined, size: 13, color: c.inkFaint),
-                const SizedBox(width: 6),
+                Icon(Icons.visibility_off_outlined, size: IconSize.sm, color: c.inkFaint),
+                const SizedBox(width: Space.inline),
                 Expanded(
                   child: Text(
                     unreadableNote(item.extractionStatus),
@@ -466,7 +466,7 @@ class _ProposalCard extends StatelessWidget {
               children: [
                 Icon(
                   byHuman ? Icons.gavel_outlined : Icons.auto_awesome_outlined,
-                  size: 17,
+                  size: IconSize.md,
                   color: c.accent,
                 ),
                 const SizedBox(width: 8),
@@ -511,7 +511,7 @@ class _ProposalCard extends StatelessWidget {
                   children: [
                     Padding(
                       padding: EdgeInsets.only(top: 3),
-                      child: Icon(Icons.link, size: 14, color: c.inkFaint),
+                      child: Icon(Icons.link, size: IconSize.sm, color: c.inkFaint),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -736,7 +736,7 @@ class _AllocationLeg extends StatelessWidget {
           mainAxisAlignment: alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             Container(width: 8, height: 8, decoration: BoxDecoration(color: colour, shape: BoxShape.circle)),
-            const SizedBox(width: 6),
+            const SizedBox(width: Space.inline),
             Flexible(
               child: Text(
                 label,
@@ -772,7 +772,7 @@ class _AcceptanceState extends StatelessWidget {
     if (closed) {
       return Row(
         children: [
-          Icon(Icons.check_circle, size: 18, color: c.ok),
+          Icon(Icons.check_circle, size: IconSize.md, color: c.ok),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -813,7 +813,7 @@ class _AcceptanceRow extends StatelessWidget {
       children: [
         Icon(
           accepted ? Icons.check_circle : Icons.radio_button_unchecked,
-          size: 17,
+          size: IconSize.md,
           color: accepted ? c.ok : c.inkFaint,
         ),
         const SizedBox(width: 10),

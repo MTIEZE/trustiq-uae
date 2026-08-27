@@ -35,7 +35,7 @@ class ContractsScreen extends StatelessWidget {
             IconButton(
               tooltip: 'Sign out of ${state.backendLabel}',
               onPressed: state.signOut,
-              icon: const Icon(Icons.logout, size: 20),
+              icon: const Icon(Icons.logout, size: IconSize.lg),
             ),
           const SizedBox(width: 12),
         ],
@@ -47,7 +47,7 @@ class ContractsScreen extends StatelessWidget {
           ),
         ),
         backgroundColor: c.accent,
-        foregroundColor: Colors.white,
+        foregroundColor: c.onAccent,
         icon: const Icon(Icons.add),
         label: const Text('New contract'),
       ),
@@ -216,8 +216,8 @@ class _ContractTile extends StatelessWidget {
                       const SizedBox(height: Space.md),
                       Row(
                         children: [
-                          Icon(Icons.person_outline, size: 14, color: c.inkFaint),
-                          const SizedBox(width: 6),
+                          Icon(Icons.person_outline, size: IconSize.sm, color: c.inkFaint),
+                          const SizedBox(width: Space.inline),
                           Flexible(
                             child: Text(
                               counterparty.name,
@@ -226,8 +226,8 @@ class _ContractTile extends StatelessWidget {
                             ),
                           ),
                           if (counterparty.verified) ...[
-                            const SizedBox(width: 5),
-                            Icon(Icons.verified, size: 13, color: c.accent),
+                            const SizedBox(width: Space.inline),
+                            Icon(Icons.verified, size: IconSize.sm, color: c.accent),
                           ],
                           const Spacer(),
                           const SizedBox(width: Space.sm),
@@ -282,7 +282,7 @@ class _ErrorNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline, size: 18, color: c.critical),
+          Icon(Icons.error_outline, size: IconSize.md, color: c.critical),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -333,7 +333,7 @@ class _NoContractsYet extends StatelessWidget {
       padding: const EdgeInsets.only(top: 48, bottom: 24),
       child: Column(
         children: [
-          Icon(Icons.description_outlined, size: 40, color: c.inkFaint.withValues(alpha: 0.5)),
+          Icon(Icons.description_outlined, size: IconSize.hero, color: c.inkFaint.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           const Text(
             'No contracts yet',

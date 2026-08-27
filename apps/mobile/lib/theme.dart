@@ -33,6 +33,7 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
   const TrustIqPalette({
     required this.isDark,
     required this.accent,
+    required this.onAccent,
     required this.accentStrong,
     required this.accentSoft,
     required this.accentGlow,
@@ -58,6 +59,14 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
   final bool isDark;
 
   final Color accent;
+
+  /// What sits on top of the accent: a label in a filled button, a spinner, a
+  /// FAB icon. White in the light theme and near-black in the dark one,
+  /// because the dark accent is a light teal and white on it is unreadable.
+  /// Every widget that paints something onto the accent must use this rather
+  /// than assuming white, which is what four of them were doing.
+  final Color onAccent;
+
   final Color accentStrong;
   final Color accentSoft;
   final Color accentGlow;
@@ -80,6 +89,7 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
   static const light = TrustIqPalette(
     isDark: false,
     accent: Color(0xFF0D5F66),
+    onAccent: Color(0xFFFFFFFF),
     accentStrong: Color(0xFF094248),
     accentSoft: Color(0xFFE3EFEF),
     accentGlow: Color(0xFFF3F8F8),
@@ -114,6 +124,7 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
   static const dark = TrustIqPalette(
     isDark: true,
     accent: Color(0xFF4FBFC7),
+    onAccent: Color(0xFF06191B),
     accentStrong: Color(0xFF86D8DE),
     accentSoft: Color(0xFF10312F),
     accentGlow: Color(0xFF101A1B),
@@ -151,6 +162,7 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
   TrustIqPalette copyWith({
     bool? isDark,
     Color? accent,
+    Color? onAccent,
     Color? accentStrong,
     Color? accentSoft,
     Color? accentGlow,
@@ -172,6 +184,7 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
     return TrustIqPalette(
       isDark: isDark ?? this.isDark,
       accent: accent ?? this.accent,
+      onAccent: onAccent ?? this.onAccent,
       accentStrong: accentStrong ?? this.accentStrong,
       accentSoft: accentSoft ?? this.accentSoft,
       accentGlow: accentGlow ?? this.accentGlow,
@@ -199,6 +212,7 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
     return TrustIqPalette(
       isDark: t < 0.5 ? isDark : other.isDark,
       accent: mix(accent, other.accent),
+      onAccent: mix(onAccent, other.onAccent),
       accentStrong: mix(accentStrong, other.accentStrong),
       accentSoft: mix(accentSoft, other.accentSoft),
       accentGlow: mix(accentGlow, other.accentGlow),
@@ -229,12 +243,40 @@ extension TrustIqPaletteContext on BuildContext {
 /// The spacing scale. Nothing between these values.
 abstract final class Space {
   static const xs = 4.0;
+
+  /// The gap between an icon and the word next to it. Small enough that they
+  /// read as one thing, which 8 does not.
+  static const inline = 6.0;
+
   static const sm = 8.0;
   static const md = 12.0;
   static const lg = 16.0;
   static const xl = 20.0;
   static const xxl = 28.0;
   static const section = 36.0;
+}
+
+/// Icon sizes.
+///
+/// There were ten of these across the screens: 13, 14, 15, 16, 17, 18, 19, 20,
+/// 26 and 40. The differences between most of them are invisible and the
+/// inconsistency is not, so they collapse to five, chosen by what the icon sits
+/// next to rather than by eye.
+abstract final class IconSize {
+  /// Beside a caption or a label.
+  static const sm = 14.0;
+
+  /// Beside body text. The workhorse.
+  static const md = 17.0;
+
+  /// In a button or a header, where it stands alone.
+  static const lg = 20.0;
+
+  /// The subject of its own block, like a file picker.
+  static const xl = 26.0;
+
+  /// An empty state, where the icon is the only thing on screen.
+  static const hero = 40.0;
 }
 
 abstract final class Radii {
@@ -389,9 +431,7 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
           (states) => states.contains(WidgetState.disabled) ? c.accentSoft : c.accent,
         ),
         foregroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.disabled)
-              ? c.inkFaint
-              : (c.isDark ? const Color(0xFF06191B) : Colors.white),
+          (states) => states.contains(WidgetState.disabled) ? c.inkFaint : c.onAccent,
         ),
         overlayColor: WidgetStatePropertyAll(
           (c.isDark ? Colors.black : Colors.white).withValues(alpha: 0.12),
@@ -420,7 +460,7 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: c.accent,
-      foregroundColor: c.isDark ? const Color(0xFF06191B) : Colors.white,
+      foregroundColor: c.onAccent,
       elevation: 2,
       highlightElevation: 3,
       extendedTextStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),

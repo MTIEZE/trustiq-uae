@@ -135,7 +135,7 @@ class ContractDetailScreen extends StatelessWidget {
                                 m.deliveredAt != null
                                     ? Icons.check_circle
                                     : Icons.radio_button_unchecked,
-                                size: 17,
+                                size: IconSize.md,
                                 color: m.deliveredAt != null
                                     ? c.ok
                                     : c.inkFaint,
@@ -287,10 +287,10 @@ class _PartyRow extends StatelessWidget {
             children: [
               Icon(
                 verified ? Icons.verified_user_outlined : Icons.gpp_maybe_outlined,
-                size: 13,
+                size: IconSize.sm,
                 color: verified ? c.ok : c.caution,
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: Space.inline),
               Text(
                 verified ? 'Verified' : 'Unverified',
                 style: Type.caption.copyWith(
@@ -336,7 +336,7 @@ class _DisputeBanner extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Space.xl),
           child: Row(
             children: [
               Expanded(

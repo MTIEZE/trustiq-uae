@@ -261,7 +261,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     tooltip: _showPassword ? 'Hide password' : 'Show password',
                     icon: Icon(
                       _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      size: 19,
+                      size: IconSize.md,
                       color: c.inkFaint,
                     ),
                     onPressed: () => setState(() => _showPassword = !_showPassword),
@@ -275,10 +275,10 @@ class _SignInScreenState extends State<SignInScreen> {
             FilledButton(
               onPressed: _canSubmit ? _submit : null,
               child: _busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 18,
                       width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent),
                     )
                   : Text(_action),
             ),
@@ -330,7 +330,7 @@ class _Notice extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     return Container(
-      padding: const EdgeInsets.all(Space.md),
+      padding: const EdgeInsets.all(Space.lg),
       decoration: BoxDecoration(
         color: c.accentSoft,
         borderRadius: BorderRadius.circular(Radii.md),
@@ -338,7 +338,7 @@ class _Notice extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.mark_email_unread_outlined, size: 18, color: c.accent),
+          Icon(Icons.mark_email_unread_outlined, size: IconSize.md, color: c.accent),
           const SizedBox(width: Space.md),
           Expanded(
             child: Text(
