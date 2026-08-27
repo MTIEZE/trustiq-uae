@@ -72,6 +72,16 @@ grant select on storage.objects to authenticated;
 
 -- PostgREST grants table privileges to these roles; RLS then narrows the rows.
 alter default privileges in schema public
-  grant select, insert, update, delete on tables to authenticated;
+  grant select, insert, update, delete on tables to anon, authenticated;
 alter default privileges in schema public
-  grant usage, select on sequences to authenticated;
+  grant usage, select on sequences to anon, authenticated;
+
+-- The one that cost us. A real Supabase project hands EXECUTE on every new
+-- function in `public` to anon, authenticated and service_role automatically.
+-- This harness did not, so `revoke all ... from public` in a migration looked
+-- like it removed a grant nobody had, and four assertions saying a system
+-- function was out of reach passed while the deployed project let anyone with
+-- the publishable key call it. A test bed that is safer than production tests
+-- nothing worth knowing.
+alter default privileges in schema public
+  grant execute on functions to anon, authenticated, service_role;

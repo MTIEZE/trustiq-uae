@@ -26,10 +26,16 @@ migrations/
                         seeing who is on the other side of your contract, and
                         addressing a contract to someone by email
   0012_human_review.sql the reviewer a refused proposal actually goes to
+  0013_manual_verification.sql
+                        verifying a beta tester by hand, recorded permanently,
+                        until UAE Pass is connected
+  0014_system_functions_are_not_public.sql
+                        taking back the EXECUTE grants Supabase hands out
+                        automatically, and a guard that names who may pass
 
 tests/
   00_supabase_stubs.sql  local-only stubs for auth, storage and the roles
-  schema.test.sql        131 assertions run against a real Postgres
+  schema.test.sql        158 assertions run against a real Postgres
 ```
 
 ## Running the tests
@@ -113,6 +119,28 @@ A reviewer signs in as a person and holds no service-role key, so row level
 security decides what they see exactly as it does for a buyer. They are shown
 roles, claims, evidence and history, and deliberately never a party's name.
 
+**Somebody can be verified before UAE Pass exists.** The identity gate refuses
+to activate a contract until both parties are verified, and until TrustIQ is
+registered as a UAE Pass Service Provider nothing could verify anybody: a real
+signup could draft a contract, send it, and get no further. 0013 records a
+check made by a person. The profile is stamped `manual_review`, never
+`uae_pass`, so the two are never mistaken for each other, and every decision
+lands in `app.identity_checks` with a note saying what was looked at. The note
+is required and the table cannot be edited, because the question a verification
+has to be able to answer later is who made it and on what basis.
+
+**A grant nobody wrote is still a grant.** A Supabase project sets default
+privileges that hand EXECUTE on every new function in `public` to `anon` and
+`authenticated`. `revoke all ... from public` does not undo that: PUBLIC is not
+the same thing as the roles. For a while, calling `record_manual_verification`
+over PostgREST with nothing but the publishable key that ships in the mobile
+app reached the inside of the function, whose guard only asked whether the
+caller was a signed-in user. An anonymous caller is not one. 0014 takes the
+grants back and replaces that guard with one that names who may pass. The
+schema tests missed it because a bare Postgres container has no such default
+privileges; `00_supabase_stubs.sql` now sets them, so the harness is no longer
+safer than production.
+
 **The record cannot be rewritten.** Evidence, both audit logs, proposals and
 acceptances are append-only, enforced by a trigger that fires even for roles
 that bypass RLS.
@@ -131,6 +159,24 @@ supabase db push
 
 Or paste each migration into the SQL editor in filename order. Do not apply
 anything in `tests/`.
+
+This project was never linked with the CLI, so migrations here go through the
+management API instead:
+
+```bash
+node scripts/apply-migration.mjs supabase/migrations/0014_....sql
+node scripts/apply-migration.mjs --list      # what the database actually has
+```
+
+After adding any function to `public`, run:
+
+```bash
+node scripts/probe-anon-reach.mjs
+```
+
+It calls every RPC with the publishable key alone. Supabase grants EXECUTE on
+new functions automatically, so the safe state is one that has to be
+maintained rather than one that holds.
 
 **The evidence digest cannot be chosen by the uploader.** 0007 removes the
 client INSERT policy on `evidence` and grants no write policy on the storage

@@ -982,9 +982,20 @@ select pg_temp.check(
   not has_function_privilege('anon', 'public.find_counterparty(text)', 'EXECUTE'),
   'anon holds no grant on the lookup');
 
+-- anon does hold SELECT on this view: Supabase grants it on every table and
+-- view in `public`, and taking it away would be fighting the platform for no
+-- gain. What protects the view is its own WHERE clause, which resolves to
+-- auth.uid(). Asserting the grant was absent tested a thing that is not true
+-- of the deployed project. Asserting the rows are empty tests the thing that
+-- actually stands between an anonymous caller and every name in the database.
+set role anon;
+select set_config('request.jwt.claim.sub', '', false);
+
 select pg_temp.check(
-  not has_table_privilege('anon', 'public.visible_profiles', 'SELECT'),
-  'anon cannot read the profile view');
+  (select count(*) from public.visible_profiles) = 0,
+  'the profile view yields nothing to a caller with no session');
+
+reset role;
 
 \echo ''
 \echo '== The human a refused proposal goes to =='
@@ -1394,6 +1405,83 @@ select pg_temp.check(
   not has_table_privilege('authenticated', 'app.identity_checks', 'INSERT'),
   'a signed-in user cannot add a check of their own');
 
+
+\echo ''
+\echo '== System functions are not a client API =='
+
+-- The publishable key ships inside the mobile app, so anything anon can call
+-- is a public endpoint whether or not it was meant to be one. This sweep is
+-- the assertion that matters: it covers functions written after it, which the
+-- named checks below cannot.
+
+do $$
+declare
+  v_reachable text;
+begin
+  select string_agg(p.oid::regprocedure::text, ', ' order by p.oid::regprocedure::text)
+  into v_reachable
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and has_function_privilege('anon', p.oid, 'EXECUTE')
+    -- Extension members are not ours. A real project installs pgcrypto into
+    -- `extensions`; a bare container puts it in `public`, and revoking its
+    -- grants would be fighting the platform over functions we never wrote.
+    and not exists (
+      select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e'
+    );
+
+  perform pg_temp.check(v_reachable is null,
+    'no function in public is callable with the key that ships in the app' ||
+    coalesce(' (reachable: ' || v_reachable || ')', ''));
+end
+$$;
+
+-- What a signed-in person does still need. A sweep that revoked too much would
+-- pass every check above and break the app, so both directions are pinned.
+select pg_temp.check(
+  has_function_privilege('authenticated', 'public.apply_transaction_event(uuid, public.transaction_event)', 'EXECUTE'),
+  'a signed-in party can still move a contract along');
+
+select pg_temp.check(
+  has_function_privilege('authenticated', 'public.accept_resolution_proposal(uuid)', 'EXECUTE'),
+  'a signed-in party can still accept a proposal');
+
+select pg_temp.check(
+  has_function_privilege('authenticated', 'public.claim_dispute(uuid)', 'EXECUTE'),
+  'a reviewer is a signed-in person and can still claim a case');
+
+\echo ''
+\echo '-- the guard, not only the grant --'
+
+-- Run as the owner, where grants do not apply, so what answers is the check
+-- inside the function. An anon caller was the hole: the old guard asked
+-- whether the caller was a signed-in user, and an anonymous one is not.
+select set_config('request.jwt.claims', '{"role":"anon"}', false);
+
+select pg_temp.expect_error(
+  $q$ select public.record_manual_verification(
+        '33333333-3333-3333-3333-333333333333',
+        'called with nothing but the key that ships in the app') $q$,
+  'the anon role is refused by name, not left to fall through a check for user sessions');
+
+select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+select pg_temp.expect_error(
+  $q$ select public.revoke_verification(
+        '33333333-3333-3333-3333-333333333333', 'called from a signed-in client') $q$,
+  'the authenticated role is refused the same way');
+
+select set_config('request.jwt.claims', '{"role":"service_role"}', false);
+select public.record_manual_verification(
+  '33333333-3333-3333-3333-333333333333',
+  'called by the server, which is the one caller this is for');
+
+select pg_temp.check(
+  (select identity_verified_at is not null from public.profiles
+   where id = '33333333-3333-3333-3333-333333333333'),
+  'the server itself still passes the guard');
+
+select set_config('request.jwt.claims', '', false);
 
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'
