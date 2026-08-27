@@ -287,6 +287,9 @@ class DemoBackend implements Backend {
   }
 
   @override
+  bool get canRecordVerification => true;
+
+  @override
   Future<void> recordVerification(Role role) async {
     // Verification belongs to a person, not to one contract, so it lands on
     // every contract they are on rather than only the one they were looking at.

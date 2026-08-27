@@ -68,6 +68,10 @@ class AppState extends ChangeNotifier {
   /// this to be honest about what verifying does and does not prove today.
   bool get identityProviderConnected => _identity is! DemoIdentityProvider;
 
+  /// Whether the app can record a verification at all, or whether it happens
+  /// somewhere the app cannot reach.
+  bool get canRecordVerification => _backend.canRecordVerification;
+
   List<Contract> get contracts => List.unmodifiable(_contracts);
   Role get viewingAs => _viewingAs;
 

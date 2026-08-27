@@ -1251,5 +1251,149 @@ select pg_temp.check(
     'EXECUTE'),
   'anon holds no grant on issue_human_resolution');
 
+
+\echo ''
+\echo '== Manual verification =='
+
+-- Until UAE Pass is connected, nothing could verify anybody, and the gate
+-- above meant a real person could sign up and then get no further. These
+-- checks are about the bridge: that it opens the gate, that it says what it
+-- is worth, and that it cannot be walked over by whoever it is about.
+
+select pg_temp.check(
+  (select identity_verified_at is null from public.profiles
+   where id = '33333333-3333-3333-3333-333333333333'),
+  'the third party is still unverified, so the gate below is a real gate');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+
+select pg_temp.expect_error(
+  $q$ select public.record_manual_verification(
+        '33333333-3333-3333-3333-333333333333',
+        'I looked at my own documents and they seemed fine') $q$,
+  'a signed-in user cannot verify anybody, including themselves');
+
+reset role;
+
+-- The same call as the table owner, where grants do not apply. What refuses it
+-- now is the auth.uid() guard inside the function rather than a missing
+-- EXECUTE, which is the half that would still hold if a grant slipped.
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+select pg_temp.expect_error(
+  $q$ select public.record_manual_verification(
+        '33333333-3333-3333-3333-333333333333',
+        'I looked at my own documents and they seemed fine') $q$,
+  'the function refuses a user session even where grants would have allowed it');
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.expect_error(
+  $q$ select public.record_manual_verification(
+        '33333333-3333-3333-3333-333333333333', 'ok') $q$,
+  'a note too short to say anything is refused');
+
+select pg_temp.expect_error(
+  $q$ select public.record_manual_verification(
+        '99999999-9999-9999-9999-999999999999',
+        'Emirates ID checked over video call, name and photo match') $q$,
+  'verifying a profile that does not exist is refused rather than recorded');
+
+select public.record_manual_verification(
+  '33333333-3333-3333-3333-333333333333',
+  'Emirates ID shown over video call, name and photo match the account');
+
+select pg_temp.check(
+  (select identity_verified_at is not null from public.profiles
+   where id = '33333333-3333-3333-3333-333333333333'),
+  'a manual check verifies the profile');
+
+select pg_temp.check(
+  (select identity_provider from public.profiles
+   where id = '33333333-3333-3333-3333-333333333333') = 'manual_review',
+  'the profile is stamped manual_review, so nobody later mistakes it for UAE Pass');
+
+select pg_temp.check(
+  (select count(*) from app.identity_checks
+   where user_id = '33333333-3333-3333-3333-333333333333' and outcome = 'verified') = 1,
+  'the check itself is recorded, not just its result');
+
+select pg_temp.check(
+  (select note from app.identity_checks
+   where user_id = '33333333-3333-3333-3333-333333333333') like 'Emirates ID shown%',
+  'the record keeps what was actually looked at');
+
+select pg_temp.expect_error(
+  $q$ update app.identity_checks set note = 'something else'
+      where user_id = '33333333-3333-3333-3333-333333333333' $q$,
+  'a recorded check cannot be edited, even by the owner of the table');
+
+select pg_temp.expect_error(
+  $q$ delete from app.identity_checks
+      where user_id = '33333333-3333-3333-3333-333333333333' $q$,
+  'a recorded check cannot be deleted, even by the owner of the table');
+
+-- The contract from the identity gate section, which no one could accept.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-000000000002', 'accept');
+reset role;
+-- reset role does not clear the claim, and the guard below reads auth.uid()
+-- rather than the role. Leaving it set makes the next call a user session.
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-000000000002') = 'active',
+  'the contract that was refused for an unverified party can now be accepted');
+
+\echo ''
+\echo '-- taking a verification back --'
+
+select public.revoke_verification(
+  '33333333-3333-3333-3333-333333333333',
+  'The ID turned out to belong to somebody else');
+
+select pg_temp.check(
+  (select identity_verified_at is null and identity_provider is null
+   from public.profiles where id = '33333333-3333-3333-3333-333333333333'),
+  'revoking clears both the timestamp and the provider');
+
+select pg_temp.check(
+  (select count(*) from app.identity_checks
+   where user_id = '33333333-3333-3333-3333-333333333333') = 2,
+  'both decisions stay on the record, not only the current one');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-000000000002') = 'active',
+  'a contract accepted while both parties were verified stays accepted');
+
+\echo ''
+\echo '-- verification is not a client operation --'
+
+select pg_temp.check(
+  not has_function_privilege('authenticated',
+    'public.record_manual_verification(uuid, text)', 'EXECUTE'),
+  'a signed-in user holds no grant on record_manual_verification');
+
+select pg_temp.check(
+  not has_function_privilege('anon',
+    'public.record_manual_verification(uuid, text)', 'EXECUTE'),
+  'anon holds no grant on record_manual_verification');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated',
+    'public.revoke_verification(uuid, text)', 'EXECUTE'),
+  'a signed-in user holds no grant on revoke_verification');
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.identity_checks', 'SELECT'),
+  'a signed-in user cannot read who was verified and on what basis');
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.identity_checks', 'INSERT'),
+  'a signed-in user cannot add a check of their own');
+
+
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

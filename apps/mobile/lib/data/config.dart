@@ -42,6 +42,14 @@ class TrustIqConfig {
   final String url;
   final String anonKey;
 
+  /// Where someone writes to be verified while UAE Pass is not connected.
+  ///
+  /// Empty by default and shown only when set. A placeholder address here
+  /// would be worse than saying nothing: it would send a beta tester to a
+  /// mailbox nobody reads, and they would conclude they had been ignored.
+  static const verificationContact =
+      String.fromEnvironment('TRUSTIQ_VERIFY_CONTACT');
+
   bool get isLive => url.isNotEmpty && anonKey.isNotEmpty;
 
   /// The project host, for showing which backend a build is talking to.

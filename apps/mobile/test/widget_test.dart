@@ -7,6 +7,7 @@ import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/screens/contracts_screen.dart';
+import 'package:trustiq_app/screens/verify_identity_screen.dart';
 import 'package:trustiq_app/main.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -198,6 +199,62 @@ void main() {
     expect(find.text('Accept this resolution'), findsOneWidget);
     expect(find.text('Refuse and ask for a human'), findsOneWidget);
   });
+  testWidgets('a backend that cannot verify offers no button that would fail', (tester) async {
+    // The live backend cannot record a verification: the schema refuses a
+    // session that tries to verify itself. Until UAE Pass is connected, the
+    // screen has to say who does it instead. Offering the button anyway would
+    // mean telling someone their contract is blocked on their identity, and
+    // then handing them a control that errors every time they press it.
+    _tallSurface(tester);
+    final state = AppState(backend: _CannotVerifyBackend());
+    await tester.pumpWidget(_hostedScreen(VerifyIdentityScreen(state: state)));
+    await tester.pump();
+
+    final l = await L.delegate.load(const Locale('en'));
+
+    expect(find.text(l.verifiedByHand), findsOneWidget);
+    expect(find.text(l.continueWith('UAE Pass')), findsNothing);
+    expect(find.text(l.verifiedByHandRecord), findsOneWidget);
+  });
+
+  testWidgets('a backend that can verify still offers the button', (tester) async {
+    // The demo path, which does record it. The branch has to fall the other
+    // way here, or the test above would pass on a screen with no button at all.
+    _tallSurface(tester);
+    final state = AppState(backend: DemoBackend());
+    await tester.pumpWidget(_hostedScreen(VerifyIdentityScreen(state: state)));
+    await tester.pump();
+
+    final l = await L.delegate.load(const Locale('en'));
+
+    expect(find.text(l.verifiedByHand), findsNothing);
+    expect(find.byType(FilledButton), findsOneWidget);
+  });
+}
+
+/// Renders the whole screen at once.
+///
+/// The default test surface is shorter than this screen, and a ListView does
+/// not build what is off it, so a finder would report a missing widget when
+/// the widget is only below the fold.
+void _tallSurface(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1000, 3000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
+/// Mounts a screen with only the delegates it needs, for screens that do not
+/// depend on a ListenableBuilder above them.
+Widget _hostedScreen(Widget screen) => MaterialApp(
+      localizationsDelegates: L.localizationsDelegates,
+      supportedLocales: L.supportedLocales,
+      home: screen,
+    );
+
+/// Stands in for the live backend, which records no verification of its own.
+class _CannotVerifyBackend extends DemoBackend {
+  @override
+  bool get canRecordVerification => false;
 }
 
 /// Mounts a screen the way main.dart does.

@@ -87,6 +87,15 @@ abstract interface class Backend {
 
   Future<void> rejectProposal(String contractId);
 
+  /// Whether this backend can record a verification from the app at all.
+  ///
+  /// False on the live backend, where the verification columns are
+  /// server-written and no session can set them. The screen asks before it
+  /// offers a button, because a button that always fails is worse than no
+  /// button: it tells someone their identity is their problem to solve, and
+  /// then does not let them solve it.
+  bool get canRecordVerification;
+
   /// Marks the signed-in person's identity as verified.
   ///
   /// On the live backend this is a request the server may refuse: the schema

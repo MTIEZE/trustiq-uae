@@ -493,7 +493,7 @@ class LAr extends L {
 
   @override
   String get fileTypesNote =>
-      'ملفات PDF والصور والمستندات والنص العادي والأرشيفات المضغوطة، حتى ٥٠ ميغابايت. يرى الطرف الآخر كل ما تودعه هنا.';
+      'ملفات PDF والصور والمستندات والنص العادي والأرشيفات المضغوطة، حتى 50 ميغابايت. يرى الطرف الآخر كل ما تودعه هنا.';
 
   @override
   String get noteOptional => 'ملاحظة (اختيارية)';
@@ -593,11 +593,39 @@ class LAr extends L {
   String get verifyMyIdentity => 'توثيق هويتي';
 
   @override
+  String get verifiedByHand => 'التوثيق يتم بواسطة شخص، مؤقتاً';
+
+  @override
+  String get verifiedByHandBody =>
+      'الهوية الرقمية غير موصولة بعد. خلال النسخة التجريبية المغلقة، يتحقق أحد العاملين في TrustIQ من هويتك الإماراتية بنفسه ويسجّل ما رآه.';
+
+  @override
+  String get verifiedByHandWorthLess =>
+      'هذا أقل قيمة من التوثيق عبر الهوية الرقمية، وملفك يقول ذلك: يُحفظ كتحقق يدوي لا كتحقق عبر الهوية الرقمية. ومن يقرأه لاحقاً يستطيع التمييز بينهما.';
+
+  @override
+  String verifiedByHandContact(String contact) {
+    return 'راسل $contact واطلب توثيق هويتك.';
+  }
+
+  @override
+  String get verifiedByHandNoContact =>
+      'يُرتَّب التوثيق مع TrustIQ مباشرة خلال النسخة التجريبية المغلقة.';
+
+  @override
+  String get verifiedByHandRecord =>
+      'على من يوثّق هويتك أن يدوّن ما اطّلع عليه. تُحفظ هذه الملاحظة ولا يمكن تعديلها ولا حذفها لاحقاً، ولا حتى من TrustIQ.';
+
+  @override
+  String get verifiedByHandNothingToDo =>
+      'لا يوجد ما تفعله في هذه الشاشة. هي هنا لتعرف ما الذي يجب أن يحدث قبل أن يمكن قبول أي عقد، ولماذا ليس تلقائياً بعد.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override
   String get amountTwoDecimals =>
-      'المبالغ تُكتب بمنزلتين عشريتين. الدرهم الواحد ١٠٠ فلس، ولا يوجد أصغر من ذلك.';
+      'المبالغ تُكتب بمنزلتين عشريتين. الدرهم الواحد 100 فلس، ولا يوجد أصغر من ذلك.';
 
   @override
   String get amountFormat => 'أدخل مبلغاً بالدرهم، مثل 500 أو 1250.50.';

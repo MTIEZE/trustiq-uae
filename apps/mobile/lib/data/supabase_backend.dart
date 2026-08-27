@@ -484,15 +484,19 @@ class SupabaseBackend implements Backend {
   }
 
   @override
+  bool get canRecordVerification => false;
+
+  @override
   Future<void> recordVerification(Role role) async {
     // Deliberately not implemented as a write. The verification columns are
     // server-written: the profiles policy re-reads the stored row on update,
     // so a party cannot mark themselves verified even holding a valid session.
     // That is the correct behaviour, and the app must not pretend otherwise.
     throw BackendException(
-      'Identity verification is recorded by the server after UAE Pass confirms '
-      'it. This build cannot complete that, and cannot mark you verified on '
-      'its own: the database refuses it by design.',
+      'Identity verification is recorded by the server, never by the app: the '
+      'database refuses a session that tries to verify itself, by design. '
+      'Until UAE Pass is connected, a person at TrustIQ records it after '
+      'checking your documents.',
     );
   }
 

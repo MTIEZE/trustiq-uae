@@ -1153,6 +1153,48 @@ abstract class L {
   /// **'Verify my identity'**
   String get verifyMyIdentity;
 
+  /// No description provided for @verifiedByHand.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified by a person, for now'**
+  String get verifiedByHand;
+
+  /// No description provided for @verifiedByHandBody.
+  ///
+  /// In en, this message translates to:
+  /// **'UAE Pass is not connected yet. During the closed beta someone at TrustIQ checks your Emirates ID themselves and records what they saw.'**
+  String get verifiedByHandBody;
+
+  /// No description provided for @verifiedByHandWorthLess.
+  ///
+  /// In en, this message translates to:
+  /// **'This is worth less than UAE Pass, and your profile says so: it is stored as a manual check, not as a UAE Pass one. Anyone reading it later can tell the difference.'**
+  String get verifiedByHandWorthLess;
+
+  /// No description provided for @verifiedByHandContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to {contact} and ask to be verified.'**
+  String verifiedByHandContact(String contact);
+
+  /// No description provided for @verifiedByHandNoContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification is arranged with TrustIQ directly during the closed beta.'**
+  String get verifiedByHandNoContact;
+
+  /// No description provided for @verifiedByHandRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Whoever verifies you has to write down what they looked at. That note is kept, and it cannot be edited or removed afterwards, including by TrustIQ.'**
+  String get verifiedByHandRecord;
+
+  /// No description provided for @verifiedByHandNothingToDo.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nothing to do on this screen. It is here so you know what has to happen before a contract can be accepted, and why it is not automatic yet.'**
+  String get verifiedByHandNothingToDo;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

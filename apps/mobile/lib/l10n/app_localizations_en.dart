@@ -597,6 +597,34 @@ class LEn extends L {
   String get verifyMyIdentity => 'Verify my identity';
 
   @override
+  String get verifiedByHand => 'Verified by a person, for now';
+
+  @override
+  String get verifiedByHandBody =>
+      'UAE Pass is not connected yet. During the closed beta someone at TrustIQ checks your Emirates ID themselves and records what they saw.';
+
+  @override
+  String get verifiedByHandWorthLess =>
+      'This is worth less than UAE Pass, and your profile says so: it is stored as a manual check, not as a UAE Pass one. Anyone reading it later can tell the difference.';
+
+  @override
+  String verifiedByHandContact(String contact) {
+    return 'Write to $contact and ask to be verified.';
+  }
+
+  @override
+  String get verifiedByHandNoContact =>
+      'Verification is arranged with TrustIQ directly during the closed beta.';
+
+  @override
+  String get verifiedByHandRecord =>
+      'Whoever verifies you has to write down what they looked at. That note is kept, and it cannot be edited or removed afterwards, including by TrustIQ.';
+
+  @override
+  String get verifiedByHandNothingToDo =>
+      'There is nothing to do on this screen. It is here so you know what has to happen before a contract can be accepted, and why it is not automatic yet.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

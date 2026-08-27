@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
 import '../app_state.dart';
+import '../data/config.dart';
 import '../data/identity_provider.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -51,6 +52,11 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
     final l = context.l;
     final c = context.c;
     final connected = widget.state.identityProviderConnected;
+
+    // Live project, no UAE Pass: verification happens between a person and a
+    // service-role script, nowhere this screen can reach. Offering a button
+    // here would be offering a button that always fails.
+    final byHand = !connected && !widget.state.canRecordVerification;
 
     return Scaffold(
       appBar: AppBar(
@@ -123,29 +129,105 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
             ),
           ],
           const SizedBox(height: Space.xxl),
-          FilledButton(
-            onPressed: _busy ? null : _verify,
-            child: _busy
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onAccent),
-                  )
-                : Text(l.continueWith(widget.state.identityProviderName)),
-          ),
-          const SizedBox(height: Space.md),
-          if (!connected)
-            RuleNote(
-              l.uaePassNotConnected,
-              icon: Icons.construction_outlined,
-            )
-          else
-            RuleNote(
-              l.uaePassHandoffNote,
-              icon: Icons.lock_outline,
+          if (byHand)
+            const _ByHand()
+          else ...[
+            FilledButton(
+              onPressed: _busy ? null : _verify,
+              child: _busy
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: c.onAccent),
+                    )
+                  : Text(l.continueWith(widget.state.identityProviderName)),
             ),
+            const SizedBox(height: Space.md),
+            if (!connected)
+              RuleNote(
+                l.uaePassNotConnected,
+                icon: Icons.construction_outlined,
+              )
+            else
+              RuleNote(
+                l.uaePassHandoffNote,
+                icon: Icons.lock_outline,
+              ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// What happens instead of a button, while UAE Pass is not connected.
+///
+/// It says who does the checking, what the result is worth, and that the
+/// person doing it leaves a record they cannot later edit. A screen that said
+/// only "coming soon" would leave someone stuck at the identity gate with no
+/// idea what to do about it.
+class _ByHand extends StatelessWidget {
+  const _ByHand();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final c = context.c;
+    const contact = TrustIqConfig.verificationContact;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InfoCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.how_to_reg_outlined, size: IconSize.lg, color: c.accent),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l.verifiedByHand,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Space.md),
+              Text(
+                l.verifiedByHandBody,
+                style: TextStyle(fontSize: 14, height: 1.55, color: c.inkSoft),
+              ),
+              const SizedBox(height: Space.md),
+              Text(
+                contact.isEmpty
+                    ? l.verifiedByHandNoContact
+                    : l.verifiedByHandContact(contact),
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.55,
+                  fontWeight: contact.isEmpty ? FontWeight.w400 : FontWeight.w600,
+                  color: contact.isEmpty ? c.inkSoft : c.ink,
+                ),
+              ),
+              const SizedBox(height: Space.md),
+              Text(
+                l.verifiedByHandWorthLess,
+                style: TextStyle(fontSize: 13.5, height: 1.55, color: c.inkSoft),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Space.md),
+        RuleNote(l.verifiedByHandRecord, icon: Icons.history_edu_outlined),
+        const SizedBox(height: Space.sm),
+        RuleNote(l.verifiedByHandNothingToDo, icon: Icons.info_outline),
+      ],
     );
   }
 }
