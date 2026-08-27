@@ -625,6 +625,92 @@ class LEn extends L {
       'There is nothing to do on this screen. It is here so you know what has to happen before a contract can be accepted, and why it is not automatic yet.';
 
   @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingBack => 'Back';
+
+  @override
+  String onboardingStep(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get onboarding1Title => 'A record you can both point at';
+
+  @override
+  String get onboarding1Body =>
+      'Before the work starts, you and the other person write down what was agreed. Once you both accept it, neither of you can change the terms. Everything that happens after that is timestamped, and neither side can quietly rewrite it later.';
+
+  @override
+  String get onboarding1Aside =>
+      'For freelance work, a private sale, any deal with no platform standing behind it.';
+
+  @override
+  String get onboarding2Title =>
+      'If it goes wrong, it is not your word against theirs';
+
+  @override
+  String get onboarding2Body =>
+      'Each of you gives your account of what happened and files the documents behind it. An AI agent reads both against the evidence and proposes a resolution.';
+
+  @override
+  String get onboarding2Aside =>
+      'The proposal only takes effect if you both accept it. Either of you can refuse and ask for a person instead, and one refusal is enough.';
+
+  @override
+  String get onboarding3Title => 'TrustIQ never holds your money';
+
+  @override
+  String get onboarding3Body =>
+      'You pay each other directly, the way you already do. Holding other people’s funds is a regulated activity in the UAE and TrustIQ is not licensed for it, so it does not pretend to be.';
+
+  @override
+  String get onboarding3Aside =>
+      'What TrustIQ holds is the record. Nothing on this app can move a dirham.';
+
+  @override
+  String get onboarding4Title => 'What it asks of you';
+
+  @override
+  String get onboarding4Body =>
+      'An account, and an identity check before a contract becomes binding. A contract only binds two verified identities, so the other party knows who agreed.';
+
+  @override
+  String get onboarding4Aside =>
+      'Drafting a contract, sending it and filing evidence need no verification. Only accepting one does.';
+
+  @override
+  String get onboardingCreateAccount => 'Create an account';
+
+  @override
+  String get onboardingHaveAccount => 'I already have one';
+
+  @override
+  String get onboardingDone => 'Got it';
+
+  @override
+  String get whatIsTrustIq => 'What is TrustIQ?';
+
+  @override
+  String get howItWorks => 'How TrustIQ works';
+
+  @override
+  String get yourIdentity => 'Your identity';
+
+  @override
+  String identityVerifiedOn(String date) {
+    return 'Verified on $date';
+  }
+
+  @override
+  String get identityNotVerifiedYet =>
+      'Not verified yet. You can draft and send contracts, but not accept one.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

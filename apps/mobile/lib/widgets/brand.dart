@@ -114,6 +114,24 @@ class TrustIqWordmark extends StatelessWidget {
   }
 }
 
+/// Mark and wordmark side by side, for the top of a screen rather than the
+/// middle of one.
+class TrustIqBar extends StatelessWidget {
+  const TrustIqBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const TrustIqMark(size: 26),
+        const SizedBox(width: 10),
+        TrustIqWordmark(fontSize: 17),
+      ],
+    );
+  }
+}
+
 /// Mark and wordmark together, for a screen that has to introduce the product.
 class TrustIqLockup extends StatelessWidget {
   const TrustIqLockup({super.key, this.markSize = 46, this.fontSize = 28, this.subtitle});

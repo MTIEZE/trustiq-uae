@@ -65,6 +65,8 @@ class _VerifyIdentityScreenState extends State<VerifyIdentityScreen> {
       body: ListView(
         padding: const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.lg, Space.section),
         children: [
+          _Status(verifiedAt: widget.state.identityVerifiedAt),
+          const SizedBox(height: Space.md),
           InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,6 +230,59 @@ class _ByHand extends StatelessWidget {
         const SizedBox(height: Space.sm),
         RuleNote(l.verifiedByHandNothingToDo, icon: Icons.info_outline),
       ],
+    );
+  }
+}
+
+/// Where you stand, first thing.
+///
+/// This screen used to be reachable only from a contract that had just told
+/// somebody they could not accept it, so the state was implied. It is now
+/// reachable on purpose, and a screen about your identity that does not say
+/// whether you have one verified is answering the wrong question.
+class _Status extends StatelessWidget {
+  const _Status({required this.verifiedAt});
+  final DateTime? verifiedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+    final done = verifiedAt != null;
+    final date = verifiedAt?.toLocal();
+
+    return InfoCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            done ? Icons.verified_outlined : Icons.pending_outlined,
+            size: IconSize.lg,
+            color: done ? c.ok : c.caution,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.yourIdentity,
+                  style: Type.caption.copyWith(color: c.inkFaint),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  done
+                      ? l.identityVerifiedOn(
+                          '${date!.year}-${date.month.toString().padLeft(2, '0')}'
+                          '-${date.day.toString().padLeft(2, '0')}')
+                      : l.identityNotVerifiedYet,
+                  style: TextStyle(fontSize: 14, height: 1.5, color: c.ink),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

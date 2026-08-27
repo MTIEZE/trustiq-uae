@@ -51,10 +51,12 @@ class SupabaseBackend implements Backend {
       userId: user.id,
       email: user.email ?? '',
       displayName: _displayName ?? user.email ?? 'You',
+      identityVerifiedAt: _verifiedAt,
     );
   }
 
   String? _displayName;
+  DateTime? _verifiedAt;
 
   @override
   Stream<BackendSession?> get sessionChanges =>
@@ -131,6 +133,7 @@ class SupabaseBackend implements Backend {
   @override
   Future<void> signOut() async {
     _displayName = null;
+    _verifiedAt = null;
     await _client.auth.signOut();
   }
 
@@ -146,12 +149,15 @@ class SupabaseBackend implements Backend {
 
     final existing = await _client
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, identity_verified_at')
         .eq('id', user.id)
         .maybeSingle();
 
     if (existing != null) {
       _displayName = (existing['full_name'] as String?) ?? user.email;
+      _verifiedAt = DateTime.tryParse(
+        (existing['identity_verified_at'] as String?) ?? '',
+      );
       return;
     }
 
@@ -167,6 +173,9 @@ class SupabaseBackend implements Backend {
       'full_name': name,
     });
     _displayName = name;
+    // A profile that was just created cannot be verified: only the server
+    // writes that column, and it has had no chance to.
+    _verifiedAt = null;
   }
 
   /* ---------------------------------------------------------------- *

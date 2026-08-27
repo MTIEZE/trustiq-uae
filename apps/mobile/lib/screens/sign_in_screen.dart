@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
 import '../widgets/language_button.dart';
+import 'onboarding_screen.dart';
 
 /// Getting into a real project: signing in, signing up, and getting back in
 /// after forgetting a password.
@@ -188,7 +189,20 @@ class _SignInScreenState extends State<SignInScreen> {
                     const LanguageButton(),
                     const SizedBox(height: Space.lg),
                     _card(context),
-                    const SizedBox(height: Space.xl),
+                    const SizedBox(height: Space.md),
+                    // The introduction is skippable and skipped, and a person
+                    // who did that still has to be able to find out what they
+                    // are signing up to.
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const OnboardingScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.help_outline, size: IconSize.md),
+                      label: Text(l.whatIsTrustIq),
+                    ),
+                    const SizedBox(height: Space.md),
                     RuleNote(l.privacyNote, icon: Icons.lock_outline),
                     const SizedBox(height: Space.lg),
                     Text(

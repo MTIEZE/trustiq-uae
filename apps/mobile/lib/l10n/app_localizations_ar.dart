@@ -621,6 +621,91 @@ class LAr extends L {
       'لا يوجد ما تفعله في هذه الشاشة. هي هنا لتعرف ما الذي يجب أن يحدث قبل أن يمكن قبول أي عقد، ولماذا ليس تلقائياً بعد.';
 
   @override
+  String get onboardingSkip => 'تخطٍّ';
+
+  @override
+  String get onboardingNext => 'التالي';
+
+  @override
+  String get onboardingBack => 'السابق';
+
+  @override
+  String onboardingStep(int current, int total) {
+    return 'الخطوة $current من $total';
+  }
+
+  @override
+  String get onboarding1Title => 'سجلّ يستطيع كلاكما الرجوع إليه';
+
+  @override
+  String get onboarding1Body =>
+      'قبل أن يبدأ العمل، تكتبان معاً ما تم الاتفاق عليه. وبمجرد قبولكما له، لا يستطيع أيٌّ منكما تغيير الشروط. وكل ما يحدث بعد ذلك يُسجَّل بوقته، ولا يستطيع أي طرف تعديله لاحقاً في صمت.';
+
+  @override
+  String get onboarding1Aside =>
+      'للعمل الحر، أو بيع بين أفراد، أو أي صفقة لا تقف خلفها منصة.';
+
+  @override
+  String get onboarding2Title => 'إن ساءت الأمور، فلن تكون كلمتك مقابل كلمته';
+
+  @override
+  String get onboarding2Body =>
+      'يقدّم كلٌّ منكما بيانه عمّا حدث ويودع المستندات التي تسنده. يقرأ وكيل ذكاء اصطناعي البيانين مقابل الأدلة ويقترح تسوية.';
+
+  @override
+  String get onboarding2Aside =>
+      'لا يسري الاقتراح إلا إذا قبلتماه معاً. ويستطيع أيٌّ منكما رفضه وطلب شخص بدلاً منه، ورفض واحد يكفي.';
+
+  @override
+  String get onboarding3Title => 'لا تحتفظ TrustIQ بأموالك أبداً';
+
+  @override
+  String get onboarding3Body =>
+      'تدفعان لبعضكما مباشرة، كما تفعلان اليوم. الاحتفاظ بأموال الغير نشاط منظَّم في الإمارات، وTrustIQ غير مرخّصة له، فهي لا تدّعي ذلك.';
+
+  @override
+  String get onboarding3Aside =>
+      'ما تحتفظ به TrustIQ هو السجل. لا شيء في هذا التطبيق يستطيع تحريك درهم واحد.';
+
+  @override
+  String get onboarding4Title => 'ما يُطلب منك';
+
+  @override
+  String get onboarding4Body =>
+      'حساب، وتوثيق للهوية قبل أن يصبح العقد ملزماً. لا يلزم العقد إلا هويتين موثّقتين، ليعرف الطرف الآخر من وافق.';
+
+  @override
+  String get onboarding4Aside =>
+      'صياغة العقد وإرساله وإيداع الأدلة لا تحتاج إلى توثيق. القبول وحده هو الذي يحتاجه.';
+
+  @override
+  String get onboardingCreateAccount => 'إنشاء حساب';
+
+  @override
+  String get onboardingHaveAccount => 'لديّ حساب بالفعل';
+
+  @override
+  String get onboardingDone => 'فهمت';
+
+  @override
+  String get whatIsTrustIq => 'ما هي TrustIQ؟';
+
+  @override
+  String get howItWorks => 'كيف تعمل TrustIQ';
+
+  @override
+  String get yourIdentity => 'هويتك';
+
+  @override
+  String identityVerifiedOn(String date) {
+    return 'موثّقة في $date';
+  }
+
+  @override
+  String get identityNotVerifiedYet =>
+      'غير موثّقة بعد. يمكنك صياغة العقود وإرسالها، لكن لا يمكنك قبول عقد.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

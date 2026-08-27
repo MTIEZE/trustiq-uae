@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
 import 'package:trustiq_app/data/demo_backend.dart';
+import 'package:trustiq_app/data/onboarding.dart';
 import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/screens/contracts_screen.dart';
+import 'package:trustiq_app/screens/onboarding_screen.dart';
 import 'package:trustiq_app/screens/verify_identity_screen.dart';
 import 'package:trustiq_app/main.dart';
 import 'package:trustiq_core/trustiq_core.dart';
@@ -230,6 +232,118 @@ void main() {
     expect(find.text(l.verifiedByHand), findsNothing);
     expect(find.byType(FilledButton), findsOneWidget);
   });
+  testWidgets('a first launch explains the product before asking for an account', (tester) async {
+    // The problem this screen exists for: somebody installs an app they know
+    // nothing about, and the first thing it does is ask them to create an
+    // account. A sign-in form is a request for trust made before any has been
+    // offered.
+    await tester.pumpWidget(TrustIqApp(
+      backend: DemoBackend(),
+      onboarding: OnboardingGate.forTests(seen: false),
+    ));
+    await tester.pump();
+
+    final l = await L.delegate.load(const Locale('en'));
+    expect(find.text(l.onboarding1Title), findsOneWidget);
+    expect(find.text(l.contracts), findsNothing);
+  });
+
+  testWidgets('the introduction says what TrustIQ will not do, not only what it will',
+      (tester) async {
+    // The panel that earns the account. v1 never touches the money, and an
+    // introduction that left that out would be selling something else.
+    await tester.pumpWidget(TrustIqApp(
+      backend: DemoBackend(),
+      onboarding: OnboardingGate.forTests(seen: false),
+    ));
+    await tester.pump();
+
+    final l = await L.delegate.load(const Locale('en'));
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.text(l.onboardingNext));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text(l.onboarding3Title), findsOneWidget);
+  });
+
+  testWidgets('finishing it hands over to the rest of the app, once', (tester) async {
+    final gate = OnboardingGate.forTests(seen: false);
+    await tester.pumpWidget(TrustIqApp(backend: DemoBackend(), onboarding: gate));
+    await tester.pump();
+
+    final l = await L.delegate.load(const Locale('en'));
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text(l.onboardingNext));
+      await tester.pumpAndSettle();
+    }
+
+    // The last panel offers a decision rather than another Next.
+    expect(find.text(l.onboardingNext), findsNothing);
+    expect(find.text(l.onboardingCreateAccount), findsOneWidget);
+
+    await tester.tap(find.text(l.onboardingCreateAccount));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l.contracts), findsOneWidget);
+    expect(gate.seen, isTrue, reason: 'a second launch must not show it again');
+  });
+
+  testWidgets('a launch after the first goes straight in', (tester) async {
+    await tester.pumpWidget(TrustIqApp(
+      backend: DemoBackend(),
+      onboarding: OnboardingGate.forTests(seen: true),
+    ));
+    await tester.pump();
+
+    final l = await L.delegate.load(const Locale('en'));
+    expect(find.text(l.contracts), findsOneWidget);
+    expect(find.text(l.onboarding1Title), findsNothing);
+  });
+
+  testWidgets('opened for reference it closes rather than offering an account', (tester) async {
+    // Reachable again from the sign-in screen and the contract list. An
+    // explanation you can only ever see once is not documentation.
+    await tester.pumpWidget(_hostedScreen(const OnboardingScreen()));
+    await tester.pumpAndSettle();
+
+    final l = await L.delegate.load(const Locale('en'));
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text(l.onboardingNext));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text(l.onboardingDone), findsOneWidget);
+    expect(find.text(l.onboardingCreateAccount), findsNothing);
+    expect(find.text(l.onboardingSkip), findsNothing);
+  });
+  for (final code in ['en', 'ar']) {
+    testWidgets('the introduction fits a small phone in $code', (tester) async {
+      // 360x640 is the small end of what this will actually run on, and the
+      // top bar carries four things in a row. Flutter throws on an overflow in
+      // a test, so this is a real check rather than a screenshot somebody has
+      // to remember to look at. Arabic runs too: the same row right to left,
+      // with longer words in it.
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(
+        locale: Locale(code),
+        localizationsDelegates: L.localizationsDelegates,
+        supportedLocales: L.supportedLocales,
+        home: OnboardingScreen(onFinished: () {}, onSignIn: () {}),
+      ));
+      await tester.pumpAndSettle();
+
+      final l = await L.delegate.load(Locale(code));
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.text(l.onboardingNext));
+        await tester.pumpAndSettle();
+      }
+      expect(find.text(l.onboardingCreateAccount), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 /// Renders the whole screen at once.

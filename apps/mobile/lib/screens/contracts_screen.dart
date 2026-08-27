@@ -8,6 +8,8 @@ import '../widgets/common.dart';
 import '../widgets/language_button.dart';
 import 'contract_detail_screen.dart';
 import 'new_contract_screen.dart';
+import 'onboarding_screen.dart';
+import 'verify_identity_screen.dart';
 
 class ContractsScreen extends StatelessWidget {
   const ContractsScreen({super.key, required this.state});
@@ -37,7 +39,8 @@ class ContractsScreen extends StatelessWidget {
               onPressed: state.signOut,
               icon: const Icon(Icons.logout, size: IconSize.lg),
             ),
-          const SizedBox(width: 12),
+          _Menu(state: state),
+          const SizedBox(width: 4),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -107,6 +110,59 @@ class ContractsScreen extends StatelessWidget {
           true,
         _ => false,
       };
+}
+
+/// The two things a person needs and could not reach from here.
+///
+/// The explanation of what TrustIQ is had nowhere to live after the first
+/// launch, and identity verification could only be reached from a contract
+/// that had already refused to activate. Somebody who wants to be ready
+/// before their first contract had no way to be.
+class _Menu extends StatelessWidget {
+  const _Menu({required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    return PopupMenuButton<int>(
+      icon: const Icon(Icons.more_vert, size: IconSize.lg),
+      onSelected: (choice) => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => choice == 0
+              ? const OnboardingScreen()
+              : VerifyIdentityScreen(state: state),
+        ),
+      ),
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 0,
+          child: _MenuRow(icon: Icons.help_outline, label: l.howItWorks),
+        ),
+        PopupMenuItem(
+          value: 1,
+          child: _MenuRow(icon: Icons.badge_outlined, label: l.yourIdentity),
+        ),
+      ],
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: IconSize.md, color: context.c.inkSoft),
+        const SizedBox(width: 10),
+        Text(label),
+      ],
+    );
+  }
 }
 
 class _RoleSwitch extends StatelessWidget {

@@ -120,11 +120,21 @@ class BackendSession {
     required this.userId,
     required this.email,
     required this.displayName,
+    this.identityVerifiedAt,
   });
 
   final String userId;
   final String email;
   final String displayName;
+
+  /// When a person was verified, or null if they have not been.
+  ///
+  /// Carried on the session because otherwise the only way to know your own
+  /// verification state is to be a party to a contract, which puts the answer
+  /// behind the wall it is the reason for.
+  final DateTime? identityVerifiedAt;
+
+  bool get identityVerified => identityVerifiedAt != null;
 }
 
 /// A backend call that failed for a reason worth showing someone.

@@ -68,6 +68,10 @@ class AppState extends ChangeNotifier {
   /// this to be honest about what verifying does and does not prove today.
   bool get identityProviderConnected => _identity is! DemoIdentityProvider;
 
+  /// When you were verified, or null. Read from your own profile rather than
+  /// from a contract, so the answer is available before you have one.
+  DateTime? get identityVerifiedAt => _backend.session?.identityVerifiedAt;
+
   /// Whether the app can record a verification at all, or whether it happens
   /// somewhere the app cannot reach.
   bool get canRecordVerification => _backend.canRecordVerification;

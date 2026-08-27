@@ -1195,6 +1195,150 @@ abstract class L {
   /// **'There is nothing to do on this screen. It is here so you know what has to happen before a contract can be accepted, and why it is not automatic yet.'**
   String get verifiedByHandNothingToDo;
 
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get onboardingBack;
+
+  /// No description provided for @onboardingStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String onboardingStep(int current, int total);
+
+  /// No description provided for @onboarding1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'A record you can both point at'**
+  String get onboarding1Title;
+
+  /// No description provided for @onboarding1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Before the work starts, you and the other person write down what was agreed. Once you both accept it, neither of you can change the terms. Everything that happens after that is timestamped, and neither side can quietly rewrite it later.'**
+  String get onboarding1Body;
+
+  /// No description provided for @onboarding1Aside.
+  ///
+  /// In en, this message translates to:
+  /// **'For freelance work, a private sale, any deal with no platform standing behind it.'**
+  String get onboarding1Aside;
+
+  /// No description provided for @onboarding2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'If it goes wrong, it is not your word against theirs'**
+  String get onboarding2Title;
+
+  /// No description provided for @onboarding2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Each of you gives your account of what happened and files the documents behind it. An AI agent reads both against the evidence and proposes a resolution.'**
+  String get onboarding2Body;
+
+  /// No description provided for @onboarding2Aside.
+  ///
+  /// In en, this message translates to:
+  /// **'The proposal only takes effect if you both accept it. Either of you can refuse and ask for a person instead, and one refusal is enough.'**
+  String get onboarding2Aside;
+
+  /// No description provided for @onboarding3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'TrustIQ never holds your money'**
+  String get onboarding3Title;
+
+  /// No description provided for @onboarding3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay each other directly, the way you already do. Holding other people’s funds is a regulated activity in the UAE and TrustIQ is not licensed for it, so it does not pretend to be.'**
+  String get onboarding3Body;
+
+  /// No description provided for @onboarding3Aside.
+  ///
+  /// In en, this message translates to:
+  /// **'What TrustIQ holds is the record. Nothing on this app can move a dirham.'**
+  String get onboarding3Aside;
+
+  /// No description provided for @onboarding4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'What it asks of you'**
+  String get onboarding4Title;
+
+  /// No description provided for @onboarding4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'An account, and an identity check before a contract becomes binding. A contract only binds two verified identities, so the other party knows who agreed.'**
+  String get onboarding4Body;
+
+  /// No description provided for @onboarding4Aside.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafting a contract, sending it and filing evidence need no verification. Only accepting one does.'**
+  String get onboarding4Aside;
+
+  /// No description provided for @onboardingCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get onboardingCreateAccount;
+
+  /// No description provided for @onboardingHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have one'**
+  String get onboardingHaveAccount;
+
+  /// No description provided for @onboardingDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get onboardingDone;
+
+  /// No description provided for @whatIsTrustIq.
+  ///
+  /// In en, this message translates to:
+  /// **'What is TrustIQ?'**
+  String get whatIsTrustIq;
+
+  /// No description provided for @howItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'How TrustIQ works'**
+  String get howItWorks;
+
+  /// No description provided for @yourIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Your identity'**
+  String get yourIdentity;
+
+  /// No description provided for @identityVerifiedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified on {date}'**
+  String identityVerifiedOn(String date);
+
+  /// No description provided for @identityNotVerifiedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified yet. You can draft and send contracts, but not accept one.'**
+  String get identityNotVerifiedYet;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:
