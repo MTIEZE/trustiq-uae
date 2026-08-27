@@ -1,6 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Only the debug manifest declared this, which is the shape of the
+         mistake: everything works while you develop, and the release build
+         installs, opens, shows the introduction, and then fails every request
+         to Supabase with an error nobody can read. A permission a release
+         build needs belongs in the release manifest. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="trustiq_app"
+        android:label="TrustIQ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
