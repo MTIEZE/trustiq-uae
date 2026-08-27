@@ -132,6 +132,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   label: _youAre == Role.buyer ? l.emailOfDeliverer : l.emailOfPayer,
                   hint: 'name@example.ae',
                   keyboardType: TextInputType.emailAddress,
+                  textDirection: TextDirection.ltr,
                   // An email, not a name. The contract is addressed to an
                   // account, and the server resolves the address to one.
                   helper: l.counterpartyHelper,
@@ -178,14 +179,23 @@ class _NewContractScreenState extends State<NewContractScreen> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
+                  // Left to right whatever the interface language: an amount
+                  // is written the same way in both, and letting it flip would
+                  // put the currency on the wrong side of the number.
+                  textDirection: TextDirection.ltr,
                   decoration: InputDecoration(
                     hintText: '500',
-                    prefixText: 'AED  ',
-                    prefixStyle: TextStyle(
-                      color: c.inkFaint,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                    prefixIcon: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: Space.lg,
+                        end: Space.sm,
+                      ),
+                      child: Text(
+                        'AED',
+                        style: Type.bodyStrong.copyWith(color: c.inkFaint, fontSize: 15),
+                      ),
                     ),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                     errorText: _amountError,
                   ),
                   style: Type.amount.copyWith(fontSize: 22),
@@ -325,6 +335,7 @@ class _Field extends StatelessWidget {
     this.maxLength,
     this.keyboardType,
     this.helper,
+    this.textDirection,
   });
 
   final TextEditingController controller;
@@ -336,6 +347,10 @@ class _Field extends StatelessWidget {
 
   /// A line under the field for a rule the person cannot otherwise know.
   final String? helper;
+
+  /// Pins the field's direction. An email address and an amount are Latin in
+  /// both languages, and letting them follow the interface reverses them.
+  final TextDirection? textDirection;
 
   @override
   Widget build(BuildContext context) {
@@ -349,6 +364,7 @@ class _Field extends StatelessWidget {
           maxLines: maxLines,
           maxLength: maxLength,
           keyboardType: keyboardType,
+          textDirection: textDirection,
           autocorrect: keyboardType != TextInputType.emailAddress,
           decoration: InputDecoration(
             hintText: hint,

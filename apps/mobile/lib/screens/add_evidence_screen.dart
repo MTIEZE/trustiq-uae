@@ -158,6 +158,7 @@ class _AddEvidenceScreenState extends State<AddEvidenceScreen> {
               const SizedBox(height: 6),
               SelectableText(
                 item.sha256,
+                textDirection: TextDirection.ltr,
                 style: Type.mono.copyWith(
                   fontSize: 10.5,
                   color: context.c.inkSoft,

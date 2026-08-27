@@ -68,9 +68,9 @@ class MoneyText extends StatelessWidget {
     );
     final text = formatAed(amount);
     final split = text.lastIndexOf(' ');
-    if (split == -1) return Text(text, style: base);
+    if (split == -1) return _ltr(Text(text, style: base));
 
-    return Text.rich(
+    return _ltr(Text.rich(
       TextSpan(
         children: [
           TextSpan(text: text.substring(0, split)),
@@ -86,8 +86,17 @@ class MoneyText extends StatelessWidget {
         ],
       ),
       style: base,
-    );
+    ));
   }
+
+  /// Pins an amount to left-to-right.
+  ///
+  /// "500.00 AED" is a Latin string. Dropped into an Arabic paragraph, the
+  /// bidirectional algorithm is entitled to move the currency to the other
+  /// side of the number, and it does. The amount is the same either way and it
+  /// reads as a mistake, so it is pinned.
+  Widget _ltr(Widget child) =>
+      Directionality(textDirection: TextDirection.ltr, child: child);
 }
 
 class SectionLabel extends StatelessWidget {

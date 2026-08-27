@@ -249,6 +249,7 @@ class _SignInScreenState extends State<SignInScreen> {
             TextField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
+              textDirection: TextDirection.ltr,
               autocorrect: false,
               autofillHints: const [AutofillHints.email],
               decoration: InputDecoration(labelText: l.fieldEmail),

@@ -357,8 +357,12 @@ class _EvidenceRow extends StatelessWidget {
         const SizedBox(height: 6),
         Padding(
           padding: const EdgeInsetsDirectional.only(start: 28),
+          // A digest is only useful if two people can compare it character by
+          // character, which means it has to read the same way for both of
+          // them regardless of the language around it.
           child: SelectableText(
             item.sha256,
+            textDirection: TextDirection.ltr,
             style: TextStyle(
               fontSize: 10.5,
               color: c.inkFaint,
@@ -624,9 +628,27 @@ class _AllocationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
-    final seller = proposal.sellerAmount.value;
-    final buyer = proposal.buyerAmount.value;
-    final total = seller + buyer;
+    final total = proposal.sellerAmount.value + proposal.buyerAmount.value;
+
+    // One ordered list feeds both the bar and the legend. They used to be two
+    // separate Rows that happened to list the parties in the same order; in a
+    // right-to-left layout both flip, so they stayed aligned by coincidence
+    // rather than by construction. Reorder one of two Rows and the colours
+    // would say the opposite of the names, on a screen about somebody's money.
+    final shares = [
+      (
+        colour: c.accent,
+        label: context.l.toParty(contract.seller.name),
+        amount: proposal.sellerAmount,
+      ),
+      (
+        colour: c.caution,
+        label: context.l.toParty(contract.buyer.name),
+        amount: proposal.buyerAmount,
+      ),
+    ];
+
+    final visible = shares.where((s) => s.amount.value > 0).toList();
 
     return Column(
       children: [
@@ -634,60 +656,47 @@ class _AllocationBar extends StatelessWidget {
           height: 10,
           child: Row(
             children: [
-              if (seller > 0)
+              for (var i = 0; i < visible.length; i += 1) ...[
+                // A gap, so two shares read as two shares rather than as one
+                // bar that changes colour partway along.
+                if (i > 0) const SizedBox(width: 3),
                 Expanded(
-                  flex: seller,
+                  flex: visible[i].amount.value,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: c.accent,
+                      color: visible[i].colour,
                       borderRadius: BorderRadius.circular(Radii.pill),
                     ),
                   ),
                 ),
-              // A gap, so two shares read as two shares rather than as one bar
-              // that changes colour partway along.
-              if (seller > 0 && buyer > 0) const SizedBox(width: 3),
-              if (buyer > 0)
-                Expanded(
-                  flex: buyer,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: c.caution,
-                      borderRadius: BorderRadius.circular(Radii.pill),
-                    ),
-                  ),
-                ),
+              ],
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Space.md),
         Row(
           children: [
-            Expanded(
-              child: _AllocationLeg(
-                colour: c.accent,
-                label: context.l.toParty(contract.seller.name),
-                amount: proposal.sellerAmount,
+            for (var i = 0; i < shares.length; i += 1)
+              Expanded(
+                child: _AllocationLeg(
+                  colour: shares[i].colour,
+                  label: shares[i].label,
+                  amount: shares[i].amount,
+                  // The last leg hugs the far edge, whichever edge that is.
+                  alignEnd: i == shares.length - 1,
+                ),
               ),
-            ),
-            Expanded(
-              child: _AllocationLeg(
-                colour: c.caution,
-                label: context.l.toParty(contract.buyer.name),
-                amount: proposal.buyerAmount,
-                alignEnd: true,
-              ),
-            ),
           ],
         ),
         if (total != contract.totalAmount.value) ...[
-          const SizedBox(height: 8),
-          // Should be unreachable: the pipeline rejects any allocation that does
-          // not sum to the disputed amount. Shown rather than hidden, because a
-          // silent mismatch on someone's money is worse than an ugly warning.
+          const SizedBox(height: Space.sm),
+          // Should be unreachable: the pipeline rejects any allocation that
+          // does not sum to the disputed amount. Shown rather than hidden,
+          // because a silent mismatch on someone's money is worse than an ugly
+          // warning.
           Text(
             context.l.splitDoesNotAddUp,
-            style: TextStyle(fontSize: 12, color: c.critical),
+            style: Type.caption.copyWith(fontSize: 12, color: c.critical),
           ),
         ],
       ],
