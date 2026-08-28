@@ -551,6 +551,9 @@ function Footer() {
         <div className="footer-challenge">Building AI Application Challenge · Decoding Data Science · June 2026</div>
         <div className="footer-brand">Trust<span>IQ</span> UAE</div>
         <div className="footer-copy">AI-powered trust infrastructure for secure transactions between strangers</div>
+        {/* A privacy policy nobody can find is a document, not a disclosure.
+            Relative so it works under the /trustiq-uae/ base path. */}
+        <div className="footer-links"><a href="privacy.html">Privacy</a></div>
       </div>
     </footer>
   )

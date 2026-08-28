@@ -899,3 +899,21 @@
   font-size: 0.8rem;
   color: var(--text-faint);
 }
+
+.footer-links {
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.footer-links a {
+  color: var(--text-faint);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1px;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}

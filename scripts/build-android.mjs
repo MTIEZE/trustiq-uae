@@ -2,8 +2,14 @@
  * Builds the Android app for the closed beta.
  *
  *   node scripts/build-android.mjs            release, one APK for every phone
+ *   node scripts/build-android.mjs --bundle   an .aab, which is what Play takes
  *   node scripts/build-android.mjs --split    one APK per architecture, smaller
  *   node scripts/build-android.mjs --debug    no keystore needed, for a quick look
+ *
+ * APK by default, because that is what you send a tester over WhatsApp. Play
+ * has not accepted an APK since 2021 and needs the bundle, which nobody can
+ * install directly: it is a set of parts Play assembles per device and signs
+ * with its own key.
  *
  * The project is bound to a Supabase project at build time, not at runtime, so
  * the URL and the publishable key have to be passed in. Reading them from .env
@@ -23,6 +29,7 @@ import { join } from 'node:path'
 
 const MOBILE = 'apps/mobile'
 const OUT = join(MOBILE, 'build/app/outputs/flutter-apk')
+const BUNDLE_OUT = join(MOBILE, 'build/app/outputs/bundle/release')
 
 function env() {
   const out = {}
@@ -63,6 +70,20 @@ function main() {
   const cfg = env()
   const debug = process.argv.includes('--debug')
   const split = process.argv.includes('--split')
+  const bundle = process.argv.includes('--bundle')
+
+  if (bundle && split) {
+    console.error(`
+  --bundle and --split do not go together. Splitting per architecture is what
+  Play does with a bundle on its own, so asking for both is asking Flutter to
+  do by hand the one thing the bundle exists to avoid.
+`)
+    return 1
+  }
+  if (bundle && debug) {
+    console.error('\n  A debug bundle is of no use to anybody. Drop one of the two.\n')
+    return 1
+  }
 
   for (const k of ['SUPABASE_URL', 'SUPABASE_ANON_KEY']) {
     if (!cfg[k]) {
@@ -109,7 +130,7 @@ function main() {
 
   const args = [
     'build',
-    'apk',
+    bundle ? 'appbundle' : 'apk',
     debug ? '--debug' : '--release',
     `--dart-define=SUPABASE_URL=${cfg.SUPABASE_URL}`,
     `--dart-define=SUPABASE_ANON_KEY=${cfg.SUPABASE_ANON_KEY}`,
@@ -131,22 +152,30 @@ function main() {
     return 1
   }
 
-  const built = split
-    ? ['app-armeabi-v7a-release.apk', 'app-arm64-v8a-release.apk', 'app-x86_64-release.apk']
-    : [debug ? 'app-debug.apk' : 'app-release.apk']
+  const built = bundle
+    ? ['app-release.aab']
+    : split
+      ? ['app-armeabi-v7a-release.apk', 'app-arm64-v8a-release.apk', 'app-x86_64-release.apk']
+      : [debug ? 'app-debug.apk' : 'app-release.apk']
 
   console.log('')
   let found = 0
   for (const name of built) {
-    const path = join(OUT, name)
+    const path = join(bundle ? BUNDLE_OUT : OUT, name)
     if (existsSync(path)) {
       found += 1
       console.log(`  ${path}  ${mb(path)}`)
     }
   }
   if (found === 0) {
-    console.error('  The build reported success but produced no APK.\n')
+    console.error(`  The build reported success but produced no ${bundle ? 'bundle' : 'APK'}.`)
     return 1
+  }
+  if (bundle) {
+    console.log(`
+  This cannot be installed on a phone. Upload it to Play Console; Play builds
+  the per-device APK from it and signs that with its own key.
+`)
   }
   console.log('')
   return 0

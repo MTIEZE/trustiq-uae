@@ -46,8 +46,15 @@ on:
         type: choice
         default: release
         options: [release, debug]
+      format:
+        description: What to produce
+        type: choice
+        default: apk
+        options:
+          - apk
+          - bundle
       split:
-        description: One APK per architecture (smaller, three files)
+        description: One APK per architecture. Ignored for a bundle.
         type: boolean
         default: false
 
@@ -122,8 +129,9 @@ jobs:
             printf 'TRUSTIQ_VERIFY_CONTACT=%s\n' "$TRUSTIQ_VERIFY_CONTACT"
           } > .env
           node scripts/build-android.mjs \
+            ${{ inputs.format == 'bundle' && '--bundle' || '' }} \
             ${{ inputs.flavour == 'debug' && '--debug' || '' }} \
-            ${{ inputs.split && '--split' || '' }}
+            ${{ (inputs.split && inputs.format != 'bundle') && '--split' || '' }}
 
       - name: Take the keystore and the .env back off the runner
         if: always()
@@ -131,7 +139,9 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: trustiq-${{ inputs.flavour }}-${{ github.sha }}
-          path: apps/mobile/build/app/outputs/flutter-apk/*.apk
+          name: trustiq-${{ inputs.format }}-${{ inputs.flavour }}-${{ github.sha }}
+          path: |
+            apps/mobile/build/app/outputs/flutter-apk/*.apk
+            apps/mobile/build/app/outputs/bundle/release/*.aab
           if-no-files-found: error
           retention-days: 30

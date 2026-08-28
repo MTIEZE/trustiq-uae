@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrustIQ privacy</title>
+<!--
+  Written from what the schema actually does, not from a template.
+  Every claim here corresponds to something in supabase/migrations, and the
+  two have to be changed together. A policy that describes a different app is
+  worse than none: it is a promise nobody kept.
+
+  Static and self-contained on purpose. Google Play needs a URL that works
+  before the app exists and keeps working if everything else breaks.
+-->
+<style>
+  :root {
+    --bg: #060908; --surface: #121C19; --border: #24332F;
+    --accent: #2DD4A7; --amber: #E8B36A;
+    --text: #EAF2EF; --dim: #8FA39D; --faint: #5A6E68;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 48px 22px 96px; background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: clamp(28px, 5vw, 38px); line-height: 1.15; letter-spacing: -.02em; margin: 0 0 10px; }
+  .updated { color: var(--faint); font-size: 14px; margin: 0 0 40px; }
+  h2 {
+    font-size: 19px; letter-spacing: -.01em; margin: 42px 0 12px;
+    padding-top: 22px; border-top: 1px solid var(--border);
+  }
+  h3 { font-size: 15px; margin: 26px 0 8px; color: var(--text); }
+  p, li { color: var(--dim); }
+  p { margin: 0 0 14px; }
+  ul { margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  strong { color: var(--text); font-weight: 600; }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .callout {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber); border-radius: 4px;
+    padding: 18px 20px; margin: 0 0 20px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border);
+    font-size: 13.5px; color: var(--faint);
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>What TrustIQ knows about you</h1>
+  <p class="updated">Last updated 28 August 2026. This describes the closed beta.</p>
+
+  <p>
+    TrustIQ records what two people agreed, so that neither has to remember it
+    the same way. It never holds your money. This page says what it stores to
+    do that, who else sees it, and what it does not have.
+  </p>
+
+  <h2>What is stored</h2>
+
+  <h3>Your account</h3>
+  <ul>
+    <li>Your name, which the other party to a contract sees.</li>
+    <li>Your email address, used to sign in and to reach you.</li>
+    <li>Your password, held by our authentication provider and never visible to us.</li>
+    <li>Which language you chose, so mail is written in it.</li>
+  </ul>
+
+  <h3>Your identity check</h3>
+  <p>
+    A contract only becomes binding between two verified identities. During the
+    closed beta somebody at TrustIQ checks your documents and records that they
+    did, along with a note saying what they looked at. Your profile is marked as
+    a <strong>manual check</strong> and never as a UAE Pass one, so nobody
+    reading it later mistakes the two.
+  </p>
+  <div class="callout">
+    <p>
+      <strong>Your Emirates ID number is not stored.</strong> It is visible to
+      whoever checks it and goes no further. It identifies you across every
+      system in the country, and keeping a copy would make this database worth
+      attacking for reasons that have nothing to do with TrustIQ.
+    </p>
+  </div>
+
+  <h3>Your contracts</h3>
+  <ul>
+    <li>What you wrote: the description, the terms, the amount, any stages.</li>
+    <li>Every move either party makes, with who made it and when.</li>
+    <li>Documents you file as evidence, and a SHA-256 fingerprint of each, which
+        we calculate from the bytes we stored rather than accept from you.</li>
+    <li>The text inside a document, where the file is one we can read, so a
+        dispute can be judged against what it says.</li>
+    <li>What each of you wrote about a dispute, in full, shown to the other.</li>
+  </ul>
+
+  <h3>Somebody you invite</h3>
+  <p>
+    If you address a contract to an email with no TrustIQ account, we store that
+    address so the invitation can be claimed by that person and nobody else.
+    <strong>We do not write to them.</strong> You send them the code yourself.
+  </p>
+
+  <h2>What is not stored</h2>
+  <ul>
+    <li>Payment details, card numbers or bank accounts. TrustIQ handles no money.</li>
+    <li>Your Emirates ID number, address, nationality or date of birth.</li>
+    <li>Your location.</li>
+    <li>Your contacts, photos or files, beyond the documents you deliberately file.</li>
+    <li>Any advertising or analytics identifier. The app contains no analytics
+        library, no advertising library and no tracker of any kind.</li>
+  </ul>
+
+  <h2>Who else sees it</h2>
+
+  <h3>The other party</h3>
+  <p>
+    Your name, whether you are verified, and everything on a contract you share:
+    its terms, its history, the documents either of you filed and what each of
+    you said about a dispute. Nobody outside a contract can see any of it. That
+    is enforced by the database rather than by the app.
+  </p>
+
+  <h3>A reviewer at TrustIQ</h3>
+  <p>
+    Only when a dispute is escalated to a person, and only from that moment. A
+    reviewer sees the claims, the evidence and the history. They are
+    deliberately <strong>not</strong> shown either party's name.
+  </p>
+
+  <h3>Three companies we depend on</h3>
+  <ul>
+    <li><strong>Supabase</strong> hosts the database and the files.</li>
+    <li><strong>Brevo</strong> delivers email. It receives your name and address,
+        and nothing about your contracts.</li>
+    <li><strong>Anthropic</strong> analyses a dispute when one is opened. It
+        receives the agreed terms, the amount, the dates, what each of you
+        wrote about the dispute, and the text of the documents filed. We send
+        it no name, no email address and no account identifier. What it sees of
+        you is only what you or the other party typed: if either of you writes
+        a name into a claim, that goes as written.</li>
+  </ul>
+
+  <div class="callout">
+    <p>
+      <strong>Your data is stored in Germany</strong>, in Supabase's
+      eu-central-1 region, not in the UAE. If where your data physically sits
+      matters to you, it should weigh on whether you use the beta.
+    </p>
+  </div>
+
+  <h2>How long it is kept</h2>
+  <p>
+    Contracts, their history, the documents filed against them and the record of
+    identity checks are <strong>append-only</strong>. They cannot be edited or
+    removed, by either party or by TrustIQ. That is the point of the product: a
+    record one side could quietly delete would be worth nothing to the other.
+  </p>
+
+  <div class="callout">
+    <p>
+      <strong>Deleting your account is not available yet.</strong> Saying so
+      plainly is better than a form that does nothing. Because of the above, a
+      person who has been party to a contract cannot simply be erased without
+      taking the other party's record with them.
+    </p>
+    <p>
+      Write to us and we will remove what can be removed and tell you exactly
+      what stays and why. A proper path for this, which anonymises you while
+      leaving the contract record intact, is being built.
+    </p>
+  </div>
+
+  <h2>Your rights</h2>
+  <p>
+    Ask us for a copy of what we hold about you, ask us to correct it, or ask us
+    to stop using it. We will answer within thirty days. Where a request
+    conflicts with a record the other party depends on, we will say so rather
+    than quietly refuse.
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    TrustIQ is for adults entering agreements. It is not for anyone under 18 and
+    we do not knowingly hold data about anyone who is.
+  </p>
+
+  <h2>When this changes</h2>
+  <p>
+    The date at the top moves and the change is described in the app. This page
+    is versioned alongside the code that implements it, so the two cannot drift
+    apart without somebody noticing.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Write to <a href="mailto:tiezemohamed@gmail.com">tiezemohamed@gmail.com</a>.
+    TrustIQ is a project of Mohamed Tieze, based in the United Arab Emirates.
+  </p>
+
+  <footer>
+    TrustIQ &middot; <a href="./">Back to the site</a>
+  </footer>
+
+</main>
+</body>
+</html>
