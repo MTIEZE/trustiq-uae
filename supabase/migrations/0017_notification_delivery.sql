@@ -95,6 +95,11 @@ as $$
     and n.email_error is null
     and n.read_at is null            -- they already saw it in the app
     and n.created_at <= now() - p_grace
+    -- RFC 2606 reserves these, so they can never be delivered anywhere. The
+    -- seed and verification scripts use @example.test throughout, and every
+    -- one of those would be accepted by the provider, bounce, and count
+    -- against the reputation the real mail depends on.
+    and p.email !~* '@([a-z0-9-]+\.)*(test|invalid|example|localhost)$'
   group by n.recipient_id, p.email, p.full_name, p.preferred_locale;
 $$;
 

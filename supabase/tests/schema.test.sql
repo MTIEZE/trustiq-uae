@@ -1875,6 +1875,49 @@ end
 $$;
 
 \echo ''
+\echo '-- addresses that can never receive anything --'
+
+-- The seed and verification scripts use @example.test throughout. Every one
+-- of those would be accepted by the provider, bounce, and count against the
+-- reputation the real mail depends on. RFC 2606 reserves the label, so this
+-- is a fact about the address rather than a guess about the mailbox.
+insert into auth.users (id, email) values
+  ('aaaa0000-0000-0000-0000-00000000aaaa', 'seeded@example.test');
+insert into public.profiles (id, full_name, email, identity_verified_at, identity_provider) values
+  ('aaaa0000-0000-0000-0000-00000000aaaa', 'Seeded Person', 'seeded@example.test', now(), 'manual_review');
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-0000000000dd',
+   '88888888-8888-8888-8888-888888888888',
+   'aaaa0000-0000-0000-0000-00000000aaaa',
+   'Contract with a seeded address',
+   'Terms.', 12000,
+   '88888888-8888-8888-8888-888888888888');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '88888888-8888-8888-8888-888888888888', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-0000000000dd', 'submit');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*)::int from app.notifications n
+   where n.recipient_id = 'aaaa0000-0000-0000-0000-00000000aaaa') = 1,
+  'a seeded person still gets the notification in the app');
+
+select pg_temp.check(
+  (select count(*)::int from public.notifications_to_send('0 seconds'::interval) w
+   where w.recipient_id = 'aaaa0000-0000-0000-0000-00000000aaaa') = 0,
+  'but nothing is ever mailed to a reserved domain, because it can only bounce');
+
+select pg_temp.check(
+  (select count(*)::int from public.notifications_to_send('0 seconds'::interval) w
+   where w.email like '%@example.ae') >= 0,
+  'and a real top level domain is not caught by the same rule');
+
+\echo ''
 \echo '-- who may drain it --'
 
 select pg_temp.check(
