@@ -2093,5 +2093,93 @@ select pg_temp.check(
   not has_function_privilege('authenticated', 'app.milestone_context(uuid)', 'EXECUTE'),
   'and the helper that resolves your role is not a client function');
 
+
+\echo ''
+\echo '== Leaving =='
+
+-- Somebody who signed up and did nothing, and somebody who is on a contract.
+-- The two are owed different things and the difference is decided by the data.
+
+insert into auth.users (id, email) values
+  ('cccc0000-0000-0000-0000-00000000cccc', 'passing.through@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('cccc0000-0000-0000-0000-00000000cccc', 'Passing Through', 'passing.through@example.ae');
+
+select pg_temp.check(
+  (select outcome from public.close_account('cccc0000-0000-0000-0000-00000000cccc')) = 'deleted',
+  'somebody nothing points at is genuinely deleted, not given a tombstone');
+
+select pg_temp.check(
+  not exists (select 1 from public.profiles where id = 'cccc0000-0000-0000-0000-00000000cccc'),
+  'and the row is gone');
+
+select pg_temp.check(
+  (select email from app.deletion_requests
+   where user_id = 'cccc0000-0000-0000-0000-00000000cccc') = 'passing.through@example.ae',
+  'the request is on record with the address, so a later question can be answered');
+
+\echo ''
+\echo '-- somebody a contract points at --'
+
+select pg_temp.check(
+  (select outcome from public.close_account('22222222-2222-2222-2222-222222222222')) = 'anonymised',
+  'somebody on a contract is emptied rather than removed');
+
+select pg_temp.check(
+  (select full_name from public.profiles
+   where id = '22222222-2222-2222-2222-222222222222') = 'Closed account',
+  'the name goes');
+
+select pg_temp.check(
+  (select email from public.profiles
+   where id = '22222222-2222-2222-2222-222222222222') like '%@deleted.invalid',
+  'and the address becomes one that can never be delivered to');
+
+select pg_temp.check(
+  (select identity_verified_at is null and identity_provider is null
+   from public.profiles where id = '22222222-2222-2222-2222-222222222222'),
+  'the verification goes with the person: nobody is left vouched for by nobody');
+
+select pg_temp.check(
+  (select kept from app.deletion_requests
+   where user_id = '22222222-2222-2222-2222-222222222222') like '%contracts you were party to%',
+  'and what was kept is written down in words, not left to be reconstructed');
+
+\echo ''
+\echo '-- what the other party keeps --'
+
+select pg_temp.check(
+  exists (select 1 from public.transactions
+          where seller_id = '22222222-2222-2222-2222-222222222222'),
+  'the contracts are still there, because they are the other party''s too');
+
+select pg_temp.check(
+  exists (select 1 from public.evidence
+          where uploaded_by = '22222222-2222-2222-2222-222222222222'),
+  'so are the documents that were filed against them');
+
+-- The synergy worth pinning: the tombstone domain is one the sender already
+-- refuses, so nothing has to remember not to write to a closed account.
+select pg_temp.check(
+  (select count(*)::int from public.notifications_to_send('0 seconds'::interval) w
+   where w.recipient_id = '22222222-2222-2222-2222-222222222222') = 0,
+  'and no mail will ever go to the tombstone, because it is a reserved domain');
+
+\echo ''
+\echo '-- who may close an account --'
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'public.close_account(uuid)', 'EXECUTE'),
+  'a signed-in user cannot close an account directly, not even their own');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.close_account(uuid)', 'EXECUTE'),
+  'and anon certainly cannot close somebody else''s');
+
+select pg_temp.expect_error(
+  $q$ update app.deletion_requests set outcome = 'deleted'
+      where user_id = '22222222-2222-2222-2222-222222222222' $q$,
+  'the record of a closure cannot be edited afterwards');
+
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

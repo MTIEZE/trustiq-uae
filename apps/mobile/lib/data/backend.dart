@@ -126,6 +126,13 @@ abstract interface class Backend {
   /// The buyer sends it back. The attempt stays on the record.
   Future<void> requestMilestoneRevision(String milestoneId);
 
+  /// Closes the signed-in person's own account.
+  ///
+  /// Returns what happened and, when something had to be kept, what. The
+  /// answer comes from the server rather than being guessed here, because
+  /// only the server knows what actually points at the profile.
+  Future<AccountClosure> closeAccount();
+
   /// Remembers which language to write to this person in.
   ///
   /// The choice lives on the device, which is right for reading the sign-in
@@ -230,6 +237,17 @@ class AppNotification {
   final DateTime? readAt;
 
   bool get unread => readAt == null;
+}
+
+/// What happened when an account was closed.
+class AccountClosure {
+  const AccountClosure({required this.deleted, required this.kept});
+
+  /// True when nothing pointed at the profile and it was really removed.
+  final bool deleted;
+
+  /// What had to stay, in words, or null when nothing did.
+  final String? kept;
 }
 
 /// A stage as it was typed, before there is a contract to hang it on.

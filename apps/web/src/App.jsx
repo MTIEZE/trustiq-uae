@@ -553,7 +553,11 @@ function Footer() {
         <div className="footer-copy">AI-powered trust infrastructure for secure transactions between strangers</div>
         {/* A privacy policy nobody can find is a document, not a disclosure.
             Relative so it works under the /trustiq-uae/ base path. */}
-        <div className="footer-links"><a href="privacy.html">Privacy</a></div>
+        <div className="footer-links">
+          <a href="privacy.html">Privacy</a>
+          {' · '}
+          <a href="delete-account.html">Closing your account</a>
+        </div>
       </div>
     </footer>
   )

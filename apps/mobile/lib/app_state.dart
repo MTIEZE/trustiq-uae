@@ -322,6 +322,17 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Closes your own account. Throws with a reason if it could not.
+  Future<AccountClosure> closeAccount() async {
+    final result = await _backend.closeAccount();
+    // Nothing left to hold. The session is already dead server-side; clearing
+    // it here is what makes the app agree.
+    _contracts = const [];
+    _activity = const [];
+    notifyListeners();
+    return result;
+  }
+
   /// Tells the server which language to write to you in.
   ///
   /// Quiet on failure. Somebody switching language should see the interface

@@ -646,6 +646,25 @@ class SupabaseBackend implements Backend {
   }
 
   @override
+  Future<AccountClosure> closeAccount() async {
+    final session = _client.auth.currentSession;
+    if (session == null) throw BackendException('Sign in first.');
+
+    // An edge function rather than an RPC: closing an account also means
+    // shutting the sign-in, which lives in auth and is reachable only with the
+    // service role, which is the one thing this app must never hold.
+    final response = await _client.functions.invoke('close-account', body: {});
+    final data = response.data;
+    if (response.status != 200 || data is! Map) {
+      throw BackendException('The account could not be closed.');
+    }
+    return AccountClosure(
+      deleted: data['outcome'] == 'deleted',
+      kept: data['kept'] as String?,
+    );
+  }
+
+  @override
   Future<void> setPreferredLocale(String code) async {
     if (_client.auth.currentUser == null) return;
     await _rpc<void>('set_preferred_locale', {'p_locale': code}, 'saving your language');

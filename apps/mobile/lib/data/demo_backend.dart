@@ -369,6 +369,10 @@ class DemoBackend implements Backend {
       throw BackendException('Stages move against a real project, not on demo data.');
 
   @override
+  Future<AccountClosure> closeAccount() async =>
+      throw BackendException('There is no account to close on demo data.');
+
+  @override
   Future<void> setPreferredLocale(String code) async {}
 
   @override

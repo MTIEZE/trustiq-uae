@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import '../widgets/language_button.dart';
 import 'contract_detail_screen.dart';
 import 'new_contract_screen.dart';
+import 'account_screen.dart';
 import 'activity_screen.dart';
 import 'invitations_screen.dart';
 import 'onboarding_screen.dart';
@@ -36,12 +37,6 @@ class ContractsScreen extends StatelessWidget {
           _Bell(state: state),
           const LanguageButton(compact: true),
           if (!state.isLive) _RoleSwitch(state: state),
-          if (state.isLive)
-            IconButton(
-              tooltip: l.signOutOf(state.backendLabel),
-              onPressed: state.signOut,
-              icon: const Icon(Icons.logout, size: IconSize.lg),
-            ),
           _Menu(state: state),
           const SizedBox(width: 4),
         ],
@@ -201,7 +196,8 @@ class _Menu extends StatelessWidget {
           builder: (_) => switch (choice) {
             0 => const OnboardingScreen(),
             1 => VerifyIdentityScreen(state: state),
-            _ => InvitationsScreen(state: state),
+            2 => InvitationsScreen(state: state),
+            _ => AccountScreen(state: state),
           },
         ),
       ),
@@ -218,6 +214,11 @@ class _Menu extends StatelessWidget {
           value: 2,
           child: _MenuRow(icon: Icons.mail_outline, label: l.invitations),
         ),
+        if (state.isLive)
+          PopupMenuItem(
+            value: 3,
+            child: _MenuRow(icon: Icons.person_outline, label: l.yourAccount),
+          ),
       ],
     );
   }

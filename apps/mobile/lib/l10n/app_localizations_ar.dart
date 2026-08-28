@@ -450,7 +450,7 @@ class LAr extends L {
   }
 
   @override
-  String get yourAccount => 'بيانك';
+  String get yourAccount => 'حسابك';
 
   @override
   String get claimHint =>
@@ -1029,6 +1029,43 @@ class LAr extends L {
   @override
   String get formNeedsVerifiedNote =>
       'أرسله الآن إن شئت. لا يستطيع أيٌّ منكما قبوله قبل توثيق الهويتين، وهويتك ليست موثّقة.';
+
+  @override
+  String get signedInAs => 'مسجّل الدخول بـ';
+
+  @override
+  String get signOut => 'تسجيل الخروج';
+
+  @override
+  String get closeAccount => 'إغلاق حسابك';
+
+  @override
+  String get closeAccountBlurb =>
+      'يُمحى كل ما يعرّف بك. ويبقى ما يحتاجه الطرف الآخر في العقد، مرتبطاً بسجل لم يعد يحمل اسمك.';
+
+  @override
+  String get closeAccountTitle => 'إغلاق هذا الحساب؟';
+
+  @override
+  String get closeAccountBody =>
+      'يُمحى اسمك وبريدك وتوثيق هويتك، ولن تتمكن من تسجيل الدخول مرة أخرى.\n\nتبقى العقود التي أنت طرف فيها، لأنها تخصّ الطرف الآخر بقدر ما تخصّك. وسيرى مكان اسمك حساباً مغلقاً.\n\nلا يمكن التراجع عن هذا.';
+
+  @override
+  String get closeAccountConfirm => 'أغلقه';
+
+  @override
+  String get accountClosed => 'أُغلق حسابك';
+
+  @override
+  String get accountDeletedBody => 'لم يكن هناك ما يشير إليه، فحُذف بالكامل.';
+
+  @override
+  String accountKeptBody(String kept) {
+    return 'ما بقي، ولا شيء غيره: $kept.';
+  }
+
+  @override
+  String get closeAccountFailed => 'تعذّر إغلاق الحساب. لم يتغيّر شيء.';
 
   @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';

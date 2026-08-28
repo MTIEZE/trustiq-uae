@@ -1866,6 +1866,72 @@ abstract class L {
   /// **'Send it now if you like. Neither of you can accept it until both identities are verified, and yours is not.'**
   String get formNeedsVerifiedNote;
 
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as'**
+  String get signedInAs;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @closeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Close your account'**
+  String get closeAccount;
+
+  /// No description provided for @closeAccountBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything that identifies you is erased. What the other party to a contract needs is kept, attached to a record that no longer names you.'**
+  String get closeAccountBlurb;
+
+  /// No description provided for @closeAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close this account?'**
+  String get closeAccountTitle;
+
+  /// No description provided for @closeAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name, your email and your identity check are erased and you will not be able to sign in again.\n\nContracts you are party to stay, because they belong to the other person as much as to you. They will see a closed account where your name was.\n\nThis cannot be undone.'**
+  String get closeAccountBody;
+
+  /// No description provided for @closeAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Close it'**
+  String get closeAccountConfirm;
+
+  /// No description provided for @accountClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is closed'**
+  String get accountClosed;
+
+  /// No description provided for @accountDeletedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing pointed at it, so it was deleted entirely.'**
+  String get accountDeletedBody;
+
+  /// No description provided for @accountKeptBody.
+  ///
+  /// In en, this message translates to:
+  /// **'What was kept, and only this: {kept}.'**
+  String accountKeptBody(String kept);
+
+  /// No description provided for @closeAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The account could not be closed. Nothing has changed.'**
+  String get closeAccountFailed;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

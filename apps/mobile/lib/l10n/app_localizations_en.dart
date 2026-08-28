@@ -1037,6 +1037,45 @@ class LEn extends L {
       'Send it now if you like. Neither of you can accept it until both identities are verified, and yours is not.';
 
   @override
+  String get signedInAs => 'Signed in as';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get closeAccount => 'Close your account';
+
+  @override
+  String get closeAccountBlurb =>
+      'Everything that identifies you is erased. What the other party to a contract needs is kept, attached to a record that no longer names you.';
+
+  @override
+  String get closeAccountTitle => 'Close this account?';
+
+  @override
+  String get closeAccountBody =>
+      'Your name, your email and your identity check are erased and you will not be able to sign in again.\n\nContracts you are party to stay, because they belong to the other person as much as to you. They will see a closed account where your name was.\n\nThis cannot be undone.';
+
+  @override
+  String get closeAccountConfirm => 'Close it';
+
+  @override
+  String get accountClosed => 'Your account is closed';
+
+  @override
+  String get accountDeletedBody =>
+      'Nothing pointed at it, so it was deleted entirely.';
+
+  @override
+  String accountKeptBody(String kept) {
+    return 'What was kept, and only this: $kept.';
+  }
+
+  @override
+  String get closeAccountFailed =>
+      'The account could not be closed. Nothing has changed.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override
