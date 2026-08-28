@@ -1018,6 +1018,25 @@ class LEn extends L {
   }
 
   @override
+  String counterpartyNotVerified(String name) {
+    return '$name has not verified their identity yet. A contract only becomes binding between verified identities, so nothing can be accepted until they do.';
+  }
+
+  @override
+  String get youAreNotVerified => 'Your identity is not verified';
+
+  @override
+  String get youAreNotVerifiedBody =>
+      'You can draft contracts, send them and file evidence. Accepting one needs your identity, because the other party has no way of knowing who agreed.';
+
+  @override
+  String get getVerified => 'Get verified';
+
+  @override
+  String get formNeedsVerifiedNote =>
+      'Send it now if you like. Neither of you can accept it until both identities are verified, and yours is not.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

@@ -1836,6 +1836,36 @@ abstract class L {
   /// **'{who} sent a stage back'**
   String mvRequestRevision(String who);
 
+  /// No description provided for @counterpartyNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has not verified their identity yet. A contract only becomes binding between verified identities, so nothing can be accepted until they do.'**
+  String counterpartyNotVerified(String name);
+
+  /// No description provided for @youAreNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Your identity is not verified'**
+  String get youAreNotVerified;
+
+  /// No description provided for @youAreNotVerifiedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can draft contracts, send them and file evidence. Accepting one needs your identity, because the other party has no way of knowing who agreed.'**
+  String get youAreNotVerifiedBody;
+
+  /// No description provided for @getVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Get verified'**
+  String get getVerified;
+
+  /// No description provided for @formNeedsVerifiedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Send it now if you like. Neither of you can accept it until both identities are verified, and yours is not.'**
+  String get formNeedsVerifiedNote;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

@@ -388,6 +388,65 @@ void main() {
     expect(needsYou, lessThan(news),
         reason: 'news above a task is a task somebody misses');
   });
+
+  testWidgets('an unverified person is told before they hit the gate', (tester) async {
+    // The gate is at acceptance and nothing said so until somebody was refused
+    // by it, which can be after drafting a contract and sending it. Saying it
+    // where the work starts is the whole point of this notice.
+    _tallSurface(tester);
+    final state = AppState(backend: _Liveish(verified: false));
+    await state.refresh();
+
+    await tester.pumpWidget(_hostedScreen(
+      ListenableBuilder(
+        listenable: state,
+        builder: (_, _) => ContractsScreen(state: state),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final l = await L.delegate.load(const Locale('en'));
+    expect(find.text(l.youAreNotVerified), findsOneWidget);
+    expect(find.text(l.getVerified), findsOneWidget);
+    // It leads with what still works. Telling somebody they are stuck when
+    // three of the four things are available to them is not accurate.
+    expect(find.text(l.youAreNotVerifiedBody), findsOneWidget);
+  });
+
+  testWidgets('and somebody already verified is told nothing', (tester) async {
+    _tallSurface(tester);
+    final state = AppState(backend: _Liveish(verified: true));
+    await state.refresh();
+
+    await tester.pumpWidget(_hostedScreen(
+      ListenableBuilder(
+        listenable: state,
+        builder: (_, _) => ContractsScreen(state: state),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final l = await L.delegate.load(const Locale('en'));
+    expect(find.text(l.youAreNotVerified), findsNothing,
+        reason: 'confirming it on every launch is the same nag with a tick on it');
+  });
+}
+
+/// Demo data behind a session that reports itself the way a real one does.
+class _Liveish extends DemoBackend {
+  _Liveish({required this.verified});
+  final bool verified;
+
+  @override
+  bool get isLive => true;
+
+  @override
+  BackendSession? get session => BackendSession(
+        userId: 'usr_you',
+        email: 'you@example.ae',
+        displayName: 'You',
+        identityVerifiedAt: verified ? DateTime(2026, 8, 1) : null,
+      );
 }
 
 /// Three things happened: one waiting on you, two for information.

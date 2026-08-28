@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'contract_detail_screen.dart';
 import 'invitation_created_screen.dart';
+import 'verify_identity_screen.dart';
 
 /// Creating a contract: the product's front door.
 ///
@@ -184,6 +185,10 @@ class _NewContractScreenState extends State<NewContractScreen> {
         children: [
           // A form of three questions rather than one wall of fields. The
           // numbers are not decoration: they tell someone how much is left.
+          if (widget.state.isLive && widget.state.identityVerifiedAt == null) ...[
+            YourIdentityNotice(state: widget.state, compact: true),
+            const SizedBox(height: Space.lg),
+          ],
           _Step(number: 1, title: l.stepWhoWith, blurb: l.stepWhoWithBlurb),
           InfoCard(
             padding: const EdgeInsets.all(Space.xl),

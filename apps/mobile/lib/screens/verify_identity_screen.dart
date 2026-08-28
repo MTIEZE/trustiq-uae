@@ -340,6 +340,75 @@ class _KeptRow extends StatelessWidget {
 }
 
 /// Shown where an action is blocked because someone is not verified yet.
+/// A standing note that you cannot accept a contract yet.
+///
+/// The gate has always been at acceptance, and nothing ever said so until the
+/// moment somebody was refused by it. That is late: you can have drafted a
+/// contract, sent it, and be waiting on the other side before finding out that
+/// the block is on your end. This says it where the work starts instead.
+///
+/// It leads with what still works. A person who can do three of the four
+/// things needs to know which one is missing, not to be told they are stuck.
+class YourIdentityNotice extends StatelessWidget {
+  const YourIdentityNotice({super.key, required this.state, this.compact = false});
+
+  final AppState state;
+
+  /// For a form, where this sits beside fields rather than above a list.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+
+    // Nothing to say to somebody who is already verified. Confirming it every
+    // time they open the app would be the same nag with a green tick on it.
+    if (state.identityVerifiedAt != null) return const SizedBox.shrink();
+
+    if (compact) {
+      return RuleNote(l.formNeedsVerifiedNote, icon: Icons.gpp_maybe_outlined, tone: c.caution);
+    }
+
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.gpp_maybe_outlined, size: IconSize.lg, color: c.caution),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l.youAreNotVerified,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Space.sm),
+          Text(
+            l.youAreNotVerifiedBody,
+            style: TextStyle(fontSize: 14, height: 1.55, color: c.inkSoft),
+          ),
+          const SizedBox(height: Space.md),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => VerifyIdentityScreen(state: state),
+                ),
+              ),
+              child: Text(l.getVerified),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class IdentityGateNotice extends StatelessWidget {
   const IdentityGateNotice({
     super.key,
@@ -379,9 +448,7 @@ class IdentityGateNotice extends StatelessWidget {
             const SizedBox(height: Space.md),
             Text(
               youAreVerified
-                  ? '$counterpartyName has not verified their identity yet. A '
-                      'contract only becomes binding between verified identities, '
-                      'so nothing can be accepted until they do.'
+                  ? context.l.counterpartyNotVerified(counterpartyName)
                   : context.l.identityGateNote,
               style: const TextStyle(fontSize: 14, height: 1.55),
             ),

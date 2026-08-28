@@ -66,6 +66,12 @@ class ContractsScreen extends StatelessWidget {
             RuleNote(l.demoDataNote, icon: Icons.science_outlined),
             const SizedBox(height: 14),
           ],
+          // Above the list, because it is the reason a contract further down
+          // will refuse to activate.
+          if (state.isLive) ...[
+            YourIdentityNotice(state: state),
+            if (state.identityVerifiedAt == null) const SizedBox(height: 14),
+          ],
           if (state.error != null) ...[
             _ErrorNote(message: state.error!, onDismiss: state.clearError),
             const SizedBox(height: 14),

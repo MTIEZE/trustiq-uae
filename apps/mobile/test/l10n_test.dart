@@ -140,8 +140,14 @@ void main() {
           final line = lines[i];
           final trimmed = line.trimLeft();
           if (trimmed.startsWith('//') || trimmed.startsWith('///')) continue;
-          // A sentence, not an identifier: starts with a capital and runs on.
-          for (final m in RegExp(r"'([A-Z][^']{6,})'").allMatches(line)) {
+          // A sentence, not an identifier: starts with a capital and runs on,
+          // or starts with an interpolated value and then runs on. The second
+          // half was added because a hardcoded English sentence beginning
+          // '$counterpartyName has not verified...' sat in a screen for weeks:
+          // it does not start with a capital, so the first pattern never saw
+          // it, and neither did anybody reading Arabic.
+          final sentence = RegExp(r"'((?:[A-Z]|\$\w+ )[^']{6,})'");
+          for (final m in sentence.allMatches(line)) {
             final value = m.group(1)!;
             if (value.startsWith('package') || value.startsWith('assets')) continue;
             // A font family is a name the system looks up, not words anybody

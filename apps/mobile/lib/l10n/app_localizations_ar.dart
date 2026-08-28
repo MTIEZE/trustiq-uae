@@ -1012,6 +1012,25 @@ class LAr extends L {
   }
 
   @override
+  String counterpartyNotVerified(String name) {
+    return 'لم يوثّق $name هويته بعد. ولا يصبح العقد ملزماً إلا بين هويتين موثّقتين، فلا يمكن قبول أي شيء قبل أن يفعل.';
+  }
+
+  @override
+  String get youAreNotVerified => 'هويتك غير موثّقة';
+
+  @override
+  String get youAreNotVerifiedBody =>
+      'يمكنك صياغة العقود وإرسالها وإيداع الأدلة. أما قبول عقد فيحتاج إلى توثيق هويتك، لأن الطرف الآخر لا سبيل له لمعرفة من وافق.';
+
+  @override
+  String get getVerified => 'وثّق هويتك';
+
+  @override
+  String get formNeedsVerifiedNote =>
+      'أرسله الآن إن شئت. لا يستطيع أيٌّ منكما قبوله قبل توثيق الهويتين، وهويتك ليست موثّقة.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

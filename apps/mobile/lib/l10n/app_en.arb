@@ -409,6 +409,13 @@
   "mvRequestRevision": "{who} sent a stage back",
   "@mvRequestRevision": {"placeholders": {"who": {"type": "String"}}},
 
+  "counterpartyNotVerified": "{name} has not verified their identity yet. A contract only becomes binding between verified identities, so nothing can be accepted until they do.",
+  "@counterpartyNotVerified": {"placeholders": {"name": {"type": "String"}}},
+  "youAreNotVerified": "Your identity is not verified",
+  "youAreNotVerifiedBody": "You can draft contracts, send them and file evidence. Accepting one needs your identity, because the other party has no way of knowing who agreed.",
+  "getVerified": "Get verified",
+  "formNeedsVerifiedNote": "Send it now if you like. Neither of you can accept it until both identities are verified, and yours is not.",
+
   "amountMustBePositive": "The amount must be more than zero.",
   "amountTwoDecimals": "Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.",
   "amountFormat": "Enter an amount in AED, like 500 or 1250.50.",
