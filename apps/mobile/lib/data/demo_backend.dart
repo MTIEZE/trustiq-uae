@@ -354,6 +354,9 @@ class DemoBackend implements Backend {
   Future<void> markNotificationsRead(DateTime before) async {}
 
   @override
+  Future<void> setPreferredLocale(String code) async {}
+
+  @override
   bool get canRecordVerification => true;
 
   @override

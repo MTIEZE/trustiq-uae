@@ -294,6 +294,19 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Tells the server which language to write to you in.
+  ///
+  /// Quiet on failure. Somebody switching language should see the interface
+  /// switch, not an error about a preference that will be sent again the next
+  /// time they touch the control.
+  Future<void> rememberLocale(String code) async {
+    try {
+      await _backend.setPreferredLocale(code);
+    } on BackendException {
+      // Not worth a banner.
+    }
+  }
+
   Future<void> markActivityRead() async {
     if (_activity.isEmpty) return;
     final newest = _activity.first.at;

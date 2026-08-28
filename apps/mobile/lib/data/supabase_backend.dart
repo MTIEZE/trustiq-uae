@@ -584,6 +584,12 @@ class SupabaseBackend implements Backend {
   }
 
   @override
+  Future<void> setPreferredLocale(String code) async {
+    if (_client.auth.currentUser == null) return;
+    await _rpc<void>('set_preferred_locale', {'p_locale': code}, 'saving your language');
+  }
+
+  @override
   bool get canRecordVerification => false;
 
   @override

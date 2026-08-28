@@ -79,10 +79,24 @@ class _TrustIqAppState extends State<TrustIqApp> {
     // from storage arrives without anyone pressing sign in, and a screen that
     // waits for the button shows a returning person an empty list.
     _state.start();
+
+    // The language is stored on the device, because it has to be readable
+    // before there is an account. The server needs its own copy, because an
+    // email is written to somebody who is not holding the phone. Wired here
+    // rather than inside LanguageController, which has no business knowing a
+    // backend exists.
+    widget.language.addListener(_rememberLanguage);
+    _rememberLanguage();
+  }
+
+  void _rememberLanguage() {
+    final chosen = widget.language.locale;
+    if (chosen != null) _state.rememberLocale(chosen.languageCode);
   }
 
   @override
   void dispose() {
+    widget.language.removeListener(_rememberLanguage);
     _state.dispose();
     super.dispose();
   }

@@ -108,6 +108,13 @@ abstract interface class Backend {
   /// swallow something that landed while it was being read.
   Future<void> markNotificationsRead(DateTime before);
 
+  /// Remembers which language to write to this person in.
+  ///
+  /// The choice lives on the device, which is right for reading the sign-in
+  /// screen before there is an account and useless for writing to somebody
+  /// who is not holding the phone.
+  Future<void> setPreferredLocale(String code);
+
   /// Fires a transition. Returns null on success, or why it was refused.
   Future<TransitionError?> fire(String contractId, TransactionEvent event);
 

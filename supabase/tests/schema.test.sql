@@ -1774,5 +1774,124 @@ select pg_temp.check(
       and t.tgfoid = 'app.forbid_mutation'::regproc),
   'the outbox is deliberately not append-only: read and sent have to be writable');
 
+
+\echo ''
+\echo '== Handing the outbox to something that sends =='
+
+-- Two people who exist only for this section, and one contract between them.
+-- The pair above will not do: the section before this one marked everything
+-- of theirs read, and read rows are deliberately never mailed.
+
+insert into auth.users (id, email) values
+  ('88888888-8888-8888-8888-888888888888', 'mailed.buyer@example.ae'),
+  ('99999999-9999-9999-9999-999999999999', 'mailed.seller@example.ae');
+
+insert into public.profiles (id, full_name, email, identity_verified_at, identity_provider) values
+  ('88888888-8888-8888-8888-888888888888', 'Mailed Buyer',  'mailed.buyer@example.ae',  now(), 'manual_review'),
+  ('99999999-9999-9999-9999-999999999999', 'Mailed Seller', 'mailed.seller@example.ae', now(), 'manual_review');
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-0000000000ee',
+   '88888888-8888-8888-8888-888888888888',
+   '99999999-9999-9999-9999-999999999999',
+   'Contract used for the delivery checks',
+   'Terms.', 40000,
+   '88888888-8888-8888-8888-888888888888');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '88888888-8888-8888-8888-888888888888', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-0000000000ee', 'submit');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*)::int from public.notifications_to_send('0 seconds'::interval)) > 0,
+  'with no grace period there is something to send');
+
+select pg_temp.check(
+  (select count(*)::int from public.notifications_to_send('1 hour'::interval)) = 0,
+  'and with an hour of grace there is not, so two moves in a row become one email');
+
+select pg_temp.check(
+  (select waiting from public.notifications_to_send('0 seconds'::interval) w
+   where w.recipient_id = '99999999-9999-9999-9999-999999999999') = 1,
+  'one row per person carrying a count, not one row per event');
+
+select pg_temp.check(
+  (select locale from public.notifications_to_send('0 seconds'::interval) w
+   where w.recipient_id = '99999999-9999-9999-9999-999999999999') = 'en',
+  'somebody who never chose a language is written to in English');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '99999999-9999-9999-9999-999999999999', false);
+select public.set_preferred_locale('ar');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select locale from public.notifications_to_send('0 seconds'::interval) w
+   where w.recipient_id = '99999999-9999-9999-9999-999999999999') = 'ar',
+  'and somebody who chose Arabic is written to in Arabic');
+
+-- Inside a session on purpose. Run with the claim cleared, this passed on
+-- "sign in first" and proved nothing about the language at all.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '99999999-9999-9999-9999-999999999999', false);
+
+select pg_temp.expect_error(
+  $q$ select public.set_preferred_locale('fr') $q$,
+  'a language the app does not speak is refused rather than stored');
+
+select pg_temp.check(
+  (select preferred_locale from public.profiles
+   where id = '99999999-9999-9999-9999-999999999999') = 'ar',
+  'and the refusal left the previous choice standing');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- Marking, both ways round.
+do $$
+declare
+  v_ids bigint[];
+begin
+  select ids into v_ids
+  from public.notifications_to_send('0 seconds'::interval) w
+  where w.recipient_id = '99999999-9999-9999-9999-999999999999';
+
+  perform public.mark_notifications_sent(v_ids, 'brevo 500');
+  perform pg_temp.check(
+    (select count(*)::int from public.notifications_to_send('0 seconds'::interval) w
+     where w.recipient_id = '99999999-9999-9999-9999-999999999999') = 0,
+    'a batch that failed is not offered again, so nobody is retried at forever');
+
+  perform pg_temp.check(
+    (select email_error is not null and emailed_at is null
+     from app.notifications where id = v_ids[1]),
+    'and the failure is written down rather than swallowed');
+end
+$$;
+
+\echo ''
+\echo '-- who may drain it --'
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'public.notifications_to_send(interval)', 'EXECUTE'),
+  'a signed-in user cannot read who is about to be written to');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'public.mark_notifications_sent(bigint[], text)', 'EXECUTE'),
+  'nor mark somebody else''s mail as sent');
+
+select pg_temp.check(
+  has_function_privilege('service_role', 'public.notifications_to_send(interval)', 'EXECUTE'),
+  'the sender, which holds the service role, can');
+
+select pg_temp.check(
+  has_function_privilege('authenticated', 'public.set_preferred_locale(text)', 'EXECUTE'),
+  'choosing your own language is yours to do');
+
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

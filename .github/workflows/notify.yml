@@ -1,0 +1,79 @@
+# Asks the notification sender to drain the outbox.
+#
+# The database has neither pg_net nor pg_cron, so nothing inside it can call
+# out or schedule. That is fine and largely deliberate: the outbox was built so
+# that sending is somebody else's problem and a mail provider having a bad
+# afternoon can never make a contract transition fail. This is that somebody.
+#
+# Fifteen minutes. GitHub delays scheduled runs under load, sometimes by a lot,
+# and the sender already waits a grace period before offering a row so that two
+# moves in a row become one email. Nothing here is time critical: the point is
+# that a person learns within the hour rather than the next time they happen to
+# open the app.
+#
+# Needs one secret, SUPABASE_SERVICE_ROLE_KEY, and the repository variable
+# SUPABASE_URL that the Android build already uses. The function checks the
+# bearer against its own copy of the service role key, so an anonymous caller
+# gets nothing.
+
+name: Send notification emails
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  # So it can be run by hand while watching what happens, which is how it will
+  # be looked at every time somebody says they did not get an email.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Two runs draining the same outbox at once would take the same batch twice
+  # and send somebody the same mail twice. Skip rather than queue: the next
+  # scheduled run is fifteen minutes away and nothing is lost by missing one.
+  group: send-notifications
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Drain the outbox
+        env:
+          URL: ${{ vars.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "::error::Not configured: SUPABASE_URL (variable) and SUPABASE_SERVICE_ROLE_KEY (secret) are both needed."
+            exit 1
+          fi
+
+          # -sS so a failure is visible without the progress meter, and the
+          # body is captured rather than printed blind: it is the only place
+          # the counts appear.
+          body=$(curl -sS -X POST "$URL/functions/v1/send-notifications" \
+            -H "Authorization: Bearer $KEY" \
+            -H "Content-Type: application/json" \
+            -w '\n%{http_code}' \
+            -d '{}')
+
+          status=$(printf '%s' "$body" | tail -n1)
+          payload=$(printf '%s' "$body" | sed '$d')
+
+          echo "HTTP $status"
+          echo "$payload"
+
+          if [ "$status" != "200" ]; then
+            echo "::error::The sender answered $status. The function logs in the Supabase dashboard say why."
+            exit 1
+          fi
+
+          # Surfaced on the run itself, so a week of quiet runs can be read at
+          # a glance rather than by opening each one.
+          echo "### Notifications" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$payload" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
