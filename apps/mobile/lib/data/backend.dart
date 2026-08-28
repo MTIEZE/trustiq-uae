@@ -101,6 +101,13 @@ abstract interface class Backend {
 
   Future<void> revokeInvitation(String id);
 
+  /// What has happened on your contracts since you last looked.
+  Future<List<AppNotification>> notifications({int limit});
+
+  /// Marks everything up to [before] read, so opening the list does not
+  /// swallow something that landed while it was being read.
+  Future<void> markNotificationsRead(DateTime before);
+
   /// Fires a transition. Returns null on success, or why it was refused.
   Future<TransitionError?> fire(String contractId, TransactionEvent event);
 
@@ -160,6 +167,44 @@ class BackendSession {
   final DateTime? identityVerifiedAt;
 
   bool get identityVerified => identityVerifiedAt != null;
+}
+
+/// One thing that happened on a contract you are party to.
+///
+/// Carries the event rather than a sentence. The database records what
+/// happened; the app says it, in the language the reader chose.
+class AppNotification {
+  const AppNotification({
+    required this.id,
+    required this.contractId,
+    required this.disputeId,
+    required this.aboutDispute,
+    required this.event,
+    required this.actor,
+    required this.needsYou,
+    required this.at,
+    required this.readAt,
+  });
+
+  final int id;
+  final String? contractId;
+  final String? disputeId;
+
+  /// Which machine the event belongs to. The two enums share names, so this
+  /// is what decides how [event] is read.
+  final bool aboutDispute;
+
+  /// The wire name, as the database recorded it.
+  final String event;
+  final Actor actor;
+
+  /// Whether the next move is theirs, rather than something to be told about.
+  final bool needsYou;
+
+  final DateTime at;
+  final DateTime? readAt;
+
+  bool get unread => readAt == null;
 }
 
 /// A contract draft waiting for somebody who has not joined yet.

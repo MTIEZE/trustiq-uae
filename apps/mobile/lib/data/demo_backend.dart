@@ -147,7 +147,6 @@ class DemoBackend implements Backend {
               at: DateTime.now(),
               event: event,
               actor: _actor,
-              describe: _describe(contract, event),
             ),
           ],
         ));
@@ -180,7 +179,6 @@ class DemoBackend implements Backend {
           at: DateTime.now(),
           event: TransactionEvent.openDispute,
           actor: _actor,
-          describe: _describe(contract, TransactionEvent.openDispute),
         ),
       ],
     ));
@@ -257,7 +255,6 @@ class DemoBackend implements Backend {
           at: DateTime.now(),
           event: TransactionEvent.resolveDispute,
           actor: Actor.system,
-          describe: 'Both parties accepted the proposal',
         ),
       ],
     ));
@@ -348,6 +345,14 @@ class DemoBackend implements Backend {
     );
   }
 
+  // The demo has one person in it, so there is nobody to be told anything by.
+  // An empty list is the honest answer rather than invented activity.
+  @override
+  Future<List<AppNotification>> notifications({int limit = 50}) async => const [];
+
+  @override
+  Future<void> markNotificationsRead(DateTime before) async {}
+
   @override
   bool get canRecordVerification => true;
 
@@ -366,21 +371,6 @@ class DemoBackend implements Backend {
 
   static Party _verified(Party party) =>
       Party(id: party.id, name: party.name, verified: true);
-
-  String _describe(Contract contract, TransactionEvent event) {
-    final who = contract.partyFor(viewingAs).name;
-    return switch (event) {
-      TransactionEvent.submit => '$who sent the contract',
-      TransactionEvent.accept => '$who accepted the terms',
-      TransactionEvent.decline => '$who declined the terms',
-      TransactionEvent.withdraw => '$who withdrew the contract',
-      TransactionEvent.markDelivered => '$who marked the work delivered',
-      TransactionEvent.requestRevision => '$who requested changes',
-      TransactionEvent.confirmDelivery => '$who confirmed the delivery',
-      TransactionEvent.openDispute => '$who opened a dispute',
-      _ => '$who fired ${event.wireName}',
-    };
-  }
 }
 
 

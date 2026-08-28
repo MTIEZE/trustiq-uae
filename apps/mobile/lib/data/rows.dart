@@ -133,36 +133,7 @@ TimelineEntry timelineFromRow(Map<String, dynamic> row, Contract Function()? _) 
       at: readTime(row, 'occurred_at'),
       event: readTransactionEvent(readString(row, 'event')),
       actor: readActor(readString(row, 'actor'), 'transaction_events.actor'),
-      describe: describeEvent(
-        readTransactionEvent(readString(row, 'event')),
-        readActor(readString(row, 'actor'), 'transaction_events.actor'),
-      ),
     );
-
-/// Plain words for one recorded transition.
-///
-/// Written from the actor rather than from a name, because the event log
-/// records who acted as a role and the person reading it may be either side.
-String describeEvent(TransactionEvent event, Actor actor) {
-  final who = switch (actor) {
-    Actor.buyer => 'The buyer',
-    Actor.seller => 'The seller',
-    Actor.system => 'TrustIQ',
-  };
-  return switch (event) {
-    TransactionEvent.submit => '$who sent the contract',
-    TransactionEvent.accept => '$who accepted the terms',
-    TransactionEvent.decline => '$who declined the terms',
-    TransactionEvent.withdraw => '$who withdrew the contract',
-    TransactionEvent.markDelivered => '$who marked the work delivered',
-    TransactionEvent.requestRevision => '$who requested changes',
-    TransactionEvent.confirmDelivery => '$who confirmed the delivery',
-    TransactionEvent.openDispute => '$who opened a dispute',
-    TransactionEvent.resolveDispute => '$who resolved the dispute',
-    TransactionEvent.cancelByAgreement => '$who cancelled the contract',
-    TransactionEvent.expire => 'The contract expired',
-  };
-}
 
 ResolutionProposal? proposalFromRows(
   Map<String, dynamic>? proposal,

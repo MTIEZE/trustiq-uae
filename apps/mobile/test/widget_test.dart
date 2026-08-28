@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
+import 'package:trustiq_app/data/backend.dart';
 import 'package:trustiq_app/data/demo_backend.dart';
 import 'package:trustiq_app/data/onboarding.dart';
 import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/screens/contracts_screen.dart';
+import 'package:trustiq_app/screens/activity_screen.dart';
 import 'package:trustiq_app/screens/onboarding_screen.dart';
 import 'package:trustiq_app/screens/verify_identity_screen.dart';
 import 'package:trustiq_app/main.dart';
@@ -344,6 +346,72 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  testWidgets('the badge counts what needs you, not everything that happened', (tester) async {
+    // A badge that also counted news would be lit permanently, and a badge
+    // that is always lit is one people stop reading.
+    final state = AppState(backend: _NoisyBackend());
+    await state.refresh();
+
+    expect(state.activity.length, 3);
+    expect(state.waitingOnYou, 1);
+  });
+
+  testWidgets('a notification already read stops counting', (tester) async {
+    final state = AppState(backend: _NoisyBackend());
+    await state.refresh();
+    expect(state.waitingOnYou, 1);
+
+    await state.markActivityRead();
+    expect(state.waitingOnYou, 0,
+        reason: 'opening the list is what clears it, not tapping each line');
+  });
+
+  testWidgets('the activity screen keeps tasks above news', (tester) async {
+    _tallSurface(tester);
+    final state = AppState(backend: _NoisyBackend());
+    await state.refresh();
+
+    await tester.pumpWidget(_hostedScreen(ActivityScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    final l = await L.delegate.load(const Locale('en'));
+    // SectionLabel renders its text uppercased, so the finder has to match
+    // what is on screen rather than what was passed in.
+    final needsYou = tester.getTopLeft(find.text(l.needsYou.toUpperCase())).dy;
+    final news = tester.getTopLeft(find.text(l.history.toUpperCase())).dy;
+    expect(needsYou, lessThan(news),
+        reason: 'news above a task is a task somebody misses');
+  });
+}
+
+/// Three things happened: one waiting on you, two for information.
+class _NoisyBackend extends DemoBackend {
+  var _read = false;
+
+  @override
+  Future<List<AppNotification>> notifications({int limit = 50}) async {
+    final now = DateTime.now();
+    return [
+      AppNotification(
+        id: 3, contractId: 'c1', disputeId: null, aboutDispute: false,
+        event: 'submit', actor: Actor.buyer, needsYou: true,
+        at: now, readAt: _read ? now : null,
+      ),
+      AppNotification(
+        id: 2, contractId: 'c1', disputeId: null, aboutDispute: false,
+        event: 'accept', actor: Actor.seller, needsYou: false,
+        at: now.subtract(const Duration(hours: 1)), readAt: _read ? now : null,
+      ),
+      AppNotification(
+        id: 1, contractId: 'c1', disputeId: 'd1', aboutDispute: true,
+        event: 'escalate', actor: Actor.system, needsYou: false,
+        at: now.subtract(const Duration(hours: 2)), readAt: _read ? now : null,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> markNotificationsRead(DateTime before) async => _read = true;
 }
 
 /// Renders the whole screen at once.

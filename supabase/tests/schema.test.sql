@@ -1637,5 +1637,142 @@ select pg_temp.check(
   not has_function_privilege('authenticated', 'app.new_invitation_code()', 'EXECUTE'),
   'a signed-in user cannot mint codes on their own');
 
+
+\echo ''
+\echo '== Telling somebody that something needs them =='
+
+-- A fresh contract between two known parties, so every count below is about
+-- this one and not about everything the suite has driven so far.
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-0000000000ff',
+   '11111111-1111-1111-1111-111111111111',
+   '22222222-2222-2222-2222-222222222222',
+   'Contract used for the notification checks',
+   'Terms.', 30000,
+   '11111111-1111-1111-1111-111111111111');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-0000000000ff', 'submit');
+reset role;
+
+select pg_temp.check(
+  (select count(*)::int from app.notifications n
+   where n.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+     and n.recipient_id = '22222222-2222-2222-2222-222222222222') = 1,
+  'sending a contract tells the other party');
+
+select pg_temp.check(
+  (select count(*)::int from app.notifications n
+   where n.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+     and n.recipient_id = '11111111-1111-1111-1111-111111111111') = 0,
+  'and does not tell the person who sent it, who already knows');
+
+select pg_temp.check(
+  (select needs_you from app.notifications n
+   where n.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+     and n.recipient_id = '22222222-2222-2222-2222-222222222222'),
+  'a contract waiting to be accepted is marked as needing them, not as news');
+
+select pg_temp.check(
+  (select source = 'transaction' and event = 'submit' and actor = 'buyer'
+   from app.notifications n
+   where n.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+     and n.recipient_id = '22222222-2222-2222-2222-222222222222'),
+  'the row carries the event, its machine and who acted, never a sentence to read out');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-0000000000ff', 'accept');
+reset role;
+
+select pg_temp.check(
+  (select count(*)::int from app.notifications n
+   where n.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+     and n.recipient_id = '11111111-1111-1111-1111-111111111111'
+     and n.event = 'accept') = 1,
+  'accepting tells the other side in turn');
+
+-- The case the live check caught and this suite had not thought to ask about.
+select pg_temp.check(
+  (select not needs_you from app.notifications n
+   where n.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+     and n.recipient_id = '11111111-1111-1111-1111-111111111111'
+     and n.event = 'accept'),
+  'being told your contract was accepted is news: the work is now the other side''s');
+
+select pg_temp.check(
+  app.transaction_event_needs_them('request_revision'),
+  'asking for changes is a job of work for whoever is told, not a comment');
+
+\echo ''
+\echo '-- what each person can see --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+
+select pg_temp.check(
+  not exists (
+    select 1 from public.my_notifications(200) m
+    where m.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+      and m.event = 'accept'),
+  'your own move is not in your own list');
+
+select pg_temp.check(
+  exists (
+    select 1 from public.my_notifications(200) m
+    where m.transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000ff'
+      and m.event = 'submit'),
+  'the move that is waiting on you is');
+
+select pg_temp.check(
+  (select count(*)::int from public.my_notifications(3)) <= 3,
+  'the limit is honoured, so a long history cannot be asked for in one call');
+
+-- Marking read takes a cutoff, so opening the list marks what was on screen
+-- rather than something that landed while it was being read.
+select pg_temp.check(
+  public.mark_notifications_read(now() - interval '1 hour') = 0,
+  'nothing older than the cutoff means nothing marked');
+
+select pg_temp.check(
+  public.mark_notifications_read() > 0,
+  'without a cutoff, everything unread is marked');
+
+select pg_temp.check(
+  public.mark_notifications_read() = 0,
+  'and marking twice marks nothing the second time');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
+\echo '-- the outbox is not a client table --'
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.notifications', 'SELECT'),
+  'a signed-in user cannot read who is being told what');
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.notifications', 'UPDATE'),
+  'nor mark somebody else''s as read');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.my_notifications(integer)', 'EXECUTE'),
+  'anon holds no grant on the list');
+
+-- Delivery state is writable on purpose, unlike everything else this schema
+-- keeps. A notification is a job about the record, not part of it.
+select pg_temp.check(
+  not exists (
+    select 1 from pg_trigger t
+    where t.tgrelid = 'app.notifications'::regclass
+      and not t.tgisinternal
+      and t.tgfoid = 'app.forbid_mutation'::regproc),
+  'the outbox is deliberately not append-only: read and sent have to be writable');
+
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

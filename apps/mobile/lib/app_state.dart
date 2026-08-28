@@ -209,6 +209,10 @@ class AppState extends ChangeNotifier {
   Future<void> refresh() async {
     await _guard(() async {
       _contracts = await _backend.loadContracts();
+      // The bell has to have a count before anybody opens the screen that
+      // shows it, so activity travels with the contracts rather than waiting
+      // to be asked for.
+      await loadActivity();
     });
   }
 
@@ -266,6 +270,36 @@ class AppState extends ChangeNotifier {
   }
 
   Future<List<Invitation>> invitations() => _backend.myInvitations();
+
+  /* ---------------------------------------------------------------- *
+   * Activity
+   * ---------------------------------------------------------------- */
+
+  List<AppNotification> _activity = const [];
+  List<AppNotification> get activity => _activity;
+
+  /// How many things are waiting on you. Drives the count on the bell, and
+  /// counts only what needs a move: being told the other side accepted is
+  /// news, not a task, and a badge that counts news is a badge people learn
+  /// to ignore.
+  int get waitingOnYou => _activity.where((n) => n.unread && n.needsYou).length;
+
+  Future<void> loadActivity() async {
+    try {
+      _activity = await _backend.notifications();
+      notifyListeners();
+    } on BackendException {
+      // The bell is not worth an error banner over. The contracts underneath
+      // are what matters and they loaded or did not on their own.
+    }
+  }
+
+  Future<void> markActivityRead() async {
+    if (_activity.isEmpty) return;
+    final newest = _activity.first.at;
+    await _backend.markNotificationsRead(newest);
+    await loadActivity();
+  }
 
   Future<void> withdrawInvitation(String id) => _backend.revokeInvitation(id);
 
@@ -334,6 +368,7 @@ class AppState extends ChangeNotifier {
       }
       _setViewingAs(youAre);
       _contracts = await _backend.loadContracts();
+      await loadActivity();
     });
 
     if (noAccount != null) throw noAccount!;

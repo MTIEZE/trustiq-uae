@@ -822,6 +822,119 @@ class LEn extends L {
   String get sellerWord => 'seller';
 
   @override
+  String get whoBuyer => 'The buyer';
+
+  @override
+  String get whoSeller => 'The seller';
+
+  @override
+  String get whoSystem => 'TrustIQ';
+
+  @override
+  String evSubmit(String who) {
+    return '$who sent the contract';
+  }
+
+  @override
+  String evAccept(String who) {
+    return '$who accepted the terms';
+  }
+
+  @override
+  String evDecline(String who) {
+    return '$who declined the terms';
+  }
+
+  @override
+  String evWithdraw(String who) {
+    return '$who withdrew the contract';
+  }
+
+  @override
+  String evMarkDelivered(String who) {
+    return '$who marked the work delivered';
+  }
+
+  @override
+  String evRequestRevision(String who) {
+    return '$who requested changes';
+  }
+
+  @override
+  String evConfirmDelivery(String who) {
+    return '$who confirmed the delivery';
+  }
+
+  @override
+  String evOpenDispute(String who) {
+    return '$who opened a dispute';
+  }
+
+  @override
+  String evResolveDispute(String who) {
+    return '$who resolved the dispute';
+  }
+
+  @override
+  String evCancelByAgreement(String who) {
+    return '$who cancelled the contract';
+  }
+
+  @override
+  String get evExpire => 'The contract expired';
+
+  @override
+  String get devSubmitForAi =>
+      'Both accounts are in, and the case went to the agent';
+
+  @override
+  String get devIssueProposal => 'A resolution was proposed';
+
+  @override
+  String devAcceptProposal(String who) {
+    return '$who accepted the resolution';
+  }
+
+  @override
+  String devRejectProposal(String who) {
+    return '$who refused it and asked for a person';
+  }
+
+  @override
+  String get devEscalate => 'The case went to a human reviewer';
+
+  @override
+  String get devAssignReviewer => 'A reviewer took the case';
+
+  @override
+  String get devIssueHumanResolution => 'A reviewer decided the case';
+
+  @override
+  String devWithdrawDispute(String who) {
+    return '$who withdrew the dispute';
+  }
+
+  @override
+  String get notifications => 'Activity';
+
+  @override
+  String get nothingWaiting => 'Nothing is waiting on you.';
+
+  @override
+  String get nothingWaitingBody =>
+      'When the other party moves on one of your contracts, it appears here.';
+
+  @override
+  String get needsYou => 'Needs you';
+
+  @override
+  String get markAllRead => 'Mark all as read';
+
+  @override
+  String get activityNote =>
+      'This list is built from the contract record itself, so it says exactly what happened and nothing else.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

@@ -61,7 +61,18 @@ void main() {
       // Codes are generated from a Latin alphabet chosen for being unambiguous
       // when read aloud, so an Arabic example would show somebody characters
       // they will never be asked to type.
-      const untranslated = {'appName', 'languageEnglish', 'languageArabic', 'codeHint'};
+      const untranslated = {
+        'appName',
+        'languageEnglish',
+        'languageArabic',
+        // An example of an invitation code, not a sentence. Codes are drawn
+        // from a Latin alphabet chosen for being unambiguous read aloud, so an
+        // Arabic example would show characters nobody will ever be asked to type.
+        'codeHint',
+        // The brand, standing in for the actor on a system move. Same reason
+        // as appName: translating it would invent a second name for TrustIQ.
+        'whoSystem',
+      };
       final arabic = RegExp(r'[؀-ۿ]');
       for (final key in keys(ar)) {
         if (untranslated.contains(key)) continue;
@@ -100,13 +111,26 @@ void main() {
     // The drift guard for language, the same shape as the one for colour. An
     // English string left in a screen renders as English inside an Arabic
     // interface: no error, no test failure, just one line that did not switch.
-    final screens = Directory('lib/screens')
-        .listSync()
+    //
+    // theme.dart is in scope because that is where the sentences are built.
+    // describeEvent used to live in lib/data and hardcode English at the
+    // moment a row was parsed, before there was a locale to build it in, so
+    // every Arabic reader saw an English contract history and no test noticed.
+    // A guard that watches only the screens misses whatever renders for them.
+    //
+    // The rest of lib/data is deliberately out of scope, and that is a real
+    // gap rather than a clean edge: BackendException messages are written in
+    // English there and several screens show them in a snackbar as they are.
+    // Bringing them under this guard is its own change.
+    final screens = [
+      ...Directory('lib/screens').listSync(),
+      File('lib/theme.dart'),
+    ]
         .whereType<File>()
         .where((f) => f.path.endsWith('.dart'))
         .toList();
 
-    test('there are screens to check', () => expect(screens.length, greaterThan(5)));
+    test('there are files to check', () => expect(screens.length, greaterThan(10)));
 
     for (final file in screens) {
       test('${file.uri.pathSegments.last} reads its text from the ARB', () {
@@ -120,6 +144,11 @@ void main() {
           for (final m in RegExp(r"'([A-Z][^']{6,})'").allMatches(line)) {
             final value = m.group(1)!;
             if (value.startsWith('package') || value.startsWith('assets')) continue;
+            // A font family is a name the system looks up, not words anybody
+            // reads. Matched on the line rather than on the value: skipping
+            // every single-token string would also skip a bare 'Delivered'
+            // left in a widget, which is exactly what this is here to catch.
+            if (line.contains('FontFamily') || line.contains('fontFamily')) continue;
             offenders.add('line ${i + 1}: $value');
           }
         }

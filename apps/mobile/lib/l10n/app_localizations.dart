@@ -1530,6 +1530,174 @@ abstract class L {
   /// **'seller'**
   String get sellerWord;
 
+  /// No description provided for @whoBuyer.
+  ///
+  /// In en, this message translates to:
+  /// **'The buyer'**
+  String get whoBuyer;
+
+  /// No description provided for @whoSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'The seller'**
+  String get whoSeller;
+
+  /// No description provided for @whoSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'TrustIQ'**
+  String get whoSystem;
+
+  /// No description provided for @evSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} sent the contract'**
+  String evSubmit(String who);
+
+  /// No description provided for @evAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} accepted the terms'**
+  String evAccept(String who);
+
+  /// No description provided for @evDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} declined the terms'**
+  String evDecline(String who);
+
+  /// No description provided for @evWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} withdrew the contract'**
+  String evWithdraw(String who);
+
+  /// No description provided for @evMarkDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} marked the work delivered'**
+  String evMarkDelivered(String who);
+
+  /// No description provided for @evRequestRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} requested changes'**
+  String evRequestRevision(String who);
+
+  /// No description provided for @evConfirmDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} confirmed the delivery'**
+  String evConfirmDelivery(String who);
+
+  /// No description provided for @evOpenDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} opened a dispute'**
+  String evOpenDispute(String who);
+
+  /// No description provided for @evResolveDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} resolved the dispute'**
+  String evResolveDispute(String who);
+
+  /// No description provided for @evCancelByAgreement.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} cancelled the contract'**
+  String evCancelByAgreement(String who);
+
+  /// No description provided for @evExpire.
+  ///
+  /// In en, this message translates to:
+  /// **'The contract expired'**
+  String get evExpire;
+
+  /// No description provided for @devSubmitForAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Both accounts are in, and the case went to the agent'**
+  String get devSubmitForAi;
+
+  /// No description provided for @devIssueProposal.
+  ///
+  /// In en, this message translates to:
+  /// **'A resolution was proposed'**
+  String get devIssueProposal;
+
+  /// No description provided for @devAcceptProposal.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} accepted the resolution'**
+  String devAcceptProposal(String who);
+
+  /// No description provided for @devRejectProposal.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} refused it and asked for a person'**
+  String devRejectProposal(String who);
+
+  /// No description provided for @devEscalate.
+  ///
+  /// In en, this message translates to:
+  /// **'The case went to a human reviewer'**
+  String get devEscalate;
+
+  /// No description provided for @devAssignReviewer.
+  ///
+  /// In en, this message translates to:
+  /// **'A reviewer took the case'**
+  String get devAssignReviewer;
+
+  /// No description provided for @devIssueHumanResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'A reviewer decided the case'**
+  String get devIssueHumanResolution;
+
+  /// No description provided for @devWithdrawDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} withdrew the dispute'**
+  String devWithdrawDispute(String who);
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get notifications;
+
+  /// No description provided for @nothingWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting on you.'**
+  String get nothingWaiting;
+
+  /// No description provided for @nothingWaitingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When the other party moves on one of your contracts, it appears here.'**
+  String get nothingWaitingBody;
+
+  /// No description provided for @needsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs you'**
+  String get needsYou;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get markAllRead;
+
+  /// No description provided for @activityNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This list is built from the contract record itself, so it says exactly what happened and nothing else.'**
+  String get activityNote;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

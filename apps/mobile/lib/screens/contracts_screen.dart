@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import '../widgets/language_button.dart';
 import 'contract_detail_screen.dart';
 import 'new_contract_screen.dart';
+import 'activity_screen.dart';
 import 'invitations_screen.dart';
 import 'onboarding_screen.dart';
 import 'verify_identity_screen.dart';
@@ -32,6 +33,7 @@ class ContractsScreen extends StatelessWidget {
           // Only in the demo. Against a real project the side you are on comes
           // from your session and cannot be chosen, and offering the control
           // anyway would suggest otherwise.
+          _Bell(state: state),
           const LanguageButton(compact: true),
           if (!state.isLive) _RoleSwitch(state: state),
           if (state.isLive)
@@ -111,6 +113,66 @@ class ContractsScreen extends StatelessWidget {
           true,
         _ => false,
       };
+}
+
+/// How many things are waiting, without shouting about the rest.
+///
+/// The count is only ever moves that need them. A badge that also counted
+/// being told the other side accepted would be a badge that is always lit,
+/// and a badge that is always lit is one people stop reading.
+class _Bell extends StatelessWidget {
+  const _Bell({required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+    final waiting = state.waitingOnYou;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          tooltip: l.notifications,
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => ActivityScreen(state: state),
+            ),
+          ),
+          icon: Icon(
+            waiting > 0 ? Icons.notifications_active : Icons.notifications_none,
+            size: IconSize.lg,
+          ),
+        ),
+        if (waiting > 0)
+          PositionedDirectional(
+            top: 8,
+            end: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 17),
+              decoration: BoxDecoration(
+                color: c.critical,
+                borderRadius: BorderRadius.circular(Radii.pill),
+              ),
+              child: Text(
+                // Nine and a bit is as much precision as a badge can carry.
+                waiting > 9 ? '9+' : '$waiting',
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.ltr,
+                style: TextStyle(
+                  color: c.onAccent,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 /// The two things a person needs and could not reach from here.

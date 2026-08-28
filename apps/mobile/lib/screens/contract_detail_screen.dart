@@ -428,12 +428,12 @@ class _TimelineRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    entry.describe,
+                    describeEvent(entry.event, entry.actor, context.l),
                     style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _formatDate(entry.at),
+                    formatMoment(entry.at, Localizations.localeOf(context)),
                     style: TextStyle(
                       fontSize: 11.5,
                       color: c.inkFaint,
@@ -449,16 +449,6 @@ class _TimelineRow extends StatelessWidget {
     );
   }
 
-  static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-
-  static String _formatDate(DateTime d) {
-    final hh = d.hour.toString().padLeft(2, '0');
-    final mm = d.minute.toString().padLeft(2, '0');
-    return '${d.day} ${_months[d.month - 1]} ${d.year}, $hh:$mm';
-  }
 }
 
 class _ActionButton extends StatelessWidget {

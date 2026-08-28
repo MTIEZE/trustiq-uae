@@ -10,6 +10,7 @@ import 'package:trustiq_app/data/language.dart';
 import 'package:trustiq_app/l10n/app_localizations.dart';
 import 'package:trustiq_app/data/demo_data.dart';
 import 'package:trustiq_app/data/rows.dart';
+import 'package:trustiq_app/theme.dart';
 import 'package:trustiq_app/screens/dispute_screen.dart' show unreadableNote;
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -329,28 +330,57 @@ void main() {
   });
 
   group('describing an event', () {
-    test('names the side that acted', () {
-      expect(describeEvent(TransactionEvent.accept, Actor.seller), contains('seller'));
-      expect(describeEvent(TransactionEvent.accept, Actor.buyer), contains('buyer'));
-    });
+    // These used to run in English only, because the sentence was built in
+    // English only: describeEvent hardcoded it at the moment a row was parsed,
+    // and the contract history stayed English however the app was set. Running
+    // every event through both languages is what stops that coming back.
+    for (final code in ['en', 'ar']) {
+      test('$code: names the side that acted', () async {
+        final l = await L.delegate.load(Locale(code));
+        expect(describeEvent(TransactionEvent.accept, Actor.seller, l), contains(l.whoSeller));
+        expect(describeEvent(TransactionEvent.accept, Actor.buyer, l), contains(l.whoBuyer));
+      });
 
-    test('names TrustIQ for a system move, never a party', () {
-      // A party must never appear to have done something the system did: the
-      // whole point of the dispute design is that the AI proposes and the
-      // parties decide.
-      final text = describeEvent(TransactionEvent.resolveDispute, Actor.system);
-      expect(text, contains('TrustIQ'));
-      expect(text, isNot(contains('buyer')));
-      expect(text, isNot(contains('seller')));
-    });
+      test('$code: names TrustIQ for a system move, never a party', () async {
+        // A party must never appear to have done something the system did: the
+        // whole point of the dispute design is that the AI proposes and the
+        // parties decide.
+        final l = await L.delegate.load(Locale(code));
+        final text = describeEvent(TransactionEvent.resolveDispute, Actor.system, l);
+        expect(text, contains(l.whoSystem));
+        expect(text, isNot(contains(l.whoBuyer)));
+        expect(text, isNot(contains(l.whoSeller)));
+      });
 
-    test('covers every event with a sentence, not a wire name', () {
-      // The switch is exhaustive, so a new event stops this compiling rather
-      // than reaching a screen as `mark_delivered`.
+      test('$code: covers every event with a sentence, not a wire name', () async {
+        // The switches are exhaustive, so a new event stops this compiling
+        // rather than reaching a screen as `mark_delivered`.
+        final l = await L.delegate.load(Locale(code));
+        for (final event in TransactionEvent.values) {
+          final text = describeEvent(event, Actor.buyer, l);
+          expect(text, isNot(equals(event.wireName)), reason: event.name);
+          expect(text.trim(), isNotEmpty, reason: event.name);
+        }
+        for (final event in DisputeEvent.values) {
+          final text = describeDisputeEvent(event, Actor.buyer, l);
+          expect(text, isNot(equals(event.wireName)), reason: event.name);
+          expect(text.trim(), isNotEmpty, reason: event.name);
+        }
+      });
+    }
+
+    test('the Arabic rendering is actually in Arabic', () async {
+      // The regression guard for the bug this group was rewritten over. The
+      // brand is the one thing allowed to stay in Latin script.
+      final l = await L.delegate.load(const Locale('ar'));
+      final arabic = RegExp(r'[؀-ۿ]');
       for (final event in TransactionEvent.values) {
-        final text = describeEvent(event, Actor.buyer);
-        expect(text, isNot(equals(event.wireName)), reason: event.name);
-        expect(text.split(' ').length, greaterThan(2), reason: event.name);
+        expect(arabic.hasMatch(describeEvent(event, Actor.buyer, l)), isTrue,
+            reason: event.name);
+      }
+      for (final event in DisputeEvent.values) {
+        expect(arabic.hasMatch(describeDisputeEvent(event, Actor.buyer, l)), isTrue,
+            reason: event.name);
       }
     });
   });

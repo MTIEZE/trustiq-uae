@@ -25,12 +25,10 @@ class TimelineEntry {
     required this.at,
     required this.event,
     required this.actor,
-    required this.describe,
   });
   final DateTime at;
   final TransactionEvent event;
   final Actor actor;
-  final String describe;
 }
 
 /// Whether a document's text could be read, and if not, which kind of not.
@@ -277,25 +275,21 @@ List<Contract> seedContracts() => [
             at: _d(1),
             event: TransactionEvent.submit,
             actor: Actor.buyer,
-            describe: 'Ahmed sent the contract',
           ),
           TimelineEntry(
             at: _d(1, 14),
             event: TransactionEvent.accept,
             actor: Actor.seller,
-            describe: 'Sara accepted the terms',
           ),
           TimelineEntry(
             at: _d(8),
             event: TransactionEvent.markDelivered,
             actor: Actor.seller,
-            describe: 'Sara marked the work delivered',
           ),
           TimelineEntry(
             at: _d(10),
             event: TransactionEvent.openDispute,
             actor: Actor.buyer,
-            describe: 'Ahmed opened a dispute',
           ),
         ],
         evidence: [
@@ -369,19 +363,16 @@ List<Contract> seedContracts() => [
             at: _d(5),
             event: TransactionEvent.submit,
             actor: Actor.buyer,
-            describe: 'Ahmed sent the contract',
           ),
           TimelineEntry(
             at: _d(5, 16),
             event: TransactionEvent.accept,
             actor: Actor.seller,
-            describe: 'Omar accepted the terms',
           ),
           TimelineEntry(
             at: _d(12),
             event: TransactionEvent.markDelivered,
             actor: Actor.seller,
-            describe: 'Omar marked the work delivered',
           ),
         ],
       ),
@@ -401,7 +392,6 @@ List<Contract> seedContracts() => [
             at: _d(17),
             event: TransactionEvent.submit,
             actor: Actor.buyer,
-            describe: 'Ahmed sent the contract',
           ),
         ],
       ),
@@ -420,25 +410,21 @@ List<Contract> seedContracts() => [
             at: _d(2),
             event: TransactionEvent.submit,
             actor: Actor.buyer,
-            describe: 'Ahmed sent the contract',
           ),
           TimelineEntry(
             at: _d(2, 11),
             event: TransactionEvent.accept,
             actor: Actor.seller,
-            describe: 'Sara accepted the terms',
           ),
           TimelineEntry(
             at: _d(9),
             event: TransactionEvent.markDelivered,
             actor: Actor.seller,
-            describe: 'Sara marked the work delivered',
           ),
           TimelineEntry(
             at: _d(11),
             event: TransactionEvent.confirmDelivery,
             actor: Actor.buyer,
-            describe: 'Ahmed confirmed the delivery',
           ),
         ],
       ),

@@ -558,6 +558,32 @@ class SupabaseBackend implements Backend {
       v == null ? null : DateTime.parse(v as String);
 
   @override
+  Future<List<AppNotification>> notifications({int limit = 50}) async {
+    final rows = await _rpc<List<dynamic>>(
+      'my_notifications', {'p_limit': limit}, 'your activity');
+    return rows.cast<Map<String, dynamic>>().map((row) => AppNotification(
+          id: _asInt(row['id']),
+          contractId: row['transaction_id'] as String?,
+          disputeId: row['dispute_id'] as String?,
+          aboutDispute: (row['source'] as String) == 'dispute',
+          event: row['event'] as String,
+          actor: readActor(row['actor'] as String, 'notifications.actor'),
+          needsYou: row['needs_you'] as bool,
+          at: DateTime.parse(row['created_at'] as String),
+          readAt: _asDate(row['read_at']),
+        )).toList(growable: false);
+  }
+
+  @override
+  Future<void> markNotificationsRead(DateTime before) async {
+    await _rpc<void>(
+      'mark_notifications_read',
+      {'p_before': before.toUtc().toIso8601String()},
+      'marking your activity read',
+    );
+  }
+
+  @override
   bool get canRecordVerification => false;
 
   @override

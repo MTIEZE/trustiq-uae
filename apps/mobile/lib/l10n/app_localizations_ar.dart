@@ -817,6 +817,118 @@ class LAr extends L {
   String get sellerWord => 'البائع';
 
   @override
+  String get whoBuyer => 'المشتري';
+
+  @override
+  String get whoSeller => 'البائع';
+
+  @override
+  String get whoSystem => 'TrustIQ';
+
+  @override
+  String evSubmit(String who) {
+    return 'أرسل $who العقد';
+  }
+
+  @override
+  String evAccept(String who) {
+    return 'قبل $who الشروط';
+  }
+
+  @override
+  String evDecline(String who) {
+    return 'رفض $who الشروط';
+  }
+
+  @override
+  String evWithdraw(String who) {
+    return 'سحب $who العقد';
+  }
+
+  @override
+  String evMarkDelivered(String who) {
+    return 'سجّل $who أن العمل سُلّم';
+  }
+
+  @override
+  String evRequestRevision(String who) {
+    return 'طلب $who تعديلات';
+  }
+
+  @override
+  String evConfirmDelivery(String who) {
+    return 'أكّد $who التسليم';
+  }
+
+  @override
+  String evOpenDispute(String who) {
+    return 'فتح $who نزاعاً';
+  }
+
+  @override
+  String evResolveDispute(String who) {
+    return 'أنهى $who النزاع';
+  }
+
+  @override
+  String evCancelByAgreement(String who) {
+    return 'ألغى $who العقد';
+  }
+
+  @override
+  String get evExpire => 'انتهت صلاحية العقد';
+
+  @override
+  String get devSubmitForAi => 'وصل بيان الطرفين، وانتقلت القضية إلى الوكيل';
+
+  @override
+  String get devIssueProposal => 'اقتُرحت تسوية';
+
+  @override
+  String devAcceptProposal(String who) {
+    return 'قبل $who التسوية';
+  }
+
+  @override
+  String devRejectProposal(String who) {
+    return 'رفضها $who وطلب شخصاً';
+  }
+
+  @override
+  String get devEscalate => 'أُحيلت القضية إلى مراجع بشري';
+
+  @override
+  String get devAssignReviewer => 'تولّى مراجع القضية';
+
+  @override
+  String get devIssueHumanResolution => 'بتّ مراجع في القضية';
+
+  @override
+  String devWithdrawDispute(String who) {
+    return 'سحب $who النزاع';
+  }
+
+  @override
+  String get notifications => 'النشاط';
+
+  @override
+  String get nothingWaiting => 'لا شيء ينتظرك.';
+
+  @override
+  String get nothingWaitingBody =>
+      'عندما يتحرّك الطرف الآخر في أحد عقودك، يظهر ذلك هنا.';
+
+  @override
+  String get needsYou => 'يحتاجك';
+
+  @override
+  String get markAllRead => 'تعليم الكل كمقروء';
+
+  @override
+  String get activityNote =>
+      'تُبنى هذه القائمة من سجل العقد نفسه، فهي تقول ما حدث بالضبط ولا شيء غير ذلك.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

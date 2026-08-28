@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
 import 'l10n/app_localizations.dart';
@@ -234,6 +235,69 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
       criticalSoft: mix(criticalSoft, other.criticalSoft),
     );
   }
+}
+
+/// A date and time, in the reader's language and calendar conventions.
+///
+/// This replaced a hardcoded list of English month abbreviations. The drift
+/// guard never saw it: it looks for quoted strings of seven characters or
+/// more, and 'Jan' is three, so an Arabic reader got Arabic everywhere except
+/// the one place a contract records when something happened.
+String formatMoment(DateTime at, Locale locale) =>
+    DateFormat.yMMMd(locale.toLanguageTag()).add_Hm().format(at.toLocal());
+
+/// The same, without the time, for a line that only needs the day.
+String formatDay(DateTime at, Locale locale) =>
+    DateFormat.yMMMd(locale.toLanguageTag()).format(at.toLocal());
+
+/// Plain words for one recorded transition, in the reader's language.
+///
+/// Written from the actor rather than from a name, because the event log
+/// records who acted as a role and the person reading it may be either side.
+///
+/// This used to build an English sentence at the moment a row was parsed,
+/// before there was a locale to build it in, so the contract history stayed in
+/// English no matter what the rest of the app was doing. The drift guard did
+/// not catch it because it only reads lib/screens, and this lived in lib/data.
+String describeEvent(TransactionEvent event, Actor actor, L l) {
+  final who = switch (actor) {
+    Actor.buyer => l.whoBuyer,
+    Actor.seller => l.whoSeller,
+    Actor.system => l.whoSystem,
+  };
+  return switch (event) {
+    TransactionEvent.submit => l.evSubmit(who),
+    TransactionEvent.accept => l.evAccept(who),
+    TransactionEvent.decline => l.evDecline(who),
+    TransactionEvent.withdraw => l.evWithdraw(who),
+    TransactionEvent.markDelivered => l.evMarkDelivered(who),
+    TransactionEvent.requestRevision => l.evRequestRevision(who),
+    TransactionEvent.confirmDelivery => l.evConfirmDelivery(who),
+    TransactionEvent.openDispute => l.evOpenDispute(who),
+    TransactionEvent.resolveDispute => l.evResolveDispute(who),
+    TransactionEvent.cancelByAgreement => l.evCancelByAgreement(who),
+    // Nobody expired it, so no actor appears.
+    TransactionEvent.expire => l.evExpire,
+  };
+}
+
+/// The same for the dispute machine.
+String describeDisputeEvent(DisputeEvent event, Actor actor, L l) {
+  final who = switch (actor) {
+    Actor.buyer => l.whoBuyer,
+    Actor.seller => l.whoSeller,
+    Actor.system => l.whoSystem,
+  };
+  return switch (event) {
+    DisputeEvent.submitForAi => l.devSubmitForAi,
+    DisputeEvent.issueProposal => l.devIssueProposal,
+    DisputeEvent.acceptProposal => l.devAcceptProposal(who),
+    DisputeEvent.rejectProposal => l.devRejectProposal(who),
+    DisputeEvent.escalate => l.devEscalate,
+    DisputeEvent.assignReviewer => l.devAssignReviewer,
+    DisputeEvent.issueHumanResolution => l.devIssueHumanResolution,
+    DisputeEvent.withdrawDispute => l.devWithdrawDispute(who),
+  };
 }
 
 extension TrustIqPaletteContext on BuildContext {
