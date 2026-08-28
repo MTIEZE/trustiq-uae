@@ -1936,5 +1936,162 @@ select pg_temp.check(
   has_function_privilege('authenticated', 'public.set_preferred_locale(text)', 'EXECUTE'),
   'choosing your own language is yours to do');
 
+
+\echo ''
+\echo '== Work agreed a stage at a time =='
+
+-- A contract in two stages between the two verified fixtures.
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-0000000000cc',
+   '11111111-1111-1111-1111-111111111111',
+   '22222222-2222-2222-2222-222222222222',
+   'Two stage build',
+   'Design, then build.', 100000,
+   '11111111-1111-1111-1111-111111111111');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+insert into public.milestones (id, transaction_id, position, title, amount_fils) values
+  ('bbbbbbbb-0000-0000-0000-0000000000c1', 'aaaaaaaa-0000-0000-0000-0000000000cc', 0, 'Design', 40000),
+  ('bbbbbbbb-0000-0000-0000-0000000000c2', 'aaaaaaaa-0000-0000-0000-0000000000cc', 1, 'Build',  60000);
+
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-0000000000cc', 'submit');
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.apply_transaction_event('aaaaaaaa-0000-0000-0000-0000000000cc', 'accept');
+
+select pg_temp.expect_error(
+  $q$ insert into public.milestones (transaction_id, position, title, amount_fils)
+      values ('aaaaaaaa-0000-0000-0000-0000000000cc', 2, 'Snuck in later', 1000) $q$,
+  'stages cannot be added once the contract is live, so the plan is what was agreed');
+
+\echo ''
+\echo '-- delivering and accepting --'
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select pg_temp.expect_error(
+  $q$ select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c1') $q$,
+  'the buyer cannot deliver a stage');
+
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+select pg_temp.expect_error(
+  $q$ select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c1') $q$,
+  'somebody outside the contract gets the same answer as for an id that does not exist');
+
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c1');
+
+select pg_temp.check(
+  (select delivered_at is not null from public.milestones
+   where id = 'bbbbbbbb-0000-0000-0000-0000000000c1'),
+  'the seller delivers the first stage');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-0000000000cc') = 'active',
+  'and the contract stays active, because one stage of two is not the work');
+
+select pg_temp.expect_error(
+  $q$ select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c1') $q$,
+  'a stage cannot be delivered twice');
+
+reset role;
+select pg_temp.check(
+  (select count(*)::int from app.notifications n
+   where n.milestone_id = 'bbbbbbbb-0000-0000-0000-0000000000c1'
+     and n.recipient_id = '11111111-1111-1111-1111-111111111111'
+     and n.source = 'milestone' and n.needs_you) = 1,
+  'the buyer is told, and told that it is their turn to look');
+
+set role authenticated;
+
+\echo ''
+\echo '-- sending one back --'
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.request_milestone_revision('bbbbbbbb-0000-0000-0000-0000000000c1');
+
+select pg_temp.check(
+  (select delivered_at is null from public.milestones
+   where id = 'bbbbbbbb-0000-0000-0000-0000000000c1'),
+  'a stage sent back is genuinely not delivered any more');
+
+select pg_temp.check(
+  (select count(*)::int from public.milestone_events
+   where milestone_id = 'bbbbbbbb-0000-0000-0000-0000000000c1') = 2,
+  'but the attempt is not erased: the round trip is two entries');
+
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c1');
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.accept_milestone('bbbbbbbb-0000-0000-0000-0000000000c1');
+
+select pg_temp.check(
+  (select accepted_at is not null from public.milestones
+   where id = 'bbbbbbbb-0000-0000-0000-0000000000c1'),
+  'the second attempt is accepted');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-0000000000cc') = 'active',
+  'and one stage accepted does not finish a two stage contract');
+
+\echo ''
+\echo '-- the last stage carries the contract --'
+
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c2');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-0000000000cc') = 'delivered',
+  'the last stage delivered is the work delivered');
+
+select pg_temp.check(
+  (select actor from public.transaction_events
+   where transaction_id = 'aaaaaaaa-0000-0000-0000-0000000000cc'
+   order by occurred_at desc, id desc limit 1) = 'seller',
+  'recorded as the seller, who did it, and not as TrustIQ');
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.request_milestone_revision('bbbbbbbb-0000-0000-0000-0000000000c2');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-0000000000cc') = 'active',
+  'sending the last stage back brings the whole contract back with it');
+
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
+select public.deliver_milestone('bbbbbbbb-0000-0000-0000-0000000000c2');
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select public.accept_milestone('bbbbbbbb-0000-0000-0000-0000000000c2');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-0000000000cc') = 'completed',
+  'accepting the last stage completes the contract, without asking for the same signature twice');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
+\echo '-- the stage record cannot be rewritten --'
+
+select pg_temp.expect_error(
+  $q$ update public.milestone_events set event = 'accept'
+      where milestone_id = 'bbbbbbbb-0000-0000-0000-0000000000c1' $q$,
+  'a stage move cannot be edited, even by the owner of the table');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.deliver_milestone(uuid)', 'EXECUTE'),
+  'anon holds no grant on delivering a stage');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'app.milestone_context(uuid)', 'EXECUTE'),
+  'and the helper that resolves your role is not a client function');
+
 \echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

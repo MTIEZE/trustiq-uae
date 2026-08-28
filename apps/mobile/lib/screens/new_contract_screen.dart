@@ -38,6 +38,78 @@ class _NewContractScreenState extends State<NewContractScreen> {
   Fils? _parsedAmount;
   String? _amountError;
 
+  /// The stages, as fields rather than as values, because they are being
+  /// typed. They become DraftStage only at the moment of submitting.
+  final _stages = <({TextEditingController title, TextEditingController amount})>[];
+
+  /// filsFromAed throws on anything it cannot read, which is right for a
+  /// domain function and wrong for a field somebody is halfway through typing.
+  Fils? _tryAed(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      return filsFromAed(raw);
+    } on Object {
+      return null;
+    }
+  }
+
+  /// What the stages add up to, or null if any of them is not a number yet.
+  Fils? get _stagesTotal {
+    var total = 0;
+    for (final stage in _stages) {
+      final parsed = _tryAed(stage.amount.text.trim());
+      if (parsed == null) return null;
+      total += parsed.value;
+    }
+    return Fils(total);
+  }
+
+  /// The stages cannot add up to more than the contract. The database refuses
+  /// it too, with a deferred constraint, but finding out after the contract
+  /// has been created and the stages have not is a worse way to learn.
+  bool get _stagesOverTotal {
+    final contract = _parsedAmount;
+    final stages = _stagesTotal;
+    if (contract == null || stages == null) return false;
+    return stages.value > contract.value;
+  }
+
+  List<DraftStage> get _draftStages => [
+        for (final stage in _stages)
+          if (stage.title.text.trim().isNotEmpty)
+            DraftStage(
+              title: stage.title.text.trim(),
+              amount: _tryAed(stage.amount.text.trim()) ?? Fils(0),
+            ),
+      ];
+
+  bool get _stagesAreUsable =>
+      _stages.isEmpty ||
+      (!_stagesOverTotal &&
+          _stages.every((s) =>
+              s.title.text.trim().isNotEmpty &&
+              (_tryAed(s.amount.text.trim())?.value ?? 0) > 0));
+
+  void _addStage() {
+    setState(() {
+      final title = TextEditingController();
+      final amount = TextEditingController();
+      title.addListener(_onStageChanged);
+      amount.addListener(_onStageChanged);
+      _stages.add((title: title, amount: amount));
+    });
+  }
+
+  void _onStageChanged() => setState(() {});
+
+  void _removeStage(int index) {
+    setState(() {
+      final gone = _stages.removeAt(index);
+      gone.title.dispose();
+      gone.amount.dispose();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +124,11 @@ class _NewContractScreenState extends State<NewContractScreen> {
   void dispose() {
     for (final c in [_description, _terms, _amount, _counterparty]) {
       c.dispose();
+    }
+    // Created while the form is open, so the fixed list above never sees them.
+    for (final stage in _stages) {
+      stage.title.dispose();
+      stage.amount.dispose();
     }
     super.dispose();
   }
@@ -87,7 +164,12 @@ class _NewContractScreenState extends State<NewContractScreen> {
       _description.text.trim().isNotEmpty &&
       _terms.text.trim().isNotEmpty &&
       _counterparty.text.trim().isNotEmpty &&
-      _parsedAmount != null;
+      _parsedAmount != null &&
+      // A half-typed stage is not a reason to refuse the contract, but a stage
+      // with no title, no amount, or one that pushes the plan over the total,
+      // is: the database would take the contract and refuse the stages, and
+      // stages cannot be added afterwards.
+      _stagesAreUsable;
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +309,39 @@ class _NewContractScreenState extends State<NewContractScreen> {
           ),
 
           const SizedBox(height: Space.xxl),
+          const SizedBox(height: Space.section),
+          _Step(number: 4, title: l.stages, blurb: l.stagesOptional),
+          const SizedBox(height: Space.md),
+          for (final (index, stage) in _stages.indexed) ...[
+            _StageFields(
+              number: index + 1,
+              title: stage.title,
+              amount: stage.amount,
+              onRemove: () => _removeStage(index),
+            ),
+            const SizedBox(height: Space.sm),
+          ],
+          OutlinedButton.icon(
+            onPressed: _stages.length >= 12 ? null : _addStage,
+            icon: const Icon(Icons.add, size: IconSize.md),
+            label: Text(l.addAStage),
+          ),
+          if (_stagesOverTotal) ...[
+            const SizedBox(height: Space.sm),
+            RuleNote(l.stagesOverTotal, icon: Icons.error_outline, tone: context.c.critical),
+          ] else if (_stages.isNotEmpty && _parsedAmount != null && _stagesTotal != null &&
+              _stagesTotal!.value < _parsedAmount!.value) ...[
+            const SizedBox(height: Space.sm),
+            RuleNote(
+              l.stagesRemainder(formatAed(Fils(_parsedAmount!.value - _stagesTotal!.value))),
+              icon: Icons.info_outline,
+            ),
+          ],
+          if (_stages.isNotEmpty) ...[
+            const SizedBox(height: Space.sm),
+            RuleNote(l.stagesFixedAfter, icon: Icons.lock_outline),
+          ],
+          const SizedBox(height: Space.section),
           FilledButton(
             onPressed: _canSubmit ? _create : null,
             child: Text(l.createAsDraft),
@@ -250,12 +365,14 @@ class _NewContractScreenState extends State<NewContractScreen> {
         amount: amount,
         youAre: _youAre,
         counterparty: _counterparty.text.trim(),
+        stages: _draftStages,
       );
     } on CounterpartyHasNoAccount catch (e) {
       if (!mounted) return;
       await _offerAnInvitation(e.email, amount);
       return;
     }
+
 
     if (!mounted) return;
 
@@ -332,6 +449,74 @@ class _NewContractScreenState extends State<NewContractScreen> {
         SnackBar(content: Text(e.message), backgroundColor: context.c.critical),
       );
     }
+  }
+}
+
+/// One stage while it is being typed.
+///
+/// Numbered rather than labelled, because the order is what the contract will
+/// record: stage one is delivered before stage two, and moving them around
+/// after the contract is sent is not possible.
+class _StageFields extends StatelessWidget {
+  const _StageFields({
+    required this.number,
+    required this.title,
+    required this.amount,
+    required this.onRemove,
+  });
+
+  final int number;
+  final TextEditingController title;
+  final TextEditingController amount;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+    return InfoCard(
+      lift: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '$number',
+                style: Type.caption.copyWith(color: c.inkFaint),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: title,
+                  decoration: InputDecoration(
+                    labelText: l.stageTitle,
+                    hintText: l.stageExample,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: l.removeStage,
+                onPressed: onRemove,
+                icon: Icon(Icons.close, size: IconSize.md, color: c.inkFaint),
+              ),
+            ],
+          ),
+          const SizedBox(height: Space.sm),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 22),
+            child: TextField(
+              controller: amount,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              // Pinned left to right: an amount is not language, and in Arabic
+              // an unpinned field puts the digits back to front.
+              textDirection: TextDirection.ltr,
+              decoration: InputDecoration(labelText: l.stageAmount),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

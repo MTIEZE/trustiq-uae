@@ -294,6 +294,34 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /* ---------------------------------------------------------------- *
+   * Stages
+   * ---------------------------------------------------------------- */
+
+  /// Moves one stage, then reloads. Returns null on success or the reason.
+  ///
+  /// The reason is returned rather than put in the banner because these three
+  /// live inside a contract screen: the person is looking at the stage they
+  /// just tried to move, and that is where the answer belongs.
+  Future<String?> moveStage(String milestoneId, StageMove move) async {
+    try {
+      switch (move) {
+        case StageMove.deliver:
+          await _backend.deliverMilestone(milestoneId);
+        case StageMove.accept:
+          await _backend.acceptMilestone(milestoneId);
+        case StageMove.sendBack:
+          await _backend.requestMilestoneRevision(milestoneId);
+      }
+      _contracts = await _backend.loadContracts();
+      await loadActivity();
+      notifyListeners();
+      return null;
+    } on BackendException catch (e) {
+      return e.message;
+    }
+  }
+
   /// Tells the server which language to write to you in.
   ///
   /// Quiet on failure. Somebody switching language should see the interface
@@ -359,6 +387,7 @@ class AppState extends ChangeNotifier {
     required Fils amount,
     required Role youAre,
     required String counterparty,
+    List<DraftStage> stages = const [],
   }) async {
     Contract? created;
     CounterpartyHasNoAccount? noAccount;
@@ -371,6 +400,7 @@ class AppState extends ChangeNotifier {
           amount: amount,
           youAre: youAre,
           counterpartyEmail: counterparty,
+          stages: stages,
         );
       } on CounterpartyHasNoAccount catch (e) {
         // Not a banner. This is the one failure with a way forward, and the
@@ -473,3 +503,6 @@ class AppState extends ChangeNotifier {
     return result;
   }
 }
+
+/// Which of the three stage calls to make.
+enum StageMove { deliver, accept, sendBack }

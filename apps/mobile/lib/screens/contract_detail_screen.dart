@@ -125,30 +125,23 @@ class ContractDetailScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       const Divider(),
                       const SizedBox(height: 12),
-                      SectionLabel(l.milestones),
-                      const SizedBox(height: 8),
-                      for (final m in contract.milestones)
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Icon(
-                                m.deliveredAt != null
-                                    ? Icons.check_circle
-                                    : Icons.radio_button_unchecked,
-                                size: IconSize.md,
-                                color: m.deliveredAt != null
-                                    ? c.ok
-                                    : c.inkFaint,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(m.title, style: const TextStyle(fontSize: 14)),
-                              ),
-                              MoneyText(m.amount, style: const TextStyle(fontSize: 13.5)),
-                            ],
+                      Row(
+                        children: [
+                          Expanded(child: SectionLabel(l.stages)),
+                          Text(
+                            l.stagesTotal(
+                              contract.milestones.where((m) => m.accepted).length,
+                              contract.milestones.length,
+                            ),
+                            style: Type.caption.copyWith(color: c.inkFaint),
                           ),
-                        ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      for (final m in contract.milestones)
+                        _StageRow(milestone: m, contract: contract, state: state),
+                      const SizedBox(height: 4),
+                      RuleNote(l.stagesNote, icon: Icons.checklist_outlined),
                     ],
                   ],
                 ),
@@ -449,6 +442,154 @@ class _TimelineRow extends StatelessWidget {
     );
   }
 
+}
+
+/// One stage, and the single move its reader is allowed to make.
+///
+/// The rules are in the database, and calling one of the three functions is
+/// how they are enforced. What is decided here is only which button to offer:
+/// showing the seller an accept button they would be refused for pressing is
+/// worse than showing them nothing.
+class _StageRow extends StatefulWidget {
+  const _StageRow({
+    required this.milestone,
+    required this.contract,
+    required this.state,
+  });
+
+  final Milestone milestone;
+  final Contract contract;
+  final AppState state;
+
+  @override
+  State<_StageRow> createState() => _StageRowState();
+}
+
+class _StageRowState extends State<_StageRow> {
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _move(StageMove move) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final failure = await widget.state.moveStage(widget.milestone.id, move);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _error = failure;
+    });
+    // No callback: the screen sits inside a ListenableBuilder on AppState and
+    // moveStage notifies, so the new state arrives on its own.
+  }
+
+  Future<void> _confirmSendBack() async {
+    final l = context.l;
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.sendStageBackTitle),
+        content: Text(l.sendStageBackBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l.goBack),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l.sendStageBack),
+          ),
+        ],
+      ),
+    );
+    if (yes == true) await _move(StageMove.sendBack);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+    final m = widget.milestone;
+    final youAre = widget.state.actorOn(widget.contract);
+    final live = widget.contract.state == TransactionState.active ||
+        widget.contract.state == TransactionState.delivered;
+
+    final (icon, tint, label) = switch (m) {
+      final s when s.accepted => (Icons.check_circle, c.ok, l.stageAccepted),
+      final s when s.delivered => (Icons.pending_outlined, c.caution, l.stageDelivered),
+      _ => (Icons.radio_button_unchecked, c.inkFaint, l.stageWaiting),
+    };
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: IconSize.md, color: tint),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  m.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: m.accepted ? c.inkSoft : c.ink,
+                  ),
+                ),
+              ),
+              Text(label, style: Type.caption.copyWith(color: tint)),
+              const SizedBox(width: 10),
+              MoneyText(m.amount, style: const TextStyle(fontSize: 13.5)),
+            ],
+          ),
+          if (live && !m.accepted) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 27),
+              child: _busy
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Wrap(
+                      spacing: Space.sm,
+                      children: [
+                        if (youAre == Actor.seller && m.waiting)
+                          OutlinedButton(
+                            onPressed: () => _move(StageMove.deliver),
+                            child: Text(l.markStageDelivered),
+                          ),
+                        if (youAre == Actor.buyer && m.delivered) ...[
+                          FilledButton(
+                            onPressed: () => _move(StageMove.accept),
+                            child: Text(l.acceptStage),
+                          ),
+                          TextButton(
+                            onPressed: _confirmSendBack,
+                            child: Text(l.sendStageBack),
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 27),
+              child: Text(
+                _error!,
+                style: TextStyle(fontSize: 13, height: 1.4, color: c.critical),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _ActionButton extends StatelessWidget {

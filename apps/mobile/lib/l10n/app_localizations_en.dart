@@ -935,6 +935,89 @@ class LEn extends L {
       'This list is built from the contract record itself, so it says exactly what happened and nothing else.';
 
   @override
+  String get stages => 'Stages';
+
+  @override
+  String get stageWaiting => 'Not started';
+
+  @override
+  String get stageDelivered => 'Delivered';
+
+  @override
+  String get stageAccepted => 'Accepted';
+
+  @override
+  String get markStageDelivered => 'Mark delivered';
+
+  @override
+  String get acceptStage => 'Accept this stage';
+
+  @override
+  String get sendStageBack => 'Send back';
+
+  @override
+  String get sendStageBackTitle => 'Send this stage back?';
+
+  @override
+  String get sendStageBackBody =>
+      'The seller will be told it needs more work. The attempt stays on the record: a stage that took three tries reads as three tries.';
+
+  @override
+  String get stagesNote =>
+      'Each stage is agreed as it lands, not all at the end. The last one accepted closes the contract, so nobody is asked to sign for the same thing twice.';
+
+  @override
+  String stagesTotal(int done, int total) {
+    return '$done of $total accepted';
+  }
+
+  @override
+  String get addAStage => 'Add a stage';
+
+  @override
+  String get stageTitle => 'What this stage covers';
+
+  @override
+  String get stageAmount => 'Amount for this stage';
+
+  @override
+  String get stageExample => 'Three concepts';
+
+  @override
+  String get removeStage => 'Remove';
+
+  @override
+  String get stagesOptional =>
+      'Optional. Without stages the contract is one delivery, confirmed once. With them, the client agrees to each piece as it arrives.';
+
+  @override
+  String get stagesOverTotal => 'The stages add up to more than the contract.';
+
+  @override
+  String stagesRemainder(String amount) {
+    return '$amount of the contract is not in any stage.';
+  }
+
+  @override
+  String get stagesFixedAfter =>
+      'Stages cannot be added or changed once the contract is sent.';
+
+  @override
+  String mvDeliver(String who) {
+    return '$who delivered a stage';
+  }
+
+  @override
+  String mvAccept(String who) {
+    return '$who accepted a stage';
+  }
+
+  @override
+  String mvRequestRevision(String who) {
+    return '$who sent a stage back';
+  }
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

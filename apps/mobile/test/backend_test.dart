@@ -385,6 +385,44 @@ void main() {
     });
   });
 
+  group('a stage of work', () {
+    Milestone at({DateTime? delivered, DateTime? accepted}) => Milestone(
+          id: 'm', title: 'Concepts', amount: Fils(1000),
+          deliveredAt: delivered, acceptedAt: accepted,
+        );
+
+    final now = DateTime.now();
+
+    test('the three states come out of the two timestamps', () {
+      expect(at().waiting, isTrue);
+      expect(at(delivered: now).delivered, isTrue);
+      expect(at(delivered: now, accepted: now).accepted, isTrue);
+    });
+
+    test('and they never overlap', () {
+      // Which matters because the row offers exactly one button, chosen by
+      // these three. Two of them true at once is two buttons.
+      for (final m in [at(), at(delivered: now), at(delivered: now, accepted: now)]) {
+        final on = [m.waiting, m.delivered, m.accepted].where((x) => x).length;
+        expect(on, 1, reason: 'delivered=${m.deliveredAt} accepted=${m.acceptedAt}');
+      }
+    });
+
+    test('an accepted stage is not also delivered', () {
+      // delivered means delivered and waiting to be looked at. Once accepted
+      // there is nothing to look at, and a screen showing both would offer
+      // the buyer a button to accept something they already accepted.
+      expect(at(delivered: now, accepted: now).delivered, isFalse);
+    });
+
+    test('a stage sent back reads as not started again', () {
+      // request_milestone_revision clears delivered_at, because the stage
+      // genuinely is not delivered any more. The attempt is not lost: it is
+      // in milestone_events, which this model does not carry.
+      expect(at().waiting, isTrue);
+    });
+  });
+
   group('inviting somebody who is not here yet', () {
     Invitation at(DateTime expires, {DateTime? claimed, DateTime? revoked}) => Invitation(
           id: 'i', code: 'ABCD-EFGH', email: 'someone@example.ae',
@@ -443,6 +481,7 @@ class _NoSuchPersonBackend extends DemoBackend {
     required Fils amount,
     required Role youAre,
     required String counterpartyEmail,
+    List<DraftStage> stages = const [],
   }) async {
     throw CounterpartyHasNoAccount(counterpartyEmail);
   }

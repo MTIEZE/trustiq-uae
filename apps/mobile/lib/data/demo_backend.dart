@@ -101,6 +101,7 @@ class DemoBackend implements Backend {
     required Fils amount,
     required Role youAre,
     required String counterpartyEmail,
+    List<DraftStage> stages = const [],
   }) async {
     final me = Party(
       id: 'usr_you',
@@ -352,6 +353,20 @@ class DemoBackend implements Backend {
 
   @override
   Future<void> markNotificationsRead(DateTime before) async {}
+
+  // The demo is one person looking at fixed data, so a stage that moved would
+  // have to be invented rather than recorded. Refused with the reason instead.
+  @override
+  Future<void> deliverMilestone(String milestoneId) async =>
+      throw BackendException('Stages move against a real project, not on demo data.');
+
+  @override
+  Future<void> acceptMilestone(String milestoneId) async =>
+      throw BackendException('Stages move against a real project, not on demo data.');
+
+  @override
+  Future<void> requestMilestoneRevision(String milestoneId) async =>
+      throw BackendException('Stages move against a real project, not on demo data.');
 
   @override
   Future<void> setPreferredLocale(String code) async {}

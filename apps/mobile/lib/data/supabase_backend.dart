@@ -221,6 +221,14 @@ class SupabaseBackend implements Backend {
           .order('occurred_at'),
       'history',
     );
+    final milestones = await _select(
+      () => _client
+          .from('milestones')
+          .select('id, transaction_id, position, title, amount_fils, delivered_at, accepted_at')
+          .inFilter('transaction_id', ids)
+          .order('position'),
+      'stages',
+    );
     final disputes = await _select(
       () => _client
           .from('disputes')
@@ -291,6 +299,7 @@ class SupabaseBackend implements Backend {
           peopleById: peopleById,
           evidence: evidence,
           events: events,
+          milestones: milestones,
           dispute: disputeByTransaction[readString(t, 'id')],
           proposalsByDispute: proposalsByDispute,
           findings: findings,
@@ -305,6 +314,7 @@ class SupabaseBackend implements Backend {
     required Map<String, Map<String, dynamic>> peopleById,
     required List<Map<String, dynamic>> evidence,
     required List<Map<String, dynamic>> events,
+    required List<Map<String, dynamic>> milestones,
     required Map<String, dynamic>? dispute,
     required Map<String, Map<String, dynamic>> proposalsByDispute,
     required List<Map<String, dynamic>> findings,
@@ -349,6 +359,19 @@ class SupabaseBackend implements Backend {
       seller: partyFromProfile(peopleById[sellerId], sellerId),
       createdAt: createdAt,
       acceptanceDeadline: readOptionalTime(transaction, 'acceptance_deadline'),
+      // Already ordered by position from the query, so the plan reads the way
+      // it was written rather than the way Postgres felt like returning it.
+      milestones: [
+        for (final m in milestones)
+          if (readString(m, 'transaction_id') == id)
+            Milestone(
+              id: readString(m, 'id'),
+              title: readString(m, 'title'),
+              amount: readFils(m['amount_fils'], 'milestones.amount_fils'),
+              deliveredAt: readOptionalTime(m, 'delivered_at'),
+              acceptedAt: readOptionalTime(m, 'accepted_at'),
+            ),
+      ],
       timeline: [
         for (final e in events)
           if (readString(e, 'transaction_id') == id) timelineFromRow(e, null),
@@ -372,6 +395,7 @@ class SupabaseBackend implements Backend {
     required Fils amount,
     required Role youAre,
     required String counterpartyEmail,
+    List<DraftStage> stages = const [],
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw BackendException('Sign in first.');
@@ -401,6 +425,26 @@ class SupabaseBackend implements Backend {
           .single();
     } on PostgrestException catch (e) {
       throw BackendException(e.message);
+    }
+
+    // Written while the contract is still a draft, which is the only window
+    // the policy allows. The database also refuses a set of stages that adds
+    // up to more than the contract, so a failure here is worth surfacing
+    // rather than swallowing: the contract exists and its plan does not.
+    if (stages.isNotEmpty) {
+      try {
+        await _client.from('milestones').insert([
+          for (final (index, stage) in stages.indexed)
+            {
+              'transaction_id': readString(created, 'id'),
+              'position': index,
+              'title': stage.title,
+              'amount_fils': stage.amount.value,
+            },
+        ]);
+      } on PostgrestException catch (e) {
+        throw BackendException('The contract was created but its stages were not: ${e.message}');
+      }
     }
 
     final contracts = await loadContracts();
@@ -581,6 +625,24 @@ class SupabaseBackend implements Backend {
       {'p_before': before.toUtc().toIso8601String()},
       'marking your activity read',
     );
+  }
+
+  @override
+  Future<void> deliverMilestone(String milestoneId) async {
+    await _rpc<void>('deliver_milestone', {'p_milestone_id': milestoneId},
+        'marking that stage delivered');
+  }
+
+  @override
+  Future<void> acceptMilestone(String milestoneId) async {
+    await _rpc<void>('accept_milestone', {'p_milestone_id': milestoneId},
+        'accepting that stage');
+  }
+
+  @override
+  Future<void> requestMilestoneRevision(String milestoneId) async {
+    await _rpc<void>('request_milestone_revision', {'p_milestone_id': milestoneId},
+        'sending that stage back');
   }
 
   @override

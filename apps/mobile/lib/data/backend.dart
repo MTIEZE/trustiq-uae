@@ -68,6 +68,14 @@ abstract interface class Backend {
   /// disagree with itself.
   Future<List<Contract>> loadContracts();
 
+  /// One stage of work, as it is written on the form before the contract
+  /// exists. Not the [Milestone] the app reads back, which has an id and a
+  /// history; this is only what somebody typed.
+  ///
+  /// The two are kept apart on purpose. Sharing one type would mean a widget
+  /// that can show a stage nobody has agreed to yet as though it had been
+  /// delivered.
+  ///
   /// Throws [CounterpartyHasNoAccount] when the address belongs to nobody.
   /// A typed failure rather than a message the caller has to read, because
   /// the screen turns that one case into an offer to invite them instead.
@@ -77,6 +85,7 @@ abstract interface class Backend {
     required Fils amount,
     required Role youAre,
     required String counterpartyEmail,
+    List<DraftStage> stages,
   });
 
   /// Records the same contract for somebody who has no account, and returns
@@ -107,6 +116,15 @@ abstract interface class Backend {
   /// Marks everything up to [before] read, so opening the list does not
   /// swallow something that landed while it was being read.
   Future<void> markNotificationsRead(DateTime before);
+
+  /// The seller says one stage is done.
+  Future<void> deliverMilestone(String milestoneId);
+
+  /// The buyer agrees that it is.
+  Future<void> acceptMilestone(String milestoneId);
+
+  /// The buyer sends it back. The attempt stays on the record.
+  Future<void> requestMilestoneRevision(String milestoneId);
 
   /// Remembers which language to write to this person in.
   ///
@@ -212,6 +230,13 @@ class AppNotification {
   final DateTime? readAt;
 
   bool get unread => readAt == null;
+}
+
+/// A stage as it was typed, before there is a contract to hang it on.
+class DraftStage {
+  const DraftStage({required this.title, required this.amount});
+  final String title;
+  final Fils amount;
 }
 
 /// A contract draft waiting for somebody who has not joined yet.

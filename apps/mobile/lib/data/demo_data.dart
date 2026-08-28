@@ -13,11 +13,31 @@ class Party {
   final bool verified;
 }
 
+/// One stage of work, agreed when the contract was drafted.
+///
+/// The state is the two timestamps rather than an enum, matching the column
+/// shape. Three states fall out of them and there is no fourth: not yet
+/// delivered, delivered and waiting to be looked at, accepted. A stage sent
+/// back returns to the first, and milestone_events keeps the round that
+/// happened.
 class Milestone {
-  const Milestone({required this.title, required this.amount, this.deliveredAt});
+  const Milestone({
+    required this.id,
+    required this.title,
+    required this.amount,
+    this.deliveredAt,
+    this.acceptedAt,
+  });
+
+  final String id;
   final String title;
   final Fils amount;
   final DateTime? deliveredAt;
+  final DateTime? acceptedAt;
+
+  bool get accepted => acceptedAt != null;
+  bool get delivered => deliveredAt != null && !accepted;
+  bool get waiting => deliveredAt == null;
 }
 
 class TimelineEntry {
@@ -267,8 +287,8 @@ List<Contract> seedContracts() => [
         seller: _sara,
         createdAt: _d(1),
         milestones: [
-          Milestone(title: 'Concepts', amount: filsFromAed('300'), deliveredAt: _d(8)),
-          Milestone(title: 'Final files', amount: filsFromAed('200')),
+          Milestone(id: 'ms_concepts', title: 'Concepts', amount: filsFromAed('300'), deliveredAt: _d(8)),
+          Milestone(id: 'ms_final', title: 'Final files', amount: filsFromAed('200')),
         ],
         timeline: [
           TimelineEntry(

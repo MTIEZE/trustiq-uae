@@ -1698,6 +1698,144 @@ abstract class L {
   /// **'This list is built from the contract record itself, so it says exactly what happened and nothing else.'**
   String get activityNote;
 
+  /// No description provided for @stages.
+  ///
+  /// In en, this message translates to:
+  /// **'Stages'**
+  String get stages;
+
+  /// No description provided for @stageWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get stageWaiting;
+
+  /// No description provided for @stageDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get stageDelivered;
+
+  /// No description provided for @stageAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get stageAccepted;
+
+  /// No description provided for @markStageDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark delivered'**
+  String get markStageDelivered;
+
+  /// No description provided for @acceptStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept this stage'**
+  String get acceptStage;
+
+  /// No description provided for @sendStageBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Send back'**
+  String get sendStageBack;
+
+  /// No description provided for @sendStageBackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this stage back?'**
+  String get sendStageBackTitle;
+
+  /// No description provided for @sendStageBackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The seller will be told it needs more work. The attempt stays on the record: a stage that took three tries reads as three tries.'**
+  String get sendStageBackBody;
+
+  /// No description provided for @stagesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Each stage is agreed as it lands, not all at the end. The last one accepted closes the contract, so nobody is asked to sign for the same thing twice.'**
+  String get stagesNote;
+
+  /// No description provided for @stagesTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} accepted'**
+  String stagesTotal(int done, int total);
+
+  /// No description provided for @addAStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a stage'**
+  String get addAStage;
+
+  /// No description provided for @stageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What this stage covers'**
+  String get stageTitle;
+
+  /// No description provided for @stageAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount for this stage'**
+  String get stageAmount;
+
+  /// No description provided for @stageExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Three concepts'**
+  String get stageExample;
+
+  /// No description provided for @removeStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeStage;
+
+  /// No description provided for @stagesOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Without stages the contract is one delivery, confirmed once. With them, the client agrees to each piece as it arrives.'**
+  String get stagesOptional;
+
+  /// No description provided for @stagesOverTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'The stages add up to more than the contract.'**
+  String get stagesOverTotal;
+
+  /// No description provided for @stagesRemainder.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} of the contract is not in any stage.'**
+  String stagesRemainder(String amount);
+
+  /// No description provided for @stagesFixedAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Stages cannot be added or changed once the contract is sent.'**
+  String get stagesFixedAfter;
+
+  /// No description provided for @mvDeliver.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} delivered a stage'**
+  String mvDeliver(String who);
+
+  /// No description provided for @mvAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} accepted a stage'**
+  String mvAccept(String who);
+
+  /// No description provided for @mvRequestRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} sent a stage back'**
+  String mvRequestRevision(String who);
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

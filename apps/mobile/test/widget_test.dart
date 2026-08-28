@@ -176,10 +176,16 @@ void main() {
     await tester.tap(find.text('Logo design for a startup'));
     await tester.pumpAndSettle();
 
-    // The dispute banner sits below the fold on a small surface, so scroll to
-    // it before tapping. Tapping a widget that is off screen silently hits
-    // whatever is in front of it.
-    await tester.ensureVisible(find.text('Proposal issued'));
+    // The dispute banner sits below the fold, and further below since stages
+    // gained their own rows and buttons. ensureVisible is not enough on its
+    // own: a ListView has not built what is far past the fold, so there is
+    // nothing to make visible. Scroll until it exists, then tap it. Tapping a
+    // widget that is off screen silently hits whatever is in front of it.
+    await tester.scrollUntilVisible(
+      find.text('Proposal issued'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Proposal issued'));
     await tester.pumpAndSettle();

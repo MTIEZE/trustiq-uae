@@ -929,6 +929,89 @@ class LAr extends L {
       'تُبنى هذه القائمة من سجل العقد نفسه، فهي تقول ما حدث بالضبط ولا شيء غير ذلك.';
 
   @override
+  String get stages => 'المراحل';
+
+  @override
+  String get stageWaiting => 'لم تبدأ';
+
+  @override
+  String get stageDelivered => 'سُلّمت';
+
+  @override
+  String get stageAccepted => 'مقبولة';
+
+  @override
+  String get markStageDelivered => 'تسجيل التسليم';
+
+  @override
+  String get acceptStage => 'قبول هذه المرحلة';
+
+  @override
+  String get sendStageBack => 'إعادة';
+
+  @override
+  String get sendStageBackTitle => 'إعادة هذه المرحلة؟';
+
+  @override
+  String get sendStageBackBody =>
+      'سيُبلَّغ البائع بأنها تحتاج عملاً إضافياً. وتبقى المحاولة في السجل: مرحلة استغرقت ثلاث محاولات تُقرأ كثلاث محاولات.';
+
+  @override
+  String get stagesNote =>
+      'يُتفق على كل مرحلة عند وصولها، لا على الكل في النهاية. وقبول المرحلة الأخيرة يُغلق العقد، فلا يُطلب من أحد التوقيع مرتين على الشيء نفسه.';
+
+  @override
+  String stagesTotal(int done, int total) {
+    return 'قُبلت $done من $total';
+  }
+
+  @override
+  String get addAStage => 'إضافة مرحلة';
+
+  @override
+  String get stageTitle => 'ما تشمله هذه المرحلة';
+
+  @override
+  String get stageAmount => 'مبلغ هذه المرحلة';
+
+  @override
+  String get stageExample => 'ثلاثة مفاهيم';
+
+  @override
+  String get removeStage => 'حذف';
+
+  @override
+  String get stagesOptional =>
+      'اختياري. بدون مراحل يكون العقد تسليماً واحداً يُؤكَّد مرة واحدة. ومعها يوافق العميل على كل جزء عند وصوله.';
+
+  @override
+  String get stagesOverTotal => 'مجموع المراحل يتجاوز قيمة العقد.';
+
+  @override
+  String stagesRemainder(String amount) {
+    return '$amount من العقد ليست ضمن أي مرحلة.';
+  }
+
+  @override
+  String get stagesFixedAfter =>
+      'لا يمكن إضافة المراحل أو تعديلها بعد إرسال العقد.';
+
+  @override
+  String mvDeliver(String who) {
+    return 'سلّم $who مرحلة';
+  }
+
+  @override
+  String mvAccept(String who) {
+    return 'قبل $who مرحلة';
+  }
+
+  @override
+  String mvRequestRevision(String who) {
+    return 'أعاد $who مرحلة';
+  }
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override
