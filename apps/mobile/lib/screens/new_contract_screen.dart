@@ -388,7 +388,10 @@ class _NewContractScreenState extends State<NewContractScreen> {
     if (made == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.state.error ?? context.l.contractCouldNotBeCreated),
+          content: Text(
+            describeFailure(widget.state, context.l)?.title ??
+                context.l.contractCouldNotBeCreated,
+          ),
           backgroundColor: context.c.critical,
         ),
       );

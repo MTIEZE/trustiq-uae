@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
+import 'app_state.dart';
 import 'l10n/app_localizations.dart';
 
 /// The app's visual language.
@@ -235,6 +236,21 @@ class TrustIqPalette extends ThemeExtension<TrustIqPalette> {
       criticalSoft: mix(criticalSoft, other.criticalSoft),
     );
   }
+}
+
+/// What to show a person when a call failed.
+///
+/// One place, because the alternative is each screen deciding for itself
+/// whether a raw exception is fit to display, and the answer is always no.
+({String title, String? detail})? describeFailure(AppState state, L l) {
+  final message = state.error;
+  if (message != null) return (title: message, detail: null);
+
+  return switch (state.failure) {
+    Failure.network => (title: l.noConnection, detail: l.noConnectionBody),
+    Failure.unexpected => (title: l.somethingWentWrong, detail: l.somethingWentWrongBody),
+    null => null,
+  };
 }
 
 /// A date and time, in the reader's language and calendar conventions.

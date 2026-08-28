@@ -1076,6 +1076,20 @@ class LEn extends L {
       'The account could not be closed. Nothing has changed.';
 
   @override
+  String get noConnection => 'TrustIQ could not reach the internet.';
+
+  @override
+  String get noConnectionBody =>
+      'Check your connection and try again. Nothing was sent, so nothing has changed.';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong.';
+
+  @override
+  String get somethingWentWrongBody =>
+      'Try again. If it keeps happening, tell us what you were doing.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

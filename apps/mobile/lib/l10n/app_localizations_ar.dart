@@ -1068,6 +1068,20 @@ class LAr extends L {
   String get closeAccountFailed => 'تعذّر إغلاق الحساب. لم يتغيّر شيء.';
 
   @override
+  String get noConnection => 'تعذّر على TrustIQ الوصول إلى الإنترنت.';
+
+  @override
+  String get noConnectionBody =>
+      'تحقّق من اتصالك وحاول مرة أخرى. لم يُرسل شيء، فلم يتغيّر شيء.';
+
+  @override
+  String get somethingWentWrong => 'حدث خطأ ما.';
+
+  @override
+  String get somethingWentWrongBody =>
+      'حاول مرة أخرى. وإن تكرّر، أخبرنا بما كنت تفعل.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

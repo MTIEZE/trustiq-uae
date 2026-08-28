@@ -385,6 +385,71 @@ void main() {
     });
   });
 
+  group('a failure nobody can read', () {
+    // Reported from a tester's phone in Cameroon: a DNS failure reached the
+    // sign-in screen as the raw Dart exception, unreadable, and carrying the
+    // project URL to somebody who had no reason to see it.
+    const raw = "ClientException with SocketException: Failed host lookup: "
+        "'ieccihxvmlapfuhbjuxf.supabase.co' (OS Error: No address associated "
+        "with hostname, errno = 7), uri=https://ieccihxvmlapfuhbjuxf.supabase.co"
+        "/auth/v1/token?grant_type=password";
+
+    test('a lost connection is told as a lost connection', () async {
+      final state = AppState(backend: _ThrowsRaw(Exception(raw)));
+      await state.refresh();
+
+      final l = await L.delegate.load(const Locale('en'));
+      final failed = describeFailure(state, l);
+
+      expect(failed, isNotNull);
+      expect(failed!.title, l.noConnection);
+      expect(state.error, isNull, reason: 'there is no sentence to show, only a kind');
+    });
+
+    test('and the project URL never reaches a screen', () async {
+      final state = AppState(backend: _ThrowsRaw(Exception(raw)));
+      await state.refresh();
+
+      final l = await L.delegate.load(const Locale('en'));
+      final shown = describeFailure(state, l)!;
+      final text = '${shown.title} ${shown.detail}';
+
+      expect(text, isNot(contains('supabase.co')));
+      expect(text, isNot(contains('errno')));
+      expect(text, isNot(contains('Exception')));
+    });
+
+    test('anything else is a failure, not a stack trace', () async {
+      final state = AppState(backend: _ThrowsRaw(StateError('Bad state: no element')));
+      await state.refresh();
+
+      final l = await L.delegate.load(const Locale('en'));
+      final shown = describeFailure(state, l)!;
+      expect(shown.title, l.somethingWentWrong);
+      expect('${shown.title} ${shown.detail}', isNot(contains('Bad state')));
+    });
+
+    test('a backend that had words of its own keeps them', () async {
+      // BackendException carries a sentence written for a person. Replacing it
+      // with a generic one would lose the only useful thing about it.
+      final state = AppState(backend: _ThrowsRaw(BackendException('Sign in first.')));
+      await state.refresh();
+
+      final l = await L.delegate.load(const Locale('en'));
+      expect(describeFailure(state, l)!.title, 'Sign in first.');
+    });
+
+    test('dismissing clears both kinds', () async {
+      final state = AppState(backend: _ThrowsRaw(Exception(raw)));
+      await state.refresh();
+      expect(state.failure, isNotNull);
+
+      state.clearError();
+      final l = await L.delegate.load(const Locale('en'));
+      expect(describeFailure(state, l), isNull);
+    });
+  });
+
   group('a stage of work', () {
     Milestone at({DateTime? delivered, DateTime? accepted}) => Milestone(
           id: 'm', title: 'Concepts', amount: Fils(1000),
@@ -485,4 +550,13 @@ class _NoSuchPersonBackend extends DemoBackend {
   }) async {
     throw CounterpartyHasNoAccount(counterpartyEmail);
   }
+}
+
+/// Throws whatever it was handed, the way the network layer does.
+class _ThrowsRaw extends DemoBackend {
+  _ThrowsRaw(this.thrown);
+  final Object thrown;
+
+  @override
+  Future<List<Contract>> loadContracts() async => throw thrown;
 }

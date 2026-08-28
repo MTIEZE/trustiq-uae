@@ -119,10 +119,17 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
 
-    final error = widget.state.error;
-    if (error != null) {
+    // A tester in Cameroon saw the raw Dart exception here, project URL and
+    // all, because a DNS failure is not an AuthException and nothing caught it.
+    final failed = describeFailure(widget.state, context.l);
+    if (failed != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: context.c.critical),
+        SnackBar(
+          content: Text(
+            failed.detail == null ? failed.title : '${failed.title} ${failed.detail}',
+          ),
+          backgroundColor: context.c.critical,
+        ),
       );
     }
   }

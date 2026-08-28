@@ -67,8 +67,13 @@ class ContractsScreen extends StatelessWidget {
             YourIdentityNotice(state: state),
             if (state.identityVerifiedAt == null) const SizedBox(height: 14),
           ],
-          if (state.error != null) ...[
-            _ErrorNote(message: state.error!, onDismiss: state.clearError),
+          if (describeFailure(state, l) case final failed?) ...[
+            _ErrorNote(
+              message: failed.detail == null
+                  ? failed.title
+                  : '${failed.title} ${failed.detail}',
+              onDismiss: state.clearError,
+            ),
             const SizedBox(height: 14),
           ],
           // Three states this list can be in, and they used to look the same.

@@ -56,6 +56,7 @@ class AppState extends ChangeNotifier {
   /// The last thing that went wrong, for a screen to show and dismiss.
   String? get error => _error;
   void clearError() {
+    _failure = null;
     if (_error == null) return;
     _error = null;
     notifyListeners();
@@ -221,6 +222,28 @@ class AppState extends ChangeNotifier {
   /// Returns whether it succeeded. A failure is kept in [error] rather than
   /// thrown: every caller here is a button, and a button that throws leaves
   /// the person looking at a spinner with no idea what happened.
+  /// Whether the last failure was the network or something we did not expect.
+  ///
+  /// Kept apart from [error] because these two have no words of their own:
+  /// they are rendered in the reader's language by the screen, whereas a
+  /// BackendException already carries a sentence.
+  Failure? _failure;
+  Failure? get failure => _failure;
+
+  /// A guess, from the shape of the exception rather than its type, because
+  /// the network layer under supabase_flutter throws several different ones
+  /// and dart:io types are not available on every platform this builds for.
+  static bool _looksLikeNetwork(Object e) {
+    final text = e.toString().toLowerCase();
+    return text.contains('socketexception') ||
+        text.contains('clientexception') ||
+        text.contains('failed host lookup') ||
+        text.contains('connection closed') ||
+        text.contains('connection refused') ||
+        text.contains('timeoutexception') ||
+        text.contains('network is unreachable');
+  }
+
   Future<bool> _guard(Future<void> Function() body) async {
     _loading = true;
     _error = null;
@@ -229,10 +252,18 @@ class AppState extends ChangeNotifier {
       await body();
       return true;
     } on BackendException catch (e) {
+      // It came with words meant for a person, so they are used as they are.
       _error = e.message;
+      _failure = null;
       return false;
     } catch (e) {
-      _error = e.toString();
+      // Never e.toString(). The exception that prompted this said
+      // "Failed host lookup: 'ieccihxvmlapfuhbjuxf.supabase.co'" in a snackbar
+      // on a tester's phone: unreadable to them, and it published the project
+      // URL to somebody who had no reason to see it.
+      _error = null;
+      _failure = _looksLikeNetwork(e) ? Failure.network : Failure.unexpected;
+      debugPrint('TrustIQ: unhandled backend failure: $e');
       return false;
     } finally {
       _loading = false;
@@ -517,3 +548,6 @@ class AppState extends ChangeNotifier {
 
 /// Which of the three stage calls to make.
 enum StageMove { deliver, accept, sendBack }
+
+/// A failure with no words of its own, to be said by whoever is showing it.
+enum Failure { network, unexpected }

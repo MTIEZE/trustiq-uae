@@ -1932,6 +1932,30 @@ abstract class L {
   /// **'The account could not be closed. Nothing has changed.'**
   String get closeAccountFailed;
 
+  /// No description provided for @noConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'TrustIQ could not reach the internet.'**
+  String get noConnection;
+
+  /// No description provided for @noConnectionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again. Nothing was sent, so nothing has changed.'**
+  String get noConnectionBody;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong.'**
+  String get somethingWentWrong;
+
+  /// No description provided for @somethingWentWrongBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again. If it keeps happening, tell us what you were doing.'**
+  String get somethingWentWrongBody;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

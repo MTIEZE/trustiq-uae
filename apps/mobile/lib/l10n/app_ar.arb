@@ -314,6 +314,11 @@
   "accountKeptBody": "ما بقي، ولا شيء غيره: {kept}.",
   "closeAccountFailed": "تعذّر إغلاق الحساب. لم يتغيّر شيء.",
 
+  "noConnection": "تعذّر على TrustIQ الوصول إلى الإنترنت.",
+  "noConnectionBody": "تحقّق من اتصالك وحاول مرة أخرى. لم يُرسل شيء، فلم يتغيّر شيء.",
+  "somethingWentWrong": "حدث خطأ ما.",
+  "somethingWentWrongBody": "حاول مرة أخرى. وإن تكرّر، أخبرنا بما كنت تفعل.",
+
   "amountMustBePositive": "يجب أن يكون المبلغ أكبر من صفر.",
   "amountTwoDecimals": "المبالغ تُكتب بمنزلتين عشريتين. الدرهم الواحد 100 فلس، ولا يوجد أصغر من ذلك.",
   "amountFormat": "أدخل مبلغاً بالدرهم، مثل 500 أو 1250.50.",
