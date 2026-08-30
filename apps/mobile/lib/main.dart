@@ -13,6 +13,7 @@ import 'l10n/app_localizations.dart';
 import 'screens/contracts_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/sign_in_screen.dart';
+import 'screens/splash_screen.dart';
 import 'widgets/language_button.dart';
 import 'theme.dart';
 
@@ -40,7 +41,12 @@ Future<void> main() async {
   final language = await LanguageController.load();
   final onboarding = await OnboardingGate.load();
 
-  runApp(TrustIqApp(backend: backend, language: language, onboarding: onboarding));
+  runApp(TrustIqApp(
+    backend: backend,
+    language: language,
+    onboarding: onboarding,
+    opensWithSplash: true,
+  ));
 }
 
 class TrustIqApp extends StatefulWidget {
@@ -49,6 +55,7 @@ class TrustIqApp extends StatefulWidget {
     required this.backend,
     LanguageController? language,
     OnboardingGate? onboarding,
+    this.opensWithSplash = false,
   })  : language = language ?? LanguageController.forTests(),
         // Tests and demo trees start past the introduction. A widget test that
         // has to dismiss four panels before it can look at a contract list is
@@ -59,6 +66,12 @@ class TrustIqApp extends StatefulWidget {
   final LanguageController language;
   final OnboardingGate onboarding;
 
+  /// Whether to play the launch sequence. Off by default for the same reason
+  /// the introduction is skipped: a test about the contract list should not
+  /// spend 1.2 seconds watching a seal land first. main() turns it on, and
+  /// splash_test.dart turns it on deliberately.
+  final bool opensWithSplash;
+
   @override
   State<TrustIqApp> createState() => _TrustIqAppState();
 }
@@ -66,6 +79,9 @@ class TrustIqApp extends StatefulWidget {
 class _TrustIqAppState extends State<TrustIqApp> {
   late final AppState _state = AppState(backend: widget.backend);
   late bool _introduced = widget.onboarding.seen;
+
+  /// The launch sequence runs once per process, not once per rebuild.
+  late bool _opened = !widget.opensWithSplash;
 
   void _finishOnboarding() {
     widget.onboarding.markSeen();
@@ -126,7 +142,10 @@ class _TrustIqAppState extends State<TrustIqApp> {
         controller: widget.language,
         child: ListenableBuilder(
           listenable: _state,
-          builder: (context, _) => _home(),
+          builder: (context, _) => AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            child: _home(),
+          ),
         ),
       ),
     );
@@ -141,6 +160,12 @@ class _TrustIqAppState extends State<TrustIqApp> {
   /// signing in and signing up; they are kept apart so that stops being true
   /// without this screen having to change.
   Widget _home() {
+    // Before anything else, and only at the start of a process. The session
+    // restore in initState is already running underneath it, so most of this
+    // is time the app was going to spend anyway.
+    if (!_opened) {
+      return SplashScreen(onDone: () => setState(() => _opened = true));
+    }
     if (!_introduced) {
       return OnboardingScreen(
         onFinished: _finishOnboarding,

@@ -359,6 +359,11 @@ abstract final class IconSize {
 
   /// An empty state, where the icon is the only thing on screen.
   static const hero = 40.0;
+
+  /// The launch sequence, where the mark is the only thing that exists yet.
+  /// Deliberately far above `hero`: this is not an icon in a layout, it is the
+  /// app introducing itself.
+  static const launch = 88.0;
 }
 
 abstract final class Radii {

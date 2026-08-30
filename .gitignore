@@ -48,3 +48,8 @@ supabase/functions/_shared/
 
 # Supabase CLI scratch files.
 supabase/.temp/
+
+# Renders from tool/capture_launch.dart. A viewing aid, not an assertion:
+# nothing fails if they go stale, so carrying half a megabyte of them in the
+# repo would be storing pictures rather than evidence. One command remakes them.
+apps/mobile/tool/goldens/

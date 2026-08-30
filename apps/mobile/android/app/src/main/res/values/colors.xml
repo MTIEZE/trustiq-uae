@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The colours the Android window is painted with before Flutter has drawn
+  anything. They are the light palette's `ground` from
+  lib/theme.dart, copied here because a window background has to exist before
+  Dart runs and so cannot be read from it.
+
+  test/launch_theme_test.dart fails if these stop matching the palette.
+-->
+<resources>
+    <color name="launch_ground">#FFF5F7F7</color>
+</resources>

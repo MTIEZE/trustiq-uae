@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
+<!--
+  What the screen shows between the tap on the icon and Flutter's first frame.
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+  It used to be white, which is not one of this app's colours: on a dark phone
+  the app opened with a white flash that read as something loading badly. This
+  is the same top-down wash SplashScreen paints, so the hand-off from the OS to
+  Flutter has nothing to see. The mark is deliberately not drawn here; it
+  arrives once, animated, on the Flutter side.
+
+  Kept identical in drawable/ and drawable-v21/ on purpose. Every device that
+  can install this app reads the v21 copy; the other exists so the two can
+  never disagree about what the app looks like when it opens.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_ground" />
 </layer-list>

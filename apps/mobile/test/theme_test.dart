@@ -285,7 +285,7 @@ void main() {
         expect(spacing[i], greaterThan(spacing[i - 1]));
       }
 
-      final icons = [IconSize.sm, IconSize.md, IconSize.lg, IconSize.xl, IconSize.hero];
+      final icons = [IconSize.sm, IconSize.md, IconSize.lg, IconSize.xl, IconSize.hero, IconSize.launch];
       expect(icons.toSet().length, icons.length);
       for (var i = 1; i < icons.length; i += 1) {
         expect(icons[i], greaterThan(icons[i - 1]));
