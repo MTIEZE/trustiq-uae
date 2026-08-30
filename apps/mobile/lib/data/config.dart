@@ -55,6 +55,19 @@ class TrustIqConfig {
   /// The project host, for showing which backend a build is talking to.
   String get label => isLive ? Uri.parse(url).host : 'demo data';
 
+  /// Points at a project without going through the build flags.
+  ///
+  /// For tools and integration checks that already hold the values, and named
+  /// the way LanguageController.forTests and OnboardingGate.forTests are, so
+  /// nothing here looks like a second production path. It runs the same
+  /// service-role refusal: a constructor that skipped it would be a way round
+  /// the one check this file exists for.
+  factory TrustIqConfig.of({required String url, required String anonKey}) {
+    final complaint = describeServiceRoleKey(anonKey);
+    if (complaint != null) throw ServiceRoleKeyInAppError(complaint);
+    return TrustIqConfig._(url: url, anonKey: anonKey);
+  }
+
   /// Reads the build-time configuration.
   ///
   /// Throws rather than falling back to demo mode when a service-role key is
