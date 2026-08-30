@@ -79,12 +79,25 @@ async function main() {
   }
 
   const body = readFileSync(source, 'utf8')
-  if (/from ['"]\.\.?\//.test(body)) {
-    // Worth catching here rather than as a runtime import failure on a
-    // function that already answers requests.
+
+  // Anything not fully qualified is resolved by deno.json's import map, and a
+  // single-file deploy uploads neither the map nor what it points at. Checking
+  // only for './' let '@trustiq/server' through, and replacing a working
+  // resolve-dispute with one file took it off the air with a BOOT_ERROR until
+  // it was redeployed with the CLI.
+  const bare = [...body.matchAll(/(?:from|import)\s+['"]([^'"]+)['"]/g)]
+    .map((m) => m[1])
+    .filter((spec) => !/^(npm:|jsr:|node:|https?:|data:)/.test(spec))
+
+  if (bare.length > 0) {
     console.error(`
-  ${source} imports a local module, and this deploys one file. Either inline
-  what it needs or deploy it with the Supabase CLI.
+  ${source} imports ${[...new Set(bare)].join(', ')}.
+
+  Those resolve through supabase/functions/deno.json, and this uploads one
+  file, so the deployed function would fail to start. Deploy it with the CLI
+  instead, which bundles what it needs:
+
+    npx supabase functions deploy ${slug} --project-ref <ref>
 `)
     return 1
   }
