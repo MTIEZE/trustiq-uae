@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -535,9 +536,113 @@ void main() {
           reason: 'it is an offer, not a failure, so nothing should be in the banner');
     });
   });
-}
 
 /// Stands in for a project where the address belongs to nobody.
+  group('attendance', () {
+    // The register exists so "how many people came back" has an answer that is
+    // not a third-party tracker. What it must not become is a chatty one.
+
+    test('the app says it is here once, however often the token is renewed', () async {
+      final backend = _CountsPresence();
+      final state = AppState(backend: backend);
+      await state.start();
+
+      expect(backend.calls, 1, reason: 'a launch marks the person present');
+
+      // What a phone actually does: the session stream fires again every time
+      // the access token is refreshed, which on a device left open is several
+      // times a day.
+      backend.renewToken();
+      backend.renewToken();
+      backend.renewToken();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(backend.calls, 1,
+          reason: 'a renewed token is not somebody opening the app again');
+
+      state.dispose();
+    });
+
+    test('somebody who signs in later is still counted', () async {
+      final backend = _CountsPresence(signedIn: false);
+      final state = AppState(backend: backend);
+      await state.start();
+
+      expect(backend.calls, 0, reason: 'nobody is present before there is a session');
+
+      backend.signInLater();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(backend.calls, 1);
+      state.dispose();
+    });
+
+    test('a register that is refused does not surface anything', () async {
+      // The contract the interface states. If this ever throws, somebody
+      // opening the app on a bad connection sees a failure about a counter.
+      final backend = _PresenceRefused();
+      final state = AppState(backend: backend);
+      await state.start();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(state.error, isNull);
+      expect(state.failure, isNull);
+      state.dispose();
+    });
+  });
+}
+
+/// Counts how many times the app said somebody was here, and lets a test drive
+/// the session stream the way Supabase drives it.
+class _CountsPresence extends DemoBackend {
+  _CountsPresence({this.signedIn = true});
+
+  final bool signedIn;
+  int calls = 0;
+
+  final _sessions = StreamController<BackendSession?>.broadcast();
+
+  static const _who = BackendSession(
+    userId: 'usr_you',
+    email: 'you@example.ae',
+    displayName: 'You',
+  );
+
+  BackendSession? _current;
+  bool _started = false;
+
+  @override
+  BackendSession? get session {
+    if (!_started) {
+      _started = true;
+      _current = signedIn ? _who : null;
+    }
+    return _current;
+  }
+
+  @override
+  Stream<BackendSession?> get sessionChanges => _sessions.stream;
+
+  void renewToken() => _sessions.add(_who);
+
+  void signInLater() {
+    _current = _who;
+    _sessions.add(_who);
+  }
+
+  @override
+  Future<void> recordActivity() async => calls += 1;
+}
+
+class _PresenceRefused extends DemoBackend {
+  @override
+  Future<void> recordActivity() async {
+    // What a real one does not do. SupabaseBackend catches this itself; the
+    // point here is that AppState does not let it out either.
+    throw StateError('the register is unreachable');
+  }
+}
+
 class _NoSuchPersonBackend extends DemoBackend {
   @override
   Future<Contract> createContract({

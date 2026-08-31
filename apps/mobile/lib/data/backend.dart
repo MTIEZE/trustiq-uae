@@ -140,6 +140,16 @@ abstract interface class Backend {
   /// who is not holding the phone.
   Future<void> setPreferredLocale(String code);
 
+  /// Marks the signed-in person present today, and never complains.
+  ///
+  /// One row per person per day, server side, and nothing about what they did.
+  /// It exists so "how many people came back" has an answer that is not a
+  /// third-party tracker inside a product whose whole argument is discretion.
+  ///
+  /// Implementations must swallow their own failures. Nobody opening the app
+  /// should ever be shown a message about a counter.
+  Future<void> recordActivity();
+
   /// Fires a transition. Returns null on success, or why it was refused.
   Future<TransitionError?> fire(String contractId, TransactionEvent event);
 

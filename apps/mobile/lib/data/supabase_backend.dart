@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
@@ -668,6 +669,20 @@ class SupabaseBackend implements Backend {
   Future<void> setPreferredLocale(String code) async {
     if (_client.auth.currentUser == null) return;
     await _rpc<void>('set_preferred_locale', {'p_locale': code}, 'saving your language');
+  }
+
+  @override
+  Future<void> recordActivity() async {
+    if (_client.auth.currentUser == null) return;
+    try {
+      await _client.rpc('record_activity');
+    } catch (e) {
+      // Deliberately not through _rpc, which turns a failure into something a
+      // screen can show. There is no screen for this and there should not be:
+      // a phone on a bad connection has better things to tell its owner than
+      // that a counter did not increment.
+      debugPrint('TrustIQ: could not record activity: $e');
+    }
   }
 
   @override

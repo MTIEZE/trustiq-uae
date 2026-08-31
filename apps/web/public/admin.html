@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TrustIQ operations</title>
+<!--
+  The operator's view of the platform.
+
+  Reachable by anyone; useful to almost nobody. Everything it shows comes from
+  four functions in supabase/migrations/0020_admin_and_activity.sql, each of
+  which refuses any caller who is not in app.admins, a table no client can
+  write to. So this page holds no authority of its own: it is a form and some
+  arithmetic in front of a door that the database keeps.
+
+  No SDK, no CDN, no framework. A page where somebody types the password to an
+  account that can read the whole platform is the last place to load a script
+  from a host we do not control. Two fetch calls do everything.
+
+  The publishable key is written into this file. It ships inside the APK and
+  is designed to be readable; hiding it here would be theatre. It grants
+  nothing on its own, which the schema tests assert in both directions.
+
+  The session lives in memory. Closing the tab signs you out, and that is the
+  intended behaviour rather than an omission: this is not a page to stay
+  logged into on a laptop somebody else can open.
+-->
+<style>
+  :root {
+    --bg: #060908; --surface: #121C19; --raised: #18241F; --border: #24332F;
+    --accent: #2DD4A7; --amber: #E8B36A; --red: #E88A7A;
+    --text: #EAF2EF; --dim: #8FA39D; --faint: #5A6E68;
+    --font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 36px 22px 96px; background: var(--bg); color: var(--text);
+    font-family: var(--font); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 960px; margin: 0 auto; }
+
+  h1 { font-size: 26px; letter-spacing: -.02em; margin: 0; }
+  h2 {
+    font-size: 15px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--faint); margin: 44px 0 14px; font-weight: 600;
+  }
+  p { color: var(--dim); margin: 0 0 14px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .host { color: var(--faint); font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .top .spacer { flex: 1; }
+
+  button {
+    font: inherit; font-size: 14px; color: var(--text); background: var(--raised);
+    border: 1px solid var(--border); border-radius: 4px; padding: 8px 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--faint); }
+  button.primary { background: var(--accent); color: #05100C; border-color: var(--accent); font-weight: 600; }
+  button[disabled] { opacity: .5; cursor: default; }
+
+  label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+  input {
+    font: inherit; width: 100%; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px;
+  }
+  input:focus { border-color: var(--accent); outline: none; }
+
+  /* Class only. As `form.gate` this out-specified `.hidden` and the sign-in
+     form stayed on screen underneath the panel it had just opened. */
+  .gate { max-width: 340px; display: grid; gap: 16px; margin-top: 40px; }
+
+  .note {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber); border-radius: 4px;
+    padding: 14px 16px; margin: 0 0 18px; font-size: 14.5px;
+  }
+  .note.bad { border-left-color: var(--red); }
+  .note p:last-child { margin-bottom: 0; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px 18px;
+  }
+  .tile .n {
+    font-size: 30px; line-height: 1.1; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .tile .k { font-size: 13px; color: var(--faint); margin-top: 4px; }
+  .tile .sub { font-size: 12.5px; color: var(--dim); margin-top: 8px; }
+
+  /* The headline. Kept apart from the tiles because it is the one number the
+     product stands or falls on, and a grid would make it look like the rest. */
+  .thesis {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 6px; padding: 22px 24px;
+  }
+  .thesis .n { font-size: 44px; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .thesis .k { font-size: 14px; color: var(--dim); margin-top: 10px; max-width: 52ch; }
+
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
+  .chart .k { font-size: 13px; color: var(--faint); }
+  .chart .n { font-size: 22px; font-variant-numeric: tabular-nums; margin: 2px 0 10px; }
+  .chart svg { display: block; width: 100%; height: 56px; }
+  .chart .foot { font-size: 12px; color: var(--faint); margin-top: 8px; }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 460px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--faint); font-weight: 600; font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+
+  .bar { display: grid; grid-template-columns: 15ch 1fr 5ch; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 14px; }
+  .bar .track { background: var(--raised); border-radius: 3px; height: 20px; overflow: hidden; }
+  .bar .fill { display: block; background: var(--accent); height: 100%; opacity: .82; }
+  .bar .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--dim); }
+
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--faint); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+
+  <div class="top">
+    <h1>TrustIQ operations</h1>
+    <span class="spacer"></span>
+    <span class="host" id="host"></span>
+  </div>
+  <p id="lede">Numbers only. Nothing on this page can name a person.</p>
+
+  <div id="problem" class="note bad hidden"><p id="problem-text"></p></div>
+
+  <form class="gate" id="gate">
+    <div>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+    </div>
+    <div>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="primary" type="submit" id="go">Sign in</button>
+  </form>
+
+  <div id="panel" class="hidden">
+
+    <div class="top" style="margin-bottom:18px">
+      <span class="host" id="who"></span>
+      <span class="spacer"></span>
+      <button id="refresh">Refresh</button>
+      <button id="out">Sign out</button>
+    </div>
+
+    <h2>Where the thesis stands</h2>
+    <div class="thesis">
+      <div class="n" id="rate">—</div>
+      <div class="k" id="rate-note"></div>
+    </div>
+
+    <h2>People</h2>
+    <div class="tiles" id="people"></div>
+
+    <h2>Last 30 days</h2>
+    <div class="charts" id="charts"></div>
+
+    <h2>How far contracts get</h2>
+    <div id="funnel"></div>
+
+    <h2>The model</h2>
+    <div class="scroll"><table id="ai"><tbody></tbody></table></div>
+    <p id="ai-note" style="font-size:13.5px;margin-top:12px"></p>
+
+  </div>
+
+  <footer>
+    Read-only. Verifying an identity, taking over a dispute or closing an
+    account are still done with the scripts in <code>scripts/</code>, which
+    need the service-role key and therefore cannot live in a browser.
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  'use strict'
+
+  var URL_ = 'https://ieccihxvmlapfuhbjuxf.supabase.co'
+  var KEY = 'sb_publishable_LvMn5CI5ZJJLt6aXaACbcQ_tE237fV4'
+
+  // In memory, deliberately. See the comment at the top of the file.
+  var token = null
+
+  var $ = function (id) { return document.getElementById(id) }
+
+  $('host').textContent = URL_.replace(/^https?:\/\//, '')
+
+  function problem (text) {
+    var box = $('problem')
+    if (!text) { box.classList.add('hidden'); return }
+    $('problem-text').textContent = text
+    box.classList.remove('hidden')
+  }
+
+  function rpc (name, body) {
+    return fetch(URL_ + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: {
+        apikey: KEY,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body || {}),
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (r.ok) return data
+        // Postgres puts our own refusal in `message`. Passing it through beats
+        // inventing a friendlier one that says less.
+        var e = new Error(data && data.message ? data.message : 'HTTP ' + r.status)
+        e.status = r.status
+        throw e
+      })
+    })
+  }
+
+  function n (v) { return Number(v || 0).toLocaleString('en-GB') }
+
+  function tile (value, key, sub) {
+    return '<div class="tile"><div class="n">' + value + '</div>' +
+      '<div class="k">' + key + '</div>' +
+      (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>'
+  }
+
+  /** A filled sparkline. No library, no axes: the shape and the total. */
+  function spark (values) {
+    var w = 240, h = 56, max = Math.max.apply(null, values.concat([1]))
+    var step = values.length > 1 ? w / (values.length - 1) : w
+    var pts = values.map(function (v, i) {
+      return (i * step).toFixed(1) + ',' + (h - (v / max) * (h - 6) - 3).toFixed(1)
+    })
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<polygon fill="var(--accent)" fill-opacity=".16" points="0,' + h + ' ' + pts.join(' ') + ' ' + w + ',' + h + '"/>' +
+      '<polyline fill="none" stroke="var(--accent)" stroke-width="1.6" points="' + pts.join(' ') + '"/>' +
+      '</svg>'
+  }
+
+  function chart (key, values, total, foot) {
+    // `total` is passed in rather than summed for the one series where a sum
+    // would be a lie: adding up daily actives counts somebody once for every
+    // day they came back, which is the opposite of what the word means.
+    if (total == null) total = values.reduce(function (a, b) { return a + Number(b || 0) }, 0)
+    return '<div class="chart"><div class="k">' + key + '</div>' +
+      '<div class="n">' + n(total) + '</div>' + spark(values.map(Number)) +
+      (foot ? '<div class="foot">' + foot + '</div>' : '') + '</div>'
+  }
+
+  function bar (label, value, of) {
+    var pct = of > 0 ? (value / of) * 100 : 0
+    return '<div class="bar"><span>' + label + '</span>' +
+      '<span class="track"><span class="fill" style="width:' + pct.toFixed(1) + '%"></span></span>' +
+      '<span class="v">' + n(value) + '</span></div>'
+  }
+
+  function render (o, daily, ai) {
+    // The headline. A percentage computed from three proposals is not a rate,
+    // and printing one anyway is the kind of number that makes somebody decide
+    // something. So below ten it says the count and refuses the percentage.
+    var issued = Number(o.proposals_issued || 0)
+    var agreed = Number(o.proposals_accepted || 0)
+    if (issued === 0) {
+      $('rate').textContent = 'No proposals yet'
+      $('rate-note').textContent =
+        'The acceptance rate is the number this product lives on: a resolution ' +
+        'only ends a dispute if both parties accept it. Nothing to measure until ' +
+        'the model has been asked.'
+    } else if (issued < 10) {
+      $('rate').textContent = agreed + ' of ' + issued + ' accepted'
+      $('rate-note').textContent =
+        'Too few to be a rate. ' + n(o.proposals_half_accepted) + ' more had one ' +
+        'party accept and the other not, and ' + n(o.escalated_to_human) +
+        ' disputes went to a human.'
+    } else {
+      $('rate').textContent = Math.round((agreed / issued) * 100) + '%'
+      $('rate-note').textContent =
+        agreed + ' of ' + issued + ' proposals accepted by both parties. ' +
+        n(o.proposals_half_accepted) + ' accepted by one only, ' +
+        n(o.escalated_to_human) + ' escalated to a human.'
+    }
+
+    $('people').innerHTML =
+      tile(n(o.people), 'accounts', n(o.verified) + ' identity checked') +
+      tile(n(o.active_today), 'here today') +
+      tile(n(o.active_7d), 'here this week') +
+      tile(n(o.active_30d), 'here this month')
+
+    $('charts').innerHTML =
+      chart('New accounts', daily.map(function (d) { return d.signups })) +
+      chart('People here', daily.map(function (d) { return d.active }),
+            o.active_30d, 'distinct, not the sum of the days') +
+      chart('Contracts started', daily.map(function (d) { return d.contracts }))
+
+    var made = Number(o.contracts || 0)
+    $('funnel').innerHTML =
+      bar('Written', made, made) +
+      bar('Both accepted', o.contracts_binding, made) +
+      bar('Confirmed done', o.contracts_confirmed, made) +
+      bar('Disputed', o.contracts_disputed, made) +
+      '<div class="bar" style="margin-top:14px"><span>Evidence filed</span>' +
+      '<span></span><span class="v">' + n(o.evidence_filed) + '</span></div>'
+
+    var rows = '<tr><th>Outcome</th><th class="n" style="text-align:right">Runs</th>' +
+      '<th class="n" style="text-align:right">Confidence</th>' +
+      '<th class="n" style="text-align:right">Latency</th>' +
+      '<th style="text-align:right">Last</th></tr>'
+    ai.forEach(function (r) {
+      rows += '<tr><td>' + r.outcome + '</td>' +
+        '<td class="n">' + n(r.calls) + '</td>' +
+        '<td class="n">' + (r.mean_confidence == null ? '—' : r.mean_confidence) + '</td>' +
+        '<td class="n">' + (r.mean_latency_ms == null ? '—' : n(r.mean_latency_ms) + ' ms') + '</td>' +
+        '<td style="text-align:right;color:var(--faint)">' +
+        (r.last_call ? String(r.last_call).slice(0, 10) : '—') + '</td></tr>'
+    })
+    $('ai').querySelector('tbody').innerHTML = rows
+    $('ai-note').textContent =
+      'Anything other than "accepted" is a run the pipeline refused to show ' +
+      'anybody. Those are here on purpose: a model that often fails validation ' +
+      'is a signal, and hiding the failures would hide it.'
+  }
+
+  function load () {
+    problem(null)
+    return Promise.all([rpc('admin_overview'), rpc('admin_daily', { p_days: 30 }), rpc('admin_ai_quality')])
+      .then(function (r) {
+        render(Array.isArray(r[0]) ? r[0][0] : r[0], r[1] || [], r[2] || [])
+      })
+      .catch(function (e) {
+        if (e.status === 403 || /operator action/.test(e.message)) {
+          problem('Signed in, but this account is not on the operator list. ' +
+            'That list is only writable from SQL, which is the point of it.')
+        } else {
+          problem(e.message)
+        }
+      })
+  }
+
+  $('gate').addEventListener('submit', function (ev) {
+    ev.preventDefault()
+    problem(null)
+    $('go').disabled = true
+
+    fetch(URL_ + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { apikey: KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $('email').value, password: $('password').value }),
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d } }) })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.d.error_description || res.d.msg || 'Sign in refused')
+        token = res.d.access_token
+        $('who').textContent = res.d.user && res.d.user.email ? res.d.user.email : ''
+        $('gate').classList.add('hidden')
+        $('lede').classList.add('hidden')
+        $('panel').classList.remove('hidden')
+        $('password').value = ''
+        return load()
+      })
+      .catch(function (e) { problem(e.message) })
+      .then(function () { $('go').disabled = false })
+  })
+
+  $('refresh').addEventListener('click', load)
+
+  $('out').addEventListener('click', function () {
+    token = null
+    $('panel').classList.add('hidden')
+    $('gate').classList.remove('hidden')
+    $('lede').classList.remove('hidden')
+    problem(null)
+  })
+})()
+</script>
+</body>
+</html>

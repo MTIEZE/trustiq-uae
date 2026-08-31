@@ -2182,4 +2182,251 @@ select pg_temp.expect_error(
   'the record of a closure cannot be edited afterwards');
 
 \echo ''
+\echo '== The operator sees numbers, not people =='
+
+reset role;
+
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-000000000001', 'operator@trustiq.ae'),
+  ('0f000000-0000-0000-0000-000000000002', 'curious@example.ae'),
+  ('0f000000-0000-0000-0000-000000000003', 'leaver@example.ae');
+
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-000000000001', 'The Operator',   'operator@trustiq.ae'),
+  ('0f000000-0000-0000-0000-000000000002', 'Curious Person', 'curious@example.ae'),
+  ('0f000000-0000-0000-0000-000000000003', 'Just Looking',   'leaver@example.ae');
+
+-- Signing in is not being an operator. Checked before the row is added, so the
+-- refusal is the default rather than something that has to be arranged.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_overview() $q$,
+  'a signed-in person who is not on the list is refused the overview');
+
+reset role;
+insert into app.admins (user_id, note) values
+  ('0f000000-0000-0000-0000-000000000001', 'Added by the schema tests');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.check(
+  (select people from public.admin_overview()) >= 3,
+  'once on the list, the same call answers, through the grant the app would use');
+
+-- The rest of the numbers are checked without the role, keeping the operator's
+-- identity. The function reads past RLS on purpose; a control query run as
+-- `authenticated` does not, because the operator is party to none of these
+-- contracts. Comparing the two from inside that role compares the truth
+-- against a filtered view of it and fails for a reason that has nothing to do
+-- with the function.
+reset role;
+
+\echo ''
+\echo '-- counted from what happened, not from where things sit now --'
+
+select pg_temp.check(
+  (select contracts_binding from public.admin_overview()) =
+  (select count(distinct e.transaction_id)
+   from public.transaction_events e
+   join app.real_transactions t on t.id = e.transaction_id
+   where e.event = 'accept'),
+  'binding contracts are counted from the event log');
+
+-- Without this, the assertion above would pass even if the function read
+-- current state, because nothing would have moved on yet.
+select pg_temp.check(
+  exists (select 1 from public.transactions t
+          join public.transaction_events e on e.transaction_id = t.id and e.event = 'accept'
+          where t.state <> 'active'),
+  'and at least one accepted contract has since moved on, so the two readings differ');
+
+select pg_temp.check(
+  (select proposals_accepted from public.admin_overview()) =
+  (select count(*) from (
+     select a.proposal_id
+     from public.dispute_acceptances a
+     join public.resolution_proposals r on r.id = a.proposal_id and r.source = 'ai'
+     join public.disputes d on d.id = r.dispute_id
+     join app.real_transactions t on t.id = d.transaction_id
+     group by a.proposal_id having count(*) = 2) agreed),
+  'a proposal counts as accepted only when both parties accepted it');
+
+select pg_temp.check(
+  (select coalesce(sum(calls), 0) from public.admin_ai_quality()) =
+  (select count(*) from public.ai_call_log),
+  'every model run is in the quality breakdown, the failed ones included');
+
+\echo ''
+\echo '-- and only about people who exist --'
+
+-- The scripts in scripts/ have filled the live database with accounts at the
+-- RFC 2606 domains. Left in, they were most of the headline: 38 profiles of
+-- which 6 were somebody. This is the assertion that the panel is about the
+-- business rather than about its own test fixtures.
+
+select set_config('trustiq.people_before', (select people from public.admin_overview())::text, false);
+select set_config('trustiq.contracts_before', (select contracts from public.admin_overview())::text, false);
+
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-0000000000a1', 'fixture.one@example.test'),
+  ('0f000000-0000-0000-0000-0000000000a2', 'fixture.two@nowhere.invalid');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-0000000000a1', 'Fixture One', 'fixture.one@example.test'),
+  ('0f000000-0000-0000-0000-0000000000a2', 'Fixture Two', 'fixture.two@nowhere.invalid');
+
+select pg_temp.check(
+  (select people from public.admin_overview())::text = current_setting('trustiq.people_before'),
+  'two accounts at reserved domains do not move the headcount');
+
+-- A contract between them, submitted so it is a live row rather than a draft
+-- nobody sent. It stops there: two unverified fixtures cannot make a contract
+-- binding, which is a rule from 0002 and not something this test should be
+-- working around.
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('0f000000-0000-0000-0000-0000000000b1',
+   '0f000000-0000-0000-0000-0000000000a1',
+   '0f000000-0000-0000-0000-0000000000a2',
+   'A contract between two fixtures',
+   'Nothing here was ever agreed by anybody.',
+   10000,
+   '0f000000-0000-0000-0000-0000000000a1');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000a1', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000b1', 'submit');
+reset role;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.check(
+  (select contracts from public.admin_overview())::text = current_setting('trustiq.contracts_before'),
+  'nor does a contract between them, even one that has been sent');
+
+-- And the guard on the guard: the row really is there, so the assertion above
+-- is about the filter rather than about an insert that quietly failed.
+select pg_temp.check(
+  (select state from public.transactions
+   where id = '0f000000-0000-0000-0000-0000000000b1') = 'pending_acceptance',
+  'the fixture contract exists and is live, it is simply not counted');
+
+\echo ''
+\echo '-- the window --'
+
+select pg_temp.check(
+  (select count(*) from public.admin_daily(7)) = 7,
+  'a seven day window has seven rows, including the days nothing happened');
+
+select pg_temp.check(
+  (select count(*) from public.admin_daily(100000)) = 365,
+  'an absurd window is clamped rather than refused');
+
+select pg_temp.check(
+  (select count(*) from public.admin_daily(0)) = 1,
+  'and so is a nonsensical one');
+
+select pg_temp.check(
+  (select count(*) from public.admin_daily(null)) = 30,
+  'no window at all means thirty days');
+
+select pg_temp.check(
+  (select signups from public.admin_daily(1)) >= 3,
+  'the profiles this suite just created land on today');
+
+\echo ''
+\echo '-- everybody else --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000002', false);
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_overview() $q$,
+  'another signed-in person cannot read the overview');
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_daily(30) $q$,
+  'nor the daily series');
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_ai_quality() $q$,
+  'nor how the model has been doing');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.admin_overview()', 'EXECUTE'),
+  'anon holds no grant on the overview');
+
+select pg_temp.check(
+  not has_table_privilege('authenticated', 'app.admins', 'SELECT'),
+  'a signed-in person cannot read who the operators are');
+
+\echo ''
+\echo '== Attendance =='
+
+-- Still the curious person, who is not an operator: marking yourself present
+-- is something everybody does.
+select public.record_activity();
+select public.record_activity();
+
+-- A signed-in caller with no profile yet. That this line runs at all is the
+-- assertion: the function stays quiet instead of raising, because a counter
+-- must never be the reason a launch fails.
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000ff', false);
+select public.record_activity();
+
+-- Counted without the role. `authenticated` holds no privilege on app.activity
+-- at all, which is the sweep further up doing its job: a signed-in person can
+-- add themselves to the register and can never read it.
+reset role;
+
+select pg_temp.check(
+  (select count(*) from app.activity
+   where user_id = '0f000000-0000-0000-0000-000000000002') = 1,
+  'opening the app twice in a day leaves one row, not two');
+
+select pg_temp.check(
+  (select count(*) from app.activity
+   where user_id = '0f000000-0000-0000-0000-0000000000ff') = 0,
+  'a caller with no profile is not recorded, and is not an error either');
+
+select pg_temp.check(
+  has_function_privilege('authenticated', 'public.record_activity()', 'EXECUTE'),
+  'a signed-in person can still mark themselves present');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.record_activity()', 'EXECUTE'),
+  'and nobody can do it without signing in');
+
+\echo ''
+\echo '-- attendance is never what keeps an account alive --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000003', false);
+select public.record_activity();
+reset role;
+
+select pg_temp.check(
+  (select count(*) from app.activity
+   where user_id = '0f000000-0000-0000-0000-000000000003') = 1,
+  'somebody who only ever opened the app has an attendance row');
+
+-- Closing is a system action, and app.assert_system_caller refuses any caller
+-- carrying a session, whatever role it holds. The suite has been signing
+-- people in for two hundred assertions, so the claim has to be put down first.
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select outcome from public.close_account('0f000000-0000-0000-0000-000000000003')) = 'deleted',
+  'and is still deleted outright, because attendance is not a record anyone is owed');
+
+select pg_temp.check(
+  (select count(*) from app.activity
+   where user_id = '0f000000-0000-0000-0000-000000000003') = 0,
+  'their attendance went with them');
+
+reset role;
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

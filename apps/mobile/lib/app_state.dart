@@ -156,12 +156,38 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      _markPresent();
       // Fire and forget: this is a stream callback, and refresh reports its
       // own failures through `error`.
       unawaited(refresh());
     });
 
-    if (_backend.session != null) await refresh();
+    if (_backend.session != null) {
+      _markPresent();
+      await refresh();
+    }
+  }
+
+  bool _presentRecorded = false;
+
+  /// Once per launch, not once per token refresh.
+  ///
+  /// The session stream fires whenever a token is renewed, which on a phone
+  /// left open is several times a day. The insert is idempotent server side,
+  /// so the extra calls would be harmless, but they would still be round trips
+  /// spent saying something already said. A process is as close as this gets
+  /// to "somebody opened the app", and on Android it is close enough: the
+  /// system kills the process between uses far more often than it keeps it.
+  void _markPresent() {
+    if (_presentRecorded) return;
+    _presentRecorded = true;
+    // The interface says an implementation swallows its own failures, and both
+    // of them do. Caught here as well because `unawaited` attaches no handler:
+    // the day somebody writes a third backend that forgets, the cost should be
+    // a line in the log rather than an unhandled error at launch.
+    unawaited(_backend.recordActivity().catchError((Object e) {
+      debugPrint('TrustIQ: could not record activity: $e');
+    }));
   }
 
   @override

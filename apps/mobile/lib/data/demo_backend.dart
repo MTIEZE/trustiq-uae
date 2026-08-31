@@ -376,6 +376,9 @@ class DemoBackend implements Backend {
   Future<void> setPreferredLocale(String code) async {}
 
   @override
+  Future<void> recordActivity() async {}
+
+  @override
   bool get canRecordVerification => true;
 
   @override
