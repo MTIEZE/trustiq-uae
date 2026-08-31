@@ -2429,4 +2429,188 @@ select pg_temp.check(
 reset role;
 
 \echo ''
+\echo '== Asking to be verified =='
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-0000000000d1', 'wants.in@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000d2', 'turned.down@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-0000000000d1', 'Wants In',    'wants.in@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000d2', 'Turned Down', 'turned.down@example.ae');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000d1', false);
+
+-- Before asking, and this is the state that did not exist at all: somebody who
+-- has never asked looked exactly like somebody whose request was refused.
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'none',
+  'somebody who has never asked is told so, rather than shown nothing');
+
+select public.request_verification('Wants In Al Mansouri', 'emirates_id', 'Happy to come to the office.');
+
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'pending',
+  'after asking, they are waiting');
+
+select pg_temp.check(
+  (select legal_name from public.my_verification()) = 'Wants In Al Mansouri',
+  'and the name being checked is the one they gave, not the one on the profile');
+
+select pg_temp.expect_error(
+  $q$ select * from public.request_verification('Wants In Al Mansouri', 'passport') $q$,
+  'asking twice is refused, so nobody is in the queue twice');
+
+\echo ''
+\echo '-- a refusal has to be answerable --'
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.expect_error(
+  $q$ select * from public.decide_verification(
+        (select id from app.verification_requests
+         where user_id = '0f000000-0000-0000-0000-0000000000d1'), false, 'no') $q$,
+  'a refusal with no real reason is refused, because it is a dead end for the person');
+
+\echo ''
+\echo '-- deciding is not something a client does --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000d1', false);
+
+select pg_temp.check(
+  not has_function_privilege('authenticated',
+    'public.decide_verification(uuid, boolean, text)', 'EXECUTE'),
+  'a signed-in person cannot decide their own verification');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'public.verification_queue()', 'EXECUTE'),
+  'nor read the queue, which carries names');
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.request_verification(text, text, text)', 'EXECUTE'),
+  'and asking at all needs an account');
+
+\echo ''
+\echo '-- the queue --'
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000d2', false);
+select public.request_verification('Turned Down Bin Rashid', 'passport');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*) from public.verification_queue()) = 2,
+  'both requests are waiting, oldest first');
+
+select pg_temp.check(
+  (select email from public.verification_queue() limit 1) = 'wants.in@example.ae',
+  'and the one who asked first is at the front');
+
+\echo ''
+\echo '-- yes --'
+
+select pg_temp.check(
+  (select outcome from public.decide_verification(
+     (select id from app.verification_requests
+      where user_id = '0f000000-0000-0000-0000-0000000000d1'),
+     true,
+     'Emirates ID seen in person at the Sharjah office, name and photo match.')) = 'approved',
+  'a request can be approved');
+
+select pg_temp.check(
+  (select identity_verified_at is not null from public.profiles
+   where id = '0f000000-0000-0000-0000-0000000000d1'),
+  'and the profile is actually stamped, through the one path that does that');
+
+select pg_temp.check(
+  (select provider from (
+     select identity_provider as provider from public.profiles
+     where id = '0f000000-0000-0000-0000-0000000000d1') x) = 'manual_review',
+  'as a manual review, never as UAE Pass');
+
+select pg_temp.check(
+  exists (select 1 from app.identity_checks
+          where user_id = '0f000000-0000-0000-0000-0000000000d1' and outcome = 'verified'),
+  'and what was looked at is on the append-only record');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000d1', false);
+
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'verified',
+  'the person is told they are verified');
+
+select pg_temp.expect_error(
+  $q$ select * from public.request_verification('Wants In Al Mansouri', 'passport') $q$,
+  'and cannot join the queue again');
+
+\echo ''
+\echo '-- no, with a reason they can act on --'
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select outcome from public.decide_verification(
+     (select id from app.verification_requests
+      where user_id = '0f000000-0000-0000-0000-0000000000d2'),
+     false,
+     'The passport photo page was cut off. Send one showing all four corners.')) = 'rejected',
+  'a request can be refused');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000d2', false);
+
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'rejected',
+  'the person is told they were refused');
+
+select pg_temp.check(
+  (select reason from public.my_verification()) like 'The passport photo page%',
+  'and told why, in words they can do something about');
+
+-- The whole point of recording a refusal rather than silently doing nothing.
+select public.request_verification('Turned Down Bin Rashid', 'passport', 'Full page this time.');
+
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'pending',
+  'and can ask again afterwards');
+
+\echo ''
+\echo '-- changing your mind --'
+
+select pg_temp.check(
+  (select public.withdraw_verification_request()) is true,
+  'a waiting request can be withdrawn');
+
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'none',
+  'and the person is back to never having asked');
+
+select pg_temp.check(
+  (select public.withdraw_verification_request()) is false,
+  'withdrawing nothing says so rather than raising');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*) from app.verification_requests
+   where user_id = '0f000000-0000-0000-0000-0000000000d2') = 2,
+  'both attempts stay on the record, the refused one included');
+
+select pg_temp.check(
+  (select count(*) from public.verification_queue()) = 0,
+  'and nothing is left waiting');
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

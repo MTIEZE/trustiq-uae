@@ -37,7 +37,7 @@ class SplashScreen extends StatefulWidget {
   ///
   /// Public so the tests can time themselves off it. They express everything
   /// as a fraction of this, so tuning it cannot turn the suite red.
-  static const run = Duration(milliseconds: 3000);
+  static const run = Duration(milliseconds: 2400);
 
   final VoidCallback onDone;
 
