@@ -1062,3 +1062,89 @@
   font-size: 14.5px; line-height: 1.6; color: var(--text-dim);
 }
 .run-note strong { color: var(--text); }
+
+/* ---------------------------------------------------------------------------
+   The shell, the stores and the beta form.
+   Shared by every page rather than copied, which is also why the nav lives in
+   one component now: two navigation bars disagree within a month.
+   --------------------------------------------------------------------------- */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.hero-narrow { padding-bottom: 72px; }
+.hero-narrow h1 { max-width: 18ch; margin-left: auto; margin-right: auto; }
+
+/* The two store buttons, in whatever state is true. The inert one is dimmed
+   and loses the pointer, so it reads as "not yet" rather than as broken. */
+.stores { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 28px 0 0; }
+.store {
+  display: inline-flex; flex-direction: column; justify-content: center;
+  min-width: 190px; padding: 12px 22px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); text-decoration: none; text-align: left;
+}
+.store:hover { border-color: var(--accent); }
+.store-sub { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
+.store-name { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+.store-off { opacity: .45; cursor: default; }
+.store-off:hover { border-color: var(--border); }
+
+.beta-wrap { max-width: 560px; margin-top: 28px; }
+.beta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.beta input[type="email"] {
+  flex: 1 1 240px; min-width: 0;
+  padding: 13px 16px; font: inherit; font-size: 15px;
+  color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.beta input[type="email"]:focus { outline: none; border-color: var(--accent); }
+.beta button {
+  padding: 13px 24px; font: inherit; font-size: 15px; font-weight: 700;
+  color: var(--bg); background: var(--accent);
+  border: none; border-radius: 8px; cursor: pointer; white-space: nowrap;
+}
+.beta button:disabled { opacity: .6; cursor: default; }
+.beta textarea {
+  width: 100%; margin-top: 10px; padding: 12px 16px;
+  font: inherit; font-size: 14.5px; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 8px; resize: vertical;
+}
+.beta textarea:focus { outline: none; border-color: var(--accent); }
+
+/* Off screen rather than display:none, because a bot reading the markup will
+   fill a hidden input and a person will never see this one. */
+.beta-trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+.beta-error { margin: 12px 0 0; font-size: 14px; color: var(--coral); }
+.beta-small { margin: 12px 0 0; font-size: 13px; color: var(--text-faint); }
+
+.beta-done {
+  max-width: 560px; margin-top: 28px; padding: 22px 24px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0;
+}
+.beta-done strong { display: block; font-size: 17px; margin-bottom: 8px; }
+.beta-done p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--text-dim); }
+
+.gate-list { display: grid; gap: 18px; margin: 32px 0 0; max-width: 720px; }
+.gate-list dt {
+  font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent); font-weight: 600; margin-bottom: 6px;
+}
+.gate-list dd { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-dim); }
+
+.footer-top {
+  display: flex; gap: 40px; justify-content: space-between; flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.footer-line { max-width: 44ch; margin: 12px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--text-dim); }
+.footer-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.footer-links a { color: var(--text-dim); text-decoration: none; font-size: 14.5px; }
+.footer-links a:hover { color: var(--accent); }
+.footer-note {
+  margin: 0; padding-top: 24px; border-top: 1px solid var(--border);
+  font-size: 13.5px; line-height: 1.6; color: var(--text-faint); max-width: 76ch;
+}

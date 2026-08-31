@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Nav, Footer, BetaForm } from './components/Shell.jsx'
 import './App.css'
 
 // A real run of the resolution pipeline, copied out of the production audit
@@ -53,21 +54,6 @@ const REFUSED_RUNS = [
     why: 'One finding cited a document that was never filed. Validation rejected the whole proposal rather than the sentence.',
   },
 ]
-
-function Nav() {
-  return (
-    <nav className="nav">
-      <div className="container">
-        <div className="nav-logo">Trust<span>IQ</span></div>
-        <ul className="nav-links">
-          <li><a href="#how-it-works">How It Works</a></li>
-          <li><a href="#resolution">Resolution</a></li>
-          <li><a href="#about">About</a></li>
-        </ul>
-      </div>
-    </nav>
-  )
-}
 
 function Hero() {
   return (
@@ -447,25 +433,6 @@ function RealRun() {
   )
 }
 
-function Footer() {
-  return (
-    <footer className="footer" id="about">
-      <div className="container">
-        <div className="footer-challenge">Building AI Application Challenge · Decoding Data Science · June 2026</div>
-        <div className="footer-brand">Trust<span>IQ</span> UAE</div>
-        <div className="footer-copy">AI-powered trust infrastructure for secure transactions between strangers</div>
-        {/* A privacy policy nobody can find is a document, not a disclosure.
-            Relative so it works under the /trustiq-uae/ base path. */}
-        <div className="footer-links">
-          <a href="privacy.html">Privacy</a>
-          {' · '}
-          <a href="delete-account.html">Closing your account</a>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 function App() {
   return (
     <>
@@ -474,6 +441,19 @@ function App() {
       <Problem />
       <HowItWorks />
       <RealRun />
+      <section className="problem" id="beta">
+        <div className="container">
+          <span className="label">Join the beta</span>
+          <h2>Be told once, when the app opens</h2>
+          <p className="section-sub">
+            The app is built and not yet on either store. One email when that changes, and nothing
+            else.
+          </p>
+          <div className="beta-wrap">
+            <BetaForm source="home" />
+          </div>
+        </div>
+      </section>
       <Footer />
     </>
   )

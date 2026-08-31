@@ -3058,4 +3058,94 @@ select pg_temp.check(
   'so nothing of the sort is on the record');
 
 \echo ''
+\echo '== The beta list =='
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- The first table in this project a signed-out visitor may write to, so the
+-- shape of that permission is worth pinning exactly.
+
+set role anon;
+
+insert into public.beta_signups (email, source) values
+  ('  Someone@Example.ae ', 'home'),
+  ('someone@example.ae', 'download'),
+  ('another@example.ae', 'home');
+
+select pg_temp.check(true, 'a signed-out visitor can join the list');
+
+select pg_temp.expect_error(
+  $q$ select * from public.beta_signups $q$,
+  'and cannot read it back, so the form cannot become a way to see who else signed up');
+
+select pg_temp.expect_error(
+  $q$ delete from public.beta_signups $q$,
+  'nor empty it');
+
+select pg_temp.expect_error(
+  $q$ insert into public.beta_signups (email) values ('not-an-address') $q$,
+  'an address that is not one is refused');
+
+select pg_temp.expect_error(
+  $q$ insert into public.beta_signups (email) values ('a@b.c' || repeat('x', 300)) $q$,
+  'and one long enough to be an attack is too');
+
+select pg_temp.expect_error(
+  $q$ select * from public.beta_list() $q$,
+  'reading the list is not something a visitor does');
+
+reset role;
+
+\echo ''
+\echo '-- deduplicated on the way out, not on the way in --'
+
+select pg_temp.check(
+  (select count(*) from public.beta_signups) = 3,
+  'every submission is kept, including the repeat');
+
+select pg_temp.check(
+  (select count(*) from public.beta_list()) = 2,
+  'but the list has one row per person');
+
+select pg_temp.check(
+  (select times from public.beta_list() where email = 'someone@example.ae') = 2,
+  'with the repeat counted rather than lost');
+
+-- A unique index would have been the obvious way to do this, and it would have
+-- turned a second signup into an error. An error that says "already on the
+-- list" tells anybody with a form whether a given address is on it.
+select pg_temp.check(
+  (select array_length(sources, 1) from public.beta_list()
+   where email = 'someone@example.ae') = 2,
+  'and both pages it came from recorded, which is the point of asking');
+
+select pg_temp.check(
+  (select email from public.beta_list() where email = 'someone@example.ae') = 'someone@example.ae',
+  'case and spacing folded, so two spellings of one person are one person');
+
+\echo ''
+\echo '-- the panel knows how many, not who --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.check(
+  (select public.admin_beta_waiting()) = 2,
+  'an operator sees the count');
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000002', false);
+
+select pg_temp.expect_error(
+  $q$ select public.admin_beta_waiting() $q$,
+  'and nobody else does');
+
+select pg_temp.expect_error(
+  $q$ select * from public.beta_list() $q$,
+  'and not even an operator gets the addresses');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

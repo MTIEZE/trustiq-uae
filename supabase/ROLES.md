@@ -12,7 +12,7 @@ means it cannot be forged by a client sending a different string.
 
 | Role | How somebody becomes one | Where it lives |
 | --- | --- | --- |
-| **Signed out** | The default. Holds the publishable key and nothing else. | `anon` |
+| **Signed out** | The default. Holds the publishable key and nothing else. May add an address to the beta list and read nothing back. | `anon` |
 | **Signed in, unverified** | Created an account. | `authenticated`, `profiles.identity_verified_at is null` |
 | **Waiting** | Asked to be verified and has not been answered. | `app.verification_requests.state = 'pending'` |
 | **Refused** | Was answered no, with a reason they can act on. | `app.verification_requests.state = 'rejected'` |
@@ -35,6 +35,7 @@ been half-verified.
 
 | Action | Who | Where the rule is |
 | --- | --- | --- |
+| Join the beta list | **anybody, signed out** | insert policy on `beta_signups`, no read for anyone |
 | Draft a contract, send an invitation | anybody signed in | RLS on `transactions` |
 | Make a contract binding | both parties verified | `0003_transactions.sql`, on the `accept` event |
 | Set how long a contract runs | its author, while it is a draft | `transactions_update_own_draft` |
@@ -69,11 +70,13 @@ database built from `supabase/migrations` and production is not only that.
 | `accept_milestone(p_milestone_id uuid)` | signed in |
 | `accept_resolution_proposal(p_proposal_id uuid)` | signed in |
 | `admin_ai_quality()` | signed in |
+| `admin_beta_waiting()` | signed in |
 | `admin_daily(p_days integer)` | signed in |
 | `admin_overview()` | signed in |
 | `admin_verification_pending()` | signed in |
 | `apply_dispute_event(p_dispute_id uuid, p_event dispute_event)` | signed in |
 | `apply_transaction_event(p_transaction_id uuid, p_event transaction_event)` | signed in |
+| `beta_list()` | system only |
 | `claim_dispute(p_dispute_id uuid)` | signed in |
 | `claim_invitation(p_code text)` | signed in |
 | `client_reachable_functions()` | system only |

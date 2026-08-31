@@ -1,0 +1,8 @@
+# The operator panel is reachable by anyone and useful to nobody without an
+# operator session, but there is no reason for it to be in an index.
+User-agent: *
+Allow: /
+Disallow: /trustiq-uae/admin.html
+Disallow: /trustiq-uae/confirmed.html
+
+Sitemap: https://mtieze.github.io/trustiq-uae/sitemap.xml
