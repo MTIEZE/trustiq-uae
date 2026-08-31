@@ -1,5 +1,7 @@
 import { Nav, Footer, BetaForm } from '../components/Shell.jsx'
+import { useReveal } from '../lib/motion.js'
 import '../App.css'
+import '../motion.css'
 
 /**
  * How it is built, written from the schema.
@@ -51,15 +53,17 @@ const NOT_YET = [
 ]
 
 export default function Trust() {
+  useReveal()
+
   return (
     <>
       <Nav current="Trust" />
 
-      <section className="hero hero-narrow">
+      <section className="hero hero-narrow hero-trust">
         <div className="container">
-          <span className="label">Trust and security</span>
-          <h1>What is enforced, what is checked, and what is not built</h1>
-          <p className="hero-sub">
+          <span className="label" data-reveal>Trust and security</span>
+          <h1 data-reveal>What is enforced, what is checked, and what is not built</h1>
+          <p className="hero-sub" data-reveal>
             A product about trust should be specific about its own. Everything on this page can be
             pointed at in the schema, and the last section is the one worth reading.
           </p>
@@ -68,15 +72,15 @@ export default function Trust() {
 
       <section className="part">
         <div className="container">
-          <span className="label">Enforced</span>
-          <h2>Held by the database, not by the screen</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>Enforced</span>
+          <h2 data-reveal>Held by the database, not by the screen</h2>
+          <p className="section-sub" data-reveal>
             A rule in an application is a suggestion to anybody holding a terminal. These are
             refusals from Postgres.
           </p>
           <div className="pillar-grid">
             {ENFORCED.map((e) => (
-              <div className="pillar" key={e.title}>
+              <div className="pillar" data-reveal key={e.title}>
                 <h3>{e.title}</h3>
                 <p>{e.body}</p>
               </div>
@@ -87,9 +91,9 @@ export default function Trust() {
 
       <section className="part part-alt">
         <div className="container">
-          <span className="label">Checked</span>
-          <h2>Things a person or a rule looks at</h2>
-          <dl className="gate-list">
+          <span className="label" data-reveal>Checked</span>
+          <h2 data-reveal>Things a person or a rule looks at</h2>
+          <dl className="gate-list" data-reveal>
             {CHECKED.map(([k, v]) => (
               <div key={k}>
                 <dt>{k}</dt>
@@ -102,13 +106,13 @@ export default function Trust() {
 
       <section className="part">
         <div className="container">
-          <span className="label">Not yet</span>
-          <h2>What TrustIQ does not have</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>Not yet</span>
+          <h2 data-reveal>What TrustIQ does not have</h2>
+          <p className="section-sub" data-reveal>
             Every security page has this list. Most of them leave it out, which is the reason to
             put it in.
           </p>
-          <dl className="gate-list">
+          <dl className="gate-list" data-reveal>
             {NOT_YET.map(([k, v]) => (
               <div key={k}>
                 <dt>{k}</dt>
@@ -127,9 +131,9 @@ export default function Trust() {
 
       <section className="problem">
         <div className="container">
-          <span className="label">Join the beta</span>
-          <h2>Be told once, when the app opens</h2>
-          <div className="beta-wrap">
+          <span className="label" data-reveal>Join the beta</span>
+          <h2 data-reveal>Be told once, when the app opens</h2>
+          <div className="beta-wrap" data-reveal>
             <BetaForm source="trust" />
           </div>
         </div>

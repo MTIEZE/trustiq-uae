@@ -1,25 +1,57 @@
 @import './tokens.css';
 
+/* The site's typography is now the app's typography.
+ *
+ * It was Inter for text and Space Grotesk for headings. The app is IBM Plex
+ * Sans, and it was chosen for a reason that matters more than taste: Plex has a
+ * companion Arabic face drawn to sit at the same weight and rhythm, which is
+ * what keeps a bilingual screen from looking like two products stitched
+ * together. A website in a different face is the same incoherence the colours
+ * had, one layer up.
+ *
+ * One family carries the whole site. Hierarchy comes from size, weight and
+ * tracking rather than from a second voice, which is what makes Plex read as
+ * engineering rather than as marketing. The mono is Plex too, so a hash and the
+ * sentence around it are the same design.
+ */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* The nav is fixed and 62px tall. Without this, every in-page anchor lands
+     with its own heading hidden behind the bar. */
+  scroll-padding-top: 96px;
+}
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Plex's default figures are proportional. Money and dates on this site sit
+     in columns often enough that lining them up is the right default. */
+  font-variant-numeric: tabular-nums;
 }
 
-h1, h2, h3 {
-  font-family: 'Space Grotesk', sans-serif;
-  line-height: 1.15;
+h1, h2, h3, h4 {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.12;
+  /* Plex opens up at display sizes. Pulling it back is what stops a 3.5rem
+     headline reading as a slide deck. */
+  letter-spacing: -0.03em;
+  /* No orphaned last word in a headline, at any width. */
+  text-wrap: balance;
 }
+h3, h4 { letter-spacing: -0.015em; line-height: 1.25; }
+
+p { text-wrap: pretty; }
 
 a { color: var(--accent); text-decoration: none; }
 button { font-family: inherit; cursor: pointer; border: none; }
@@ -34,12 +66,20 @@ input, textarea { font-family: inherit; }
 section { padding: 80px 0; }
 
 .label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--accent);
+}
+
+/* Anything focused by keyboard is visible, everywhere, once. Several
+   components were drawing their own and several were drawing none. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 @media (max-width: 768px) {

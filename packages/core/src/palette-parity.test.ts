@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
@@ -100,12 +100,43 @@ describe('the site and the app are the same colours', () => {
     expect(lightTokens()['--text']).not.toEqual(darkTokens()['--text'])
   })
 
-  it('nothing in the stylesheet still names the old palette', () => {
+  it('no stylesheet still names the old palette', () => {
     // The site's own colours before this: a near-black ground and a mint accent
     // that appears nowhere in the product.
-    const app = readFileSync(join(ROOT, 'apps', 'web', 'src', 'App.css'), 'utf8')
-    for (const gone of ['#2DD4A7', '#060908', '#121C19', 'rgba(45, 212, 167']) {
-      expect(app, `${gone} is left in App.css`).not.toContain(gone)
+    //
+    // Every stylesheet, not just App.css. This read one file while the site had
+    // one, and a second file arriving is exactly how a check like this stops
+    // covering what it claims to.
+    const dir = join(ROOT, 'apps', 'web', 'src')
+    for (const file of readdirSync(dir).filter((f) => f.endsWith('.css'))) {
+      const css = readFileSync(join(dir, file), 'utf8')
+      for (const gone of ['#2DD4A7', '#060908', '#121C19', 'rgba(45, 212, 167']) {
+        expect(css, `${gone} is left in ${file}`).not.toContain(gone)
+      }
+    }
+  })
+
+  it('the site is set in the same typeface as the app, everywhere', () => {
+    // The colours were made to match and the lettering was not, which is the
+    // same incoherence one layer up. Plex was picked for the app because its
+    // Arabic companion is drawn to the same rhythm; a site in Inter throws that
+    // away at the first impression.
+    const dir = join(ROOT, 'apps', 'web')
+    const files = [
+      ...readdirSync(join(dir, 'src')).filter((f) => f.endsWith('.css')).map((f) => join('src', f)),
+      ...readdirSync(dir).filter((f) => f.endsWith('.html')),
+      ...readdirSync(join(dir, 'public')).filter((f) => f.endsWith('.html')).map((f) => join('public', f)),
+    ]
+    for (const file of files) {
+      // Comments stripped first. The question is what the page asks a browser
+      // for, not what a note in the source says about what it used to ask for,
+      // and the note explaining this change is worth more than the shortcut.
+      const text = readFileSync(join(dir, file), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+      for (const gone of ['Space Grotesk', 'JetBrains Mono', "'Inter'"]) {
+        expect(text, `${file} still asks for ${gone}`).not.toContain(gone)
+      }
     }
   })
 })

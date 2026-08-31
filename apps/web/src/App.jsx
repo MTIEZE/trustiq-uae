@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Nav, Footer, BetaForm, StoreButtons } from './components/Shell.jsx'
+import TrustField from './components/TrustField.jsx'
+import { useReveal, useCursorLight } from './lib/motion.js'
 import './App.css'
+import './motion.css'
 
 // A real run of the resolution pipeline, copied out of the production audit
 // log. Nothing here is written by hand: the findings, the summary, the split
@@ -55,28 +58,53 @@ const REFUSED_RUNS = [
   },
 ]
 
+/**
+ * Four states the app really reaches, floating either side of the message.
+ *
+ * Product states, not badges. Nothing here claims a certification, an audit or
+ * a partner TrustIQ does not have, and the resolution chip repeats out loud
+ * that a proposal is not a verdict.
+ */
+const FLOATING = [
+  { key: 'agreed',   cls: 'float-a', d: '0s',   strong: 'Terms accepted',      body: 'by both parties' },
+  { key: 'evidence', cls: 'float-b', d: '-2.2s', strong: 'Evidence filed',     body: 'fingerprinted on arrival' },
+  { key: 'verified', cls: 'float-c', d: '-4.6s', strong: 'Identity verified',  body: 'checked by a person' },
+  { key: 'proposed', cls: 'float-d', d: '-6.1s', strong: 'Resolution proposed', body: 'both must accept it' },
+]
+
 function Hero() {
   return (
-    <section className="hero">
+    <section className="hero hero-stack">
+      {/* Layer 1. Points meeting, holding, and settling into agreements. */}
+      <TrustField />
+
+      {/* Layer 3. The message and the buttons are layers 4 and 5, below. */}
+      {FLOATING.map((f) => (
+        <span className={`hero-float ${f.cls}`} key={f.key} style={{ '--d': f.d }} aria-hidden="true">
+          <span className="dot" />
+          <span><b>{f.strong}</b> {f.body}</span>
+        </span>
+      ))}
+
       <div className="container">
-        <span className="label">AI-Powered Trust Infrastructure</span>
-        <h1>Secure transactions between strangers in the UAE</h1>
-        <p className="hero-sub">
+        <span className="label" data-reveal>AI-Powered Trust Infrastructure</span>
+        <h1 data-reveal>Secure transactions between <em>strangers</em> in the UAE</h1>
+        <p className="hero-sub" data-reveal>
           TrustIQ turns a handshake between strangers into a tracked contract: agreed terms,
           timestamped evidence, and a delivery both sides can follow. When something goes wrong,
           an AI agent reads the evidence and proposes a fair resolution in under 60 seconds.
         </p>
-        <div className="hero-actions">
+        <div className="hero-actions" data-reveal>
           <a href="#app" className="hero-cta">See the app</a>
           <a href="#how-it-works" className="hero-second">How it works</a>
         </div>
-        <div className="hero-pills">
+        <div className="hero-pills" data-reveal>
           <span className="pill"><span className="pill-dot"></span>Digital Contracts</span>
           <span className="pill"><span className="pill-dot"></span>Timestamped Evidence</span>
           <span className="pill"><span className="pill-dot"></span>AI Dispute Resolution</span>
           <span className="pill upcoming"><span className="pill-dot"></span>Escrow · v2</span>
         </div>
-        <p className="hero-note">
+        <p className="hero-note" data-reveal>
           Escrow, where payment is held until both parties confirm, ships in v2 with a licensed
           UAE payment partner. Everything else is what TrustIQ does today.
         </p>
@@ -89,20 +117,20 @@ function Problem() {
   return (
     <section className="problem">
       <div className="container">
-        <span className="label">The Problem</span>
-        <h2 style={{ fontSize: '2rem', marginTop: 12 }}>The trust gap in peer-to-peer transactions</h2>
+        <span className="label" data-reveal>The Problem</span>
+        <h2 data-reveal style={{ fontSize: '2rem', marginTop: 12 }}>The trust gap in peer-to-peer transactions</h2>
         <div className="problem-grid">
-          <div className="problem-card">
+          <div className="problem-card" data-reveal>
             <div className="icon">🤝</div>
             <h3>Freelancer vs. Client</h3>
             <p>Who pays first? The freelancer risks unpaid work. The client risks paying for subpar delivery. Neither has recourse.</p>
           </div>
-          <div className="problem-card">
+          <div className="problem-card" data-reveal>
             <div className="icon">🏪</div>
             <h3>Merchant vs. Buyer</h3>
             <p>Small merchants and buyers transacting without platform guarantees face delivery and payment disputes with no resolution path.</p>
           </div>
-          <div className="problem-card">
+          <div className="problem-card" data-reveal>
             <div className="icon">🏢</div>
             <h3>SME vs. SME</h3>
             <p>B2B deals between small businesses lack the legal infrastructure of enterprise contracts, leaving both parties exposed.</p>
@@ -127,7 +155,7 @@ function HowItWorks() {
         <div className="step-visual">
           <div className="mock-card">
             <div className="mock-card-header">
-              <span className="label">Create Account</span>
+              <span className="label" data-reveal>Create Account</span>
             </div>
             <div className="mock-field"><span className="mock-label">FULL NAME</span><span className="mock-value">Ahmed Al-Rashid</span></div>
             <div className="mock-field"><span className="mock-label">EMAIL</span><span className="mock-value">ahmed@startup.ae</span></div>
@@ -136,7 +164,7 @@ function HowItWorks() {
           </div>
           <div className="mock-card">
             <div className="mock-card-header">
-              <span className="label">Create Account</span>
+              <span className="label" data-reveal>Create Account</span>
             </div>
             <div className="mock-field"><span className="mock-label">FULL NAME</span><span className="mock-value">Sara Design Studio</span></div>
             <div className="mock-field"><span className="mock-label">EMAIL</span><span className="mock-value">sara@design.ae</span></div>
@@ -156,7 +184,7 @@ function HowItWorks() {
         <div className="step-visual">
           <div className="mock-card wide">
             <div className="mock-card-header">
-              <span className="label">New Transaction</span>
+              <span className="label" data-reveal>New Transaction</span>
               <span className="status-pill pending"><span className="pill-dot"></span>Draft</span>
             </div>
             <div className="mock-field"><span className="mock-label">DESCRIPTION</span><span className="mock-value">Logo design for a startup</span></div>
@@ -189,7 +217,7 @@ function HowItWorks() {
         <div className="step-visual">
           <div className="mock-card wide">
             <div className="mock-card-header">
-              <span className="label">Transaction #TIQ-2024-0847</span>
+              <span className="label" data-reveal>Transaction #TIQ-2024-0847</span>
               <span className="status-pill locked"><span className="pill-dot"></span>Escrow Locked</span>
             </div>
             <div className="escrow-visual">
@@ -224,7 +252,7 @@ function HowItWorks() {
         <div className="step-visual">
           <div className="mock-card wide">
             <div className="mock-card-header">
-              <span className="label">Transaction #TIQ-2024-0847</span>
+              <span className="label" data-reveal>Transaction #TIQ-2024-0847</span>
               <span className="status-pill locked"><span className="pill-dot"></span>Delivery Review</span>
             </div>
             <div className="delivery-timeline">
@@ -284,7 +312,7 @@ function HowItWorks() {
             </div>
             <div className="ai-processing">
               <span className="ai-arrow">↓</span>
-              <span className="label">AI Agent analyzes evidence</span>
+              <span className="label" data-reveal>AI Agent analyzes evidence</span>
               <span className="ai-arrow">↓</span>
             </div>
             <div className="mini-verdict">
@@ -301,9 +329,9 @@ function HowItWorks() {
   return (
     <section className="how-it-works" id="how-it-works">
       <div className="container">
-        <span className="label">The Full Journey</span>
-        <h2 style={{ fontSize: '2rem', marginTop: 12 }}>From handshake to resolution, step by step</h2>
-        <p className="section-sub">TrustIQ covers the entire transaction lifecycle. The AI agent only intervenes when there is a real dispute.</p>
+        <span className="label" data-reveal>The Full Journey</span>
+        <h2 data-reveal style={{ fontSize: '2rem', marginTop: 12 }}>From handshake to resolution, step by step</h2>
+        <p className="section-sub" data-reveal>TrustIQ covers the entire transaction lifecycle. The AI agent only intervenes when there is a real dispute.</p>
 
         <div className="steps-nav">
           {steps.map((s, i) => (
@@ -321,7 +349,7 @@ function HowItWorks() {
 
         <div className="step-display">
           <div className="step-info">
-            <span className="label">{steps[activeStep].subtitle}</span>
+            <span className="label" data-reveal>{steps[activeStep].subtitle}</span>
             <h3>{steps[activeStep].icon} {steps[activeStep].title}</h3>
             {steps[activeStep].phase === 'v2' && (
               <span className="phase-banner">Ships in v2, once a licensed payment partner is in place</span>
@@ -368,15 +396,15 @@ function Pillars() {
   return (
     <section className="pillars" id="pillars">
       <div className="container">
-        <span className="label">One platform</span>
-        <h2>A stronger footing for an agreement</h2>
-        <p className="section-sub">
+        <span className="label" data-reveal>One platform</span>
+        <h2 data-reveal>A stronger footing for an agreement</h2>
+        <p className="section-sub" data-reveal>
           Four things, and each one is enforced in the database rather than asked of the people
           using it.
         </p>
         <div className="pillar-grid">
           {PILLARS.map((p, i) => (
-            <div className="pillar" key={p.title}>
+            <div className="pillar" data-reveal key={p.title}>
               {/* Numbered because they are read in order, not because numbers
                   look tidy: each one depends on the one before it. */}
               <span className="pillar-n">{String(i + 1).padStart(2, '0')}</span>
@@ -401,16 +429,16 @@ function TheApp() {
   return (
     <section className="app" id="app">
       <div className="container">
-        <span className="label">The TrustIQ app</span>
-        <h2>Your agreements, in your pocket</h2>
-        <p className="section-sub">
+        <span className="label" data-reveal>The TrustIQ app</span>
+        <h2 data-reveal>Your agreements, in your pocket</h2>
+        <p className="section-sub" data-reveal>
           Real screens, rendered by the app itself rather than drawn in a design tool. Demo data:
           nothing in these has ever belonged to anybody.
         </p>
 
         <div className="shots">
           {SHOTS.map((shot) => (
-            <figure className="shot" key={shot.src}>
+            <figure className="shot" data-reveal key={shot.src}>
               <div className="shot-frame">
                 {/* Both themes, because the app follows the device and so does
                     this page. Four dark phones on a light page read as four
@@ -451,12 +479,13 @@ function TheApp() {
 
 function RealRun() {
   const r = RECORDED_RUN
+  const answer = useCursorLight()
   return (
     <section className="run" id="resolution">
       <div className="container">
-        <span className="label">From the audit log</span>
-        <h2 className="run-title">A resolution the system actually produced</h2>
-        <p className="section-sub">
+        <span className="label" data-reveal>From the audit log</span>
+        <h2 data-reveal className="run-title">A resolution the system actually produced</h2>
+        <p className="section-sub" data-reveal>
           This page used to render an invented answer behind a fake progress bar. The pipeline is
           real now, so what follows is a run that happened: the findings, the split and the numbers
           below are what the model returned, and the audit row is the row that recorded it. The
@@ -464,7 +493,7 @@ function RealRun() {
         </p>
 
         <div className="run-grid">
-          <div className="run-case">
+          <div className="run-case" data-reveal>
             <h3>What was agreed</h3>
             <p className="run-terms">{r.contract.terms}</p>
             <p className="run-amount">{r.contract.amount}</p>
@@ -480,7 +509,7 @@ function RealRun() {
             </blockquote>
           </div>
 
-          <div className="run-answer">
+          <div className="run-answer" data-reveal ref={answer}>
             <h3>What the agent found</h3>
             <ol className="run-findings">
               {r.findings.map((f) => <li key={f}>{f}</li>)}
@@ -520,7 +549,7 @@ function RealRun() {
           </p>
           <div className="run-refused-grid">
             {REFUSED_RUNS.map((x) => (
-              <div className="run-refused-card" key={x.outcome}>
+              <div className="run-refused-card" data-reveal key={x.outcome}>
                 <code>{x.outcome}</code>
                 <p>{x.why}</p>
                 <span className="run-refused-meta">
@@ -541,6 +570,8 @@ function RealRun() {
 }
 
 function App() {
+  useReveal()
+
   return (
     <>
       <Nav />
@@ -552,13 +583,13 @@ function App() {
       <RealRun />
       <section className="problem" id="beta">
         <div className="container">
-          <span className="label">Join the beta</span>
-          <h2>Be told once, when the app opens</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>Join the beta</span>
+          <h2 data-reveal>Be told once, when the app opens</h2>
+          <p className="section-sub" data-reveal>
             The app is built and not yet on either store. One email when that changes, and nothing
             else.
           </p>
-          <div className="beta-wrap">
+          <div className="beta-wrap" data-reveal>
             <BetaForm source="home" />
           </div>
         </div>

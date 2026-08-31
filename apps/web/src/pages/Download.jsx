@@ -1,6 +1,9 @@
 import { Nav, Footer, StoreButtons, BetaForm } from '../components/Shell.jsx'
 import { STORES_LIVE } from '../lib/site.js'
+import PhoneStage from '../components/PhoneStage.jsx'
+import { useReveal } from '../lib/motion.js'
 import '../App.css'
+import '../motion.css'
 
 /**
  * Getting the app, which cannot be downloaded yet.
@@ -40,38 +43,44 @@ const BEFORE_THE_STORES = [
 ]
 
 export default function Download() {
+  useReveal()
+
   return (
     <>
       <Nav current="Get the app" />
 
-      <section className="hero hero-narrow">
+      <section className="hero hero-narrow hero-download">
         <div className="container">
-          <span className="label">The TrustIQ app</span>
-          <h1>Not out yet, and here is exactly where it is</h1>
-          <p className="hero-sub">
+          <span className="label" data-reveal>The TrustIQ app</span>
+          <h1 data-reveal>Not out yet, and here is exactly where it is</h1>
+          <p className="hero-sub" data-reveal>
             The app is built and running. What it does not have is a listing on either store, and
             a button that pretends otherwise would be the first thing on this site that is not
             true.
           </p>
           <StoreButtons />
           {!STORES_LIVE && (
-            <p className="hero-note">
+            <p className="hero-note" data-reveal>
               Both of those turn into real links the day the listings exist. Until then, the way in
               is the closed beta.
             </p>
           )}
         </div>
+
+        {/* The app, and the things it produces, in space. The screen is the
+            real one: rendered by the app itself, not drawn for this page. */}
+        <PhoneStage />
       </section>
 
       <section className="problem">
         <div className="container">
-          <span className="label">Join the beta</span>
-          <h2>Be told once, when it opens</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>Join the beta</span>
+          <h2 data-reveal>Be told once, when it opens</h2>
+          <p className="section-sub" data-reveal>
             No newsletter, no sequence, no third party. One email, when there is something to
             install.
           </p>
-          <div className="beta-wrap">
+          <div className="beta-wrap" data-reveal>
             <BetaForm source="download" />
           </div>
         </div>
@@ -79,11 +88,11 @@ export default function Download() {
 
       <section className="how-it-works">
         <div className="container">
-          <span className="label">What is in it</span>
-          <h2>What the app does today</h2>
+          <span className="label" data-reveal>What is in it</span>
+          <h2 data-reveal>What the app does today</h2>
           <div className="cards">
             {WHAT_IT_DOES.map((c) => (
-              <div className="card" key={c.title}>
+              <div className="card" data-reveal key={c.title}>
                 <h3>{c.title}</h3>
                 <p>{c.body}</p>
               </div>
@@ -94,13 +103,13 @@ export default function Download() {
 
       <section className="run">
         <div className="container">
-          <span className="label">What is left</span>
-          <h2 className="run-title">Between here and a listing</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>What is left</span>
+          <h2 data-reveal className="run-title">Between here and a listing</h2>
+          <p className="section-sub" data-reveal>
             Written out rather than summarised as &ldquo;coming soon&rdquo;, because a date nobody
             explains is a date nobody believes.
           </p>
-          <dl className="gate-list">
+          <dl className="gate-list" data-reveal>
             {BEFORE_THE_STORES.map(([k, v]) => (
               <div key={k}>
                 <dt>{k}</dt>

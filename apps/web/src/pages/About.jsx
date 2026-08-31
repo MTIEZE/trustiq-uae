@@ -1,5 +1,7 @@
 import { Nav, Footer, BetaForm } from '../components/Shell.jsx'
+import { useReveal } from '../lib/motion.js'
 import '../App.css'
+import '../motion.css'
 
 /**
  * Why this exists.
@@ -35,15 +37,17 @@ const FACTS = [
 ]
 
 export default function About() {
+  useReveal()
+
   return (
     <>
       <Nav current="About" />
 
-      <section className="hero hero-narrow">
+      <section className="hero hero-narrow hero-about">
         <div className="container">
-          <span className="label">About</span>
-          <h1>Most agreements here are made without one</h1>
-          <p className="hero-sub">
+          <span className="label" data-reveal>About</span>
+          <h1 data-reveal>Most agreements here are made without one</h1>
+          <p className="hero-sub" data-reveal>
             A freelancer takes a brief over WhatsApp. A buyer pays a stranger for a phone. A small
             studio does three months of work on the strength of a call. When it goes well, none of
             that matters. When it does not, there is nothing to point at.
@@ -54,9 +58,9 @@ export default function About() {
       <section className="part">
         <div className="container part-grid">
           <div>
-            <span className="label">The problem</span>
-            <h2>Not the absence of contracts. The absence of a record.</h2>
-            <p className="part-body">
+            <span className="label" data-reveal>The problem</span>
+            <h2 data-reveal>Not the absence of contracts. The absence of a record.</h2>
+            <p className="part-body" data-reveal>
               People do write things down. They write them in chat, in email, in a note that one
               of them can edit afterwards. What is missing is not the agreement, it is anything
               that fixes it: a version both sides accepted, evidence with a date nobody set by
@@ -64,9 +68,9 @@ export default function About() {
             </p>
           </div>
           <div>
-            <span className="label">The intent</span>
-            <h2>A trust layer, not a marketplace</h2>
-            <p className="part-body">
+            <span className="label" data-reveal>The intent</span>
+            <h2 data-reveal>A trust layer, not a marketplace</h2>
+            <p className="part-body" data-reveal>
               TrustIQ does not find you work, take a cut of it, or stand between you and your
               client. It sits underneath an arrangement the two of you already have and makes it
               something you can both point at later. Nothing about it requires the other person to
@@ -78,11 +82,11 @@ export default function About() {
 
       <section className="part part-alt">
         <div className="container">
-          <span className="label">Two decisions</span>
-          <h2>The choices that shaped everything else</h2>
+          <span className="label" data-reveal>Two decisions</span>
+          <h2 data-reveal>The choices that shaped everything else</h2>
           <div className="decisions">
             {DECISIONS.map((d) => (
-              <article className="decision" key={d.title}>
+              <article className="decision" data-reveal key={d.title}>
                 <h3>{d.title}</h3>
                 <p>{d.body}</p>
                 <p className="decision-so">{d.consequence}</p>
@@ -94,9 +98,9 @@ export default function About() {
 
       <section className="part">
         <div className="container">
-          <span className="label">Plainly</span>
-          <h2>Where this actually is</h2>
-          <dl className="gate-list">
+          <span className="label" data-reveal>Plainly</span>
+          <h2 data-reveal>Where this actually is</h2>
+          <dl className="gate-list" data-reveal>
             {FACTS.map(([k, v]) => (
               <div key={k}>
                 <dt>{k}</dt>
@@ -115,9 +119,9 @@ export default function About() {
 
       <section className="problem">
         <div className="container">
-          <span className="label">Join the beta</span>
-          <h2>Be told once, when the app opens</h2>
-          <div className="beta-wrap">
+          <span className="label" data-reveal>Join the beta</span>
+          <h2 data-reveal>Be told once, when the app opens</h2>
+          <div className="beta-wrap" data-reveal>
             <BetaForm source="about" />
           </div>
         </div>

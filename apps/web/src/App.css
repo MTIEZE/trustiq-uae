@@ -18,7 +18,7 @@
   justify-content: space-between;
 }
 .nav-logo {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--text);
@@ -100,7 +100,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.75rem;
   color: var(--text-dim);
 }
@@ -213,18 +213,18 @@
   color: var(--amber);
 }
 .step-nav-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-weight: 500;
   font-size: 0.85rem;
 }
 .step-nav-title {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 .step-nav-phase {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.55rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -236,7 +236,7 @@
 }
 .phase-banner {
   display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.68rem;
   line-height: 1.5;
   padding: 6px 12px;
@@ -309,7 +309,7 @@
 }
 .mock-label {
   display: block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.6rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -323,7 +323,7 @@
   color: var(--text);
 }
 .mock-value.accent { color: var(--accent); font-weight: 600; }
-.mock-value.amber { color: var(--amber); font-weight: 600; font-family: 'Space Grotesk', sans-serif; font-size: 1rem; }
+.mock-value.amber { color: var(--amber); font-weight: 600; font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 1rem; }
 .mock-row {
   display: flex;
   gap: 20px;
@@ -346,7 +346,7 @@
   margin: 16px 0;
 }
 .mock-sig {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   padding: 6px 12px;
   border-radius: 999px;
@@ -380,7 +380,7 @@
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.6rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -412,7 +412,7 @@
   margin: 6px 0;
 }
 .escrow-action {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -430,7 +430,7 @@
 }
 .vault-icon { font-size: 1.5rem; }
 .vault-amount {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--accent);
@@ -508,7 +508,7 @@
   line-height: 1.5;
 }
 .claim-vs {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--text-faint);
@@ -564,7 +564,7 @@
 }
 .form-group label {
   display: block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -662,7 +662,7 @@
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.65rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -677,7 +677,7 @@
   box-shadow: 0 0 6px var(--accent);
 }
 .verdict-time {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.75rem;
   color: var(--text-faint);
 }
@@ -685,7 +685,7 @@
 .verdict-field { margin-bottom: 20px; }
 .verdict-field:last-child { margin-bottom: 0; }
 .verdict-field-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -699,7 +699,7 @@
   line-height: 1.6;
 }
 .verdict-decision {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--amber);
@@ -712,7 +712,7 @@
   background: color-mix(in srgb, var(--amber) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--amber) 25%, transparent);
   border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.75rem;
   color: var(--amber);
 }
@@ -733,7 +733,7 @@
   justify-content: space-between;
 }
 .payload-header span {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -744,7 +744,7 @@
   overflow-x: auto;
 }
 .payload-body pre {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.78rem;
   line-height: 1.7;
   color: var(--text-dim);
@@ -778,7 +778,7 @@
   to { transform: rotate(360deg); }
 }
 .loading-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.8rem;
   color: var(--text-dim);
 }
@@ -789,7 +789,7 @@
   margin-top: 8px;
 }
 .loading-step {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   color: var(--text-faint);
   transition: color 0.3s;
@@ -848,7 +848,7 @@
   margin-bottom: 4px;
 }
 .arch-node p {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   color: var(--text-faint);
 }
@@ -869,13 +869,13 @@
   padding: 24px;
 }
 .arch-detail-card .step-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   color: var(--accent);
   margin-bottom: 8px;
 }
 .arch-detail-card h4 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 0.95rem;
   margin-bottom: 6px;
 }
@@ -897,14 +897,14 @@
   text-align: center;
 }
 .footer-brand {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
   margin-bottom: 12px;
 }
 .footer-brand span { color: var(--accent); }
 .footer-challenge {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -973,7 +973,7 @@
 
 .run-terms { font-size: 15px; line-height: 1.6; margin: 0 0 10px; color: var(--text); }
 .run-amount {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 13px; color: var(--text-dim); margin: 0;
 }
 
@@ -1020,7 +1020,7 @@
 }
 .run-decision { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .run-conf {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 12.5px; color: var(--text-dim);
 }
 .run-bar {
@@ -1050,7 +1050,7 @@
   color: var(--text-dim); margin-bottom: 4px; font-weight: 600;
 }
 .run-audit dd {
-  margin: 0; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  margin: 0; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 13px; color: var(--text);
 }
 .run-audit dd.ok { color: var(--accent); }
@@ -1065,13 +1065,13 @@
   border-radius: 10px; padding: 20px 22px;
 }
 .run-refused-card code {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 12px; color: var(--amber);
   display: block; margin-bottom: 10px; letter-spacing: .02em;
 }
 .run-refused-card p { font-size: 14px; line-height: 1.55; color: var(--text); margin: 0 0 12px; }
 .run-refused-meta {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 12px; color: var(--text-dim);
 }
 
@@ -1192,7 +1192,7 @@
    and a grid of separate boxes reads as four unrelated features. */
 .pillar { background: var(--surface); padding: 28px 26px; }
 .pillar-n {
-  display: block; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
   font-size: 12px; color: var(--accent); margin-bottom: 14px;
 }
 .pillar h3 { font-size: 17px; letter-spacing: -.01em; margin: 0 0 8px; }

@@ -1,5 +1,7 @@
 import { Nav, Footer, BetaForm } from '../components/Shell.jsx'
+import { useReveal } from '../lib/motion.js'
 import '../App.css'
+import '../motion.css'
 
 /**
  * TrustIQ for a business.
@@ -40,15 +42,17 @@ const NOT_BUILT = [
 ]
 
 export default function Business() {
+  useReveal()
+
   return (
     <>
       <Nav current="Business" />
 
-      <section className="hero hero-narrow">
+      <section className="hero hero-narrow hero-business">
         <div className="container">
-          <span className="label">TrustIQ for business</span>
-          <h1>Built for the business that is one person</h1>
-          <p className="hero-sub">
+          <span className="label" data-reveal>TrustIQ for business</span>
+          <h1 data-reveal>Built for the business that is one person</h1>
+          <p className="hero-sub" data-reveal>
             Which, in the UAE, is a great many of them. A freelancer, a consultant, a small
             studio, a trader with regular customers. If that is you, the whole product is aimed at
             your situation.
@@ -58,11 +62,11 @@ export default function Business() {
 
       <section className="part">
         <div className="container">
-          <span className="label">What it does for you</span>
-          <h2>Repeat work, without the paperwork getting worse</h2>
+          <span className="label" data-reveal>What it does for you</span>
+          <h2 data-reveal>Repeat work, without the paperwork getting worse</h2>
           <div className="pillar-grid">
             {FOR_YOU.map((f) => (
-              <div className="pillar" key={f.title}>
+              <div className="pillar" data-reveal key={f.title}>
                 <h3>{f.title}</h3>
                 <p>{f.body}</p>
               </div>
@@ -73,13 +77,13 @@ export default function Business() {
 
       <section className="part part-alt">
         <div className="container">
-          <span className="label">If you are larger than that</span>
-          <h2>What is honestly not here</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>If you are larger than that</span>
+          <h2 data-reveal>What is honestly not here</h2>
+          <p className="section-sub" data-reveal>
             If your firm has staff, TrustIQ does not yet fit, and it is quicker to say so than to
             let you find out during a trial.
           </p>
-          <dl className="gate-list">
+          <dl className="gate-list" data-reveal>
             {NOT_BUILT.map(([k, v]) => (
               <div key={k}>
                 <dt>{k}</dt>
@@ -97,13 +101,13 @@ export default function Business() {
 
       <section className="problem">
         <div className="container">
-          <span className="label">Tell us what you need</span>
-          <h2>The note field is the point</h2>
-          <p className="section-sub">
+          <span className="label" data-reveal>Tell us what you need</span>
+          <h2 data-reveal>The note field is the point</h2>
+          <p className="section-sub" data-reveal>
             Leave your address and what your business would want from this. You will be told once
             when the app opens, and read properly in the meantime.
           </p>
-          <div className="beta-wrap">
+          <div className="beta-wrap" data-reveal>
             <BetaForm source="business" />
           </div>
         </div>

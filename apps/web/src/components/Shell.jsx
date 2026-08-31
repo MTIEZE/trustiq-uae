@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { STORES, joinBeta } from '../lib/site.js'
+import { useNavShade } from '../lib/motion.js'
 
 /**
  * The navigation and footer, shared by every page.
@@ -18,8 +19,10 @@ const LINKS = [
 ]
 
 export function Nav({ current }) {
+  const bar = useNavShade()
+
   return (
-    <nav className="nav">
+    <nav className="nav" ref={bar}>
       <div className="container nav-inner">
         <a className="nav-logo" href="/trustiq-uae/">Trust<span>IQ</span></a>
         <ul className="nav-links">

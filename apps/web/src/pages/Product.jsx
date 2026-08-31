@@ -1,5 +1,7 @@
 import { Nav, Footer, BetaForm } from '../components/Shell.jsx'
+import { useReveal } from '../lib/motion.js'
 import '../App.css'
+import '../motion.css'
 
 /**
  * What TrustIQ does, part by part.
@@ -77,15 +79,17 @@ const PARTS = [
 ]
 
 export default function Product() {
+  useReveal()
+
   return (
     <>
       <Nav current="Product" />
 
-      <section className="hero hero-narrow">
+      <section className="hero hero-narrow hero-product">
         <div className="container">
-          <span className="label">The product</span>
-          <h1>Six parts, and what each one actually does</h1>
-          <p className="hero-sub">
+          <span className="label" data-reveal>The product</span>
+          <h1 data-reveal>Six parts, and what each one actually does</h1>
+          <p className="hero-sub" data-reveal>
             Everything below is something in the schema. Where a piece is half built, it says so
             here rather than somewhere you would find later.
           </p>
@@ -96,11 +100,11 @@ export default function Product() {
         <section className={i % 2 ? 'part part-alt' : 'part'} id={part.id} key={part.id}>
           <div className="container part-grid">
             <div>
-              <span className="label">{part.kicker}</span>
-              <h2>{part.title}</h2>
-              <p className="part-body">{part.body}</p>
+              <span className="label" data-reveal>{part.kicker}</span>
+              <h2 data-reveal>{part.title}</h2>
+              <p className="part-body" data-reveal>{part.body}</p>
             </div>
-            <dl className="part-detail">
+            <dl className="part-detail" data-reveal>
               {part.detail.map(([k, v]) => (
                 <div key={k}>
                   <dt>{k}</dt>
@@ -114,9 +118,9 @@ export default function Product() {
 
       <section className="problem">
         <div className="container">
-          <span className="label">Join the beta</span>
-          <h2>Be told once, when the app opens</h2>
-          <div className="beta-wrap">
+          <span className="label" data-reveal>Join the beta</span>
+          <h2 data-reveal>Be told once, when the app opens</h2>
+          <div className="beta-wrap" data-reveal>
             <BetaForm source="product" />
           </div>
         </div>
