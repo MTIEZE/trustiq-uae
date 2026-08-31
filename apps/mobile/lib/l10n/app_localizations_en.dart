@@ -1110,6 +1110,96 @@ class LEn extends L {
   String get heldChecking => 'Checking';
 
   @override
+  String get verifyStartTitle => 'Start your verification';
+
+  @override
+  String get verifyStartBody =>
+      'One request, checked by a person. You are told the outcome either way, and if it is no, you are told what to change.';
+
+  @override
+  String get verifyStartAction => 'Start verification';
+
+  @override
+  String get verifyLegalName => 'Name as it appears on your document';
+
+  @override
+  String get verifyLegalNameHelp =>
+      'It does not have to match the name on your account. If it differs, that is fine and we will see both.';
+
+  @override
+  String get verifyLegalNameMissing => 'Enter the name on your document.';
+
+  @override
+  String get verifyDocumentKind => 'What you can show';
+
+  @override
+  String get verifyDocEmiratesId => 'Emirates ID';
+
+  @override
+  String get verifyDocPassport => 'Passport';
+
+  @override
+  String get verifyDocTradeLicence => 'Trade licence';
+
+  @override
+  String get verifyHow => 'How you would rather do it';
+
+  @override
+  String get verifyHowHint =>
+      'In person, a video call, whatever suits you. Optional.';
+
+  @override
+  String get verifyNoDocumentUpload =>
+      'Nothing is uploaded here. Your document is looked at directly, so no copy of it is stored on our servers.';
+
+  @override
+  String get verifySubmit => 'Send my request';
+
+  @override
+  String get verifyPendingTitle => 'Your request is with us';
+
+  @override
+  String verifyPendingBody(String when) {
+    return 'Sent $when. Someone will look at it and you will be told the outcome. You can keep using TrustIQ in the meantime; only making a contract binding needs this.';
+  }
+
+  @override
+  String verifyPendingShowing(String document) {
+    return 'You said you can show: $document';
+  }
+
+  @override
+  String get verifyWithdraw => 'Withdraw my request';
+
+  @override
+  String get verifyWithdrawn => 'Your request has been withdrawn.';
+
+  @override
+  String get verifyRejectedTitle => 'Your request was not accepted';
+
+  @override
+  String verifyRejectedBody(String when) {
+    return 'Answered $when. You can send a new request as soon as you have dealt with this.';
+  }
+
+  @override
+  String get verifyRejectedWhy => 'What needs to change';
+
+  @override
+  String get verifyAskAgain => 'Send a new request';
+
+  @override
+  String get verifyDoneTitle => 'Your identity is verified';
+
+  @override
+  String verifyDoneBody(String when) {
+    return 'Verified $when. Nothing else is needed from you.';
+  }
+
+  @override
+  String get verifySent => 'Request sent.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

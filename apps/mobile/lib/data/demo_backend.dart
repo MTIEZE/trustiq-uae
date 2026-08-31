@@ -378,6 +378,36 @@ class DemoBackend implements Backend {
   @override
   Future<void> recordActivity() async {}
 
+  // The demo signs in as somebody already verified, so the journey below is
+  // reachable in a demo build only by asking for it in a test.
+  MyVerification _standing = const MyVerification(
+    standing: VerificationStanding.verified,
+  );
+
+  @override
+  Future<MyVerification> myVerification() async => _standing;
+
+  @override
+  Future<void> requestVerification({
+    required String legalName,
+    required DocumentKind documentKind,
+    String? how,
+  }) async {
+    _standing = MyVerification(
+      standing: VerificationStanding.pending,
+      since: DateTime.now(),
+      documentKind: documentKind,
+      legalName: legalName,
+    );
+  }
+
+  @override
+  Future<bool> withdrawVerificationRequest() async {
+    if (_standing.standing != VerificationStanding.pending) return false;
+    _standing = MyVerification.unknown;
+    return true;
+  }
+
   @override
   bool get canRecordVerification => true;
 

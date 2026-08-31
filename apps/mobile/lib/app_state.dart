@@ -422,6 +422,64 @@ class AppState extends ChangeNotifier {
   }
 
   /// Runs identity verification and records it on success.
+  /* ---------------------------------------------------------------- *
+   * Where somebody stands on verification
+   *
+   * Held here rather than fetched by the screen, because two screens need it:
+   * the one that asks, and the contract list that offers the badge. Loaded
+   * lazily, because most sessions never open either.
+   * ---------------------------------------------------------------- */
+
+  MyVerification _standing = MyVerification.unknown;
+  MyVerification get standing => _standing;
+
+  bool _standingLoaded = false;
+
+  /// Reads it once, then only when something could have changed it.
+  ///
+  /// Never optimistic. A failure leaves the standing at `none`, which shows
+  /// somebody the button to ask rather than a badge they do not have: the
+  /// wrong answer in the other direction sends them into a refusal further
+  /// down, with no way to see why.
+  Future<void> loadStanding({bool force = false}) async {
+    if (_standingLoaded && !force) return;
+    _standingLoaded = true;
+    try {
+      _standing = await _backend.myVerification();
+    } catch (e) {
+      _standing = MyVerification.unknown;
+      debugPrint('TrustIQ: could not read verification standing: $e');
+    }
+    notifyListeners();
+  }
+
+  Future<bool> requestVerification({
+    required String legalName,
+    required DocumentKind documentKind,
+    String? how,
+  }) async {
+    final ok = await _guard(() async {
+      await _backend.requestVerification(
+        legalName: legalName,
+        documentKind: documentKind,
+        how: how,
+      );
+    });
+    // Re-read rather than assume. The server decides the state, and it is the
+    // only thing that knows whether a request that appeared to succeed put
+    // somebody in the queue or found them already verified.
+    if (ok) await loadStanding(force: true);
+    return ok;
+  }
+
+  Future<bool> withdrawVerificationRequest() async {
+    final ok = await _guard(() async {
+      await _backend.withdrawVerificationRequest();
+    });
+    if (ok) await loadStanding(force: true);
+    return ok;
+  }
+
   Future<VerificationOutcome> verifyIdentity() async {
     final outcome = await _identity.verify(role: _viewingAs);
     if (outcome is! VerificationSucceeded) return outcome;
@@ -429,6 +487,9 @@ class AppState extends ChangeNotifier {
     try {
       await _backend.recordVerification(_viewingAs);
       _contracts = await _backend.loadContracts();
+      // Otherwise somebody verified through the provider keeps being shown the
+      // manual queue they no longer need.
+      await loadStanding(force: true);
       notifyListeners();
       return outcome;
     } on BackendException catch (e) {

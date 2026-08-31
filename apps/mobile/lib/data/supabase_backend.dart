@@ -671,6 +671,70 @@ class SupabaseBackend implements Backend {
     await _rpc<void>('set_preferred_locale', {'p_locale': code}, 'saving your language');
   }
 
+  static const _documentWire = {
+    DocumentKind.emiratesId: 'emirates_id',
+    DocumentKind.passport: 'passport',
+    DocumentKind.tradeLicence: 'trade_licence',
+  };
+
+  @override
+  Future<MyVerification> myVerification() async {
+    if (_client.auth.currentUser == null) return MyVerification.unknown;
+
+    // `my_verification` always returns exactly one row, including for somebody
+    // who has never asked. Handled as if it might not, because the wrong answer
+    // to an empty result is to guess, and guessing `verified` sends somebody
+    // into a refusal further down with nothing to explain it.
+    final rows = await _rpc<List<dynamic>>(
+      'my_verification', const {}, 'checking where you stand');
+    if (rows.isEmpty) return MyVerification.unknown;
+
+    final row = Map<String, dynamic>.from(rows.first as Map);
+    final standing = switch (row['standing'] as String?) {
+      'verified' => VerificationStanding.verified,
+      'pending' => VerificationStanding.pending,
+      'rejected' => VerificationStanding.rejected,
+      _ => VerificationStanding.none,
+    };
+
+    // `identity_provider` comes back in this column when the standing is
+    // verified, which is not a document kind. Only read it when it can be one.
+    DocumentKind? kind;
+    if (standing != VerificationStanding.verified) {
+      kind = _documentWire.entries
+          .where((e) => e.value == row['document_kind'])
+          .map((e) => e.key)
+          .firstOrNull;
+    }
+
+    return MyVerification(
+      standing: standing,
+      since: readOptionalTime(row, 'since'),
+      reason: row['reason'] as String?,
+      documentKind: kind,
+      legalName: row['legal_name'] as String?,
+    );
+  }
+
+  @override
+  Future<void> requestVerification({
+    required String legalName,
+    required DocumentKind documentKind,
+    String? how,
+  }) async {
+    await _rpc<void>('request_verification', {
+      'p_legal_name': legalName,
+      'p_document_kind': _documentWire[documentKind],
+      if (how != null && how.trim().isNotEmpty) 'p_how': how.trim(),
+    }, 'sending your request');
+  }
+
+  @override
+  Future<bool> withdrawVerificationRequest() async {
+    return _rpc<bool>(
+      'withdraw_verification_request', const {}, 'withdrawing your request');
+  }
+
   @override
   Future<void> recordActivity() async {
     if (_client.auth.currentUser == null) return;

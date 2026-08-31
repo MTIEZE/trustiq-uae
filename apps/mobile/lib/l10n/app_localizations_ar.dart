@@ -1102,6 +1102,96 @@ class LAr extends L {
   String get heldChecking => 'جارٍ التحقق';
 
   @override
+  String get verifyStartTitle => 'ابدأ التحقق من هويتك';
+
+  @override
+  String get verifyStartBody =>
+      'طلب واحد، يراجعه شخص. ستُبلَّغ بالنتيجة في الحالتين، وإن كان الجواب لا، ستُبلَّغ بما ينبغي تغييره.';
+
+  @override
+  String get verifyStartAction => 'ابدأ التحقق';
+
+  @override
+  String get verifyLegalName => 'الاسم كما يظهر في وثيقتك';
+
+  @override
+  String get verifyLegalNameHelp =>
+      'لا يلزم أن يطابق الاسم المسجَّل في حسابك. إن اختلف فلا بأس، وسنرى الاثنين.';
+
+  @override
+  String get verifyLegalNameMissing => 'أدخل الاسم المدوَّن في وثيقتك.';
+
+  @override
+  String get verifyDocumentKind => 'ما يمكنك إظهاره';
+
+  @override
+  String get verifyDocEmiratesId => 'الهوية الإماراتية';
+
+  @override
+  String get verifyDocPassport => 'جواز السفر';
+
+  @override
+  String get verifyDocTradeLicence => 'الرخصة التجارية';
+
+  @override
+  String get verifyHow => 'الطريقة التي تفضّلها';
+
+  @override
+  String get verifyHowHint =>
+      'حضورًا، أو بمكالمة مرئية، أو ما يناسبك. اختياري.';
+
+  @override
+  String get verifyNoDocumentUpload =>
+      'لا تُرفع أي وثيقة هنا. يُنظر في وثيقتك مباشرة، فلا تُحفظ منها نسخة على خوادمنا.';
+
+  @override
+  String get verifySubmit => 'أرسل طلبي';
+
+  @override
+  String get verifyPendingTitle => 'طلبك لدينا';
+
+  @override
+  String verifyPendingBody(String when) {
+    return 'أُرسل $when. سينظر فيه أحدنا وستُبلَّغ بالنتيجة. يمكنك مواصلة استخدام تريست آي كيو في هذه الأثناء؛ فالتحقق لازم فقط لجعل العقد مُلزِمًا.';
+  }
+
+  @override
+  String verifyPendingShowing(String document) {
+    return 'ذكرت أنه يمكنك إظهار: $document';
+  }
+
+  @override
+  String get verifyWithdraw => 'اسحب طلبي';
+
+  @override
+  String get verifyWithdrawn => 'تم سحب طلبك.';
+
+  @override
+  String get verifyRejectedTitle => 'لم يُقبل طلبك';
+
+  @override
+  String verifyRejectedBody(String when) {
+    return 'صدر الجواب $when. يمكنك إرسال طلب جديد فور معالجة ما يلي.';
+  }
+
+  @override
+  String get verifyRejectedWhy => 'ما ينبغي تغييره';
+
+  @override
+  String get verifyAskAgain => 'أرسل طلبًا جديدًا';
+
+  @override
+  String get verifyDoneTitle => 'تم التحقق من هويتك';
+
+  @override
+  String verifyDoneBody(String when) {
+    return 'تم التحقق $when. لا يلزم منك شيء آخر.';
+  }
+
+  @override
+  String get verifySent => 'أُرسل الطلب.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

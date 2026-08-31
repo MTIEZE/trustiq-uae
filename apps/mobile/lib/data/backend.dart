@@ -150,6 +150,21 @@ abstract interface class Backend {
   /// should ever be shown a message about a counter.
   Future<void> recordActivity();
 
+  /// Where the signed-in person stands on verification.
+  Future<MyVerification> myVerification();
+
+  /// Joins the verification queue. One open request at a time; the server
+  /// refuses a second, and refuses anybody already verified.
+  Future<void> requestVerification({
+    required String legalName,
+    required DocumentKind documentKind,
+    String? how,
+  });
+
+  /// Changing your mind, which is not the same as being refused and is not
+  /// recorded as one.
+  Future<bool> withdrawVerificationRequest();
+
   /// Fires a transition. Returns null on success, or why it was refused.
   Future<TransitionError?> fire(String contractId, TransactionEvent event);
 
@@ -317,6 +332,56 @@ class CounterpartyHasNoAccount extends BackendException {
 }
 
 /// A backend call that failed for a reason worth showing someone.
+/// Which document somebody is offering to show.
+///
+/// Three, because those are the three that exist here: a resident has an
+/// Emirates ID, a visitor has a passport, a company has a trade licence. A free
+/// text field would collect thirty spellings of the same three things.
+enum DocumentKind { emiratesId, passport, tradeLicence }
+
+/// Where somebody stands, which is four states and not two.
+///
+/// `none` and `rejected` used to be the same thing as far as the app could
+/// tell, and so did `none` and `pending`. Somebody who had asked yesterday saw
+/// exactly what somebody who had never asked saw, which is why the screen
+/// could only ever be a wall of explanation.
+enum VerificationStanding { none, pending, rejected, verified }
+
+/// The answer to "where do I stand", with whatever context that state carries.
+class MyVerification {
+  const MyVerification({
+    required this.standing,
+    this.since,
+    this.reason,
+    this.documentKind,
+    this.legalName,
+  });
+
+  /// What the app assumes before it has asked, and after a failure to ask.
+  /// Never `verified`: guessing that somebody is verified is the one wrong
+  /// answer that lets them walk into a refusal further down.
+  static const unknown = MyVerification(standing: VerificationStanding.none);
+
+  final VerificationStanding standing;
+
+  /// When they asked, or when they were answered, or when they were verified.
+  final DateTime? since;
+
+  /// Why they were refused. Only ever set on [VerificationStanding.rejected],
+  /// and the server will not record a refusal without one.
+  final String? reason;
+
+  final DocumentKind? documentKind;
+
+  /// The name they gave, which is not necessarily the one on the account.
+  final String? legalName;
+
+  bool get isVerified => standing == VerificationStanding.verified;
+  bool get isWaiting => standing == VerificationStanding.pending;
+  bool get canAsk => standing == VerificationStanding.none ||
+      standing == VerificationStanding.rejected;
+}
+
 class BackendException implements Exception {
   BackendException(this.message);
   final String message;

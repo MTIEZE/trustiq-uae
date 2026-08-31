@@ -1992,6 +1992,162 @@ abstract class L {
   /// **'Checking'**
   String get heldChecking;
 
+  /// No description provided for @verifyStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start your verification'**
+  String get verifyStartTitle;
+
+  /// No description provided for @verifyStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'One request, checked by a person. You are told the outcome either way, and if it is no, you are told what to change.'**
+  String get verifyStartBody;
+
+  /// No description provided for @verifyStartAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Start verification'**
+  String get verifyStartAction;
+
+  /// No description provided for @verifyLegalName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name as it appears on your document'**
+  String get verifyLegalName;
+
+  /// No description provided for @verifyLegalNameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'It does not have to match the name on your account. If it differs, that is fine and we will see both.'**
+  String get verifyLegalNameHelp;
+
+  /// No description provided for @verifyLegalNameMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the name on your document.'**
+  String get verifyLegalNameMissing;
+
+  /// No description provided for @verifyDocumentKind.
+  ///
+  /// In en, this message translates to:
+  /// **'What you can show'**
+  String get verifyDocumentKind;
+
+  /// No description provided for @verifyDocEmiratesId.
+  ///
+  /// In en, this message translates to:
+  /// **'Emirates ID'**
+  String get verifyDocEmiratesId;
+
+  /// No description provided for @verifyDocPassport.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport'**
+  String get verifyDocPassport;
+
+  /// No description provided for @verifyDocTradeLicence.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade licence'**
+  String get verifyDocTradeLicence;
+
+  /// No description provided for @verifyHow.
+  ///
+  /// In en, this message translates to:
+  /// **'How you would rather do it'**
+  String get verifyHow;
+
+  /// No description provided for @verifyHowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In person, a video call, whatever suits you. Optional.'**
+  String get verifyHowHint;
+
+  /// No description provided for @verifyNoDocumentUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is uploaded here. Your document is looked at directly, so no copy of it is stored on our servers.'**
+  String get verifyNoDocumentUpload;
+
+  /// No description provided for @verifySubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send my request'**
+  String get verifySubmit;
+
+  /// No description provided for @verifyPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is with us'**
+  String get verifyPendingTitle;
+
+  /// No description provided for @verifyPendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent {when}. Someone will look at it and you will be told the outcome. You can keep using TrustIQ in the meantime; only making a contract binding needs this.'**
+  String verifyPendingBody(String when);
+
+  /// No description provided for @verifyPendingShowing.
+  ///
+  /// In en, this message translates to:
+  /// **'You said you can show: {document}'**
+  String verifyPendingShowing(String document);
+
+  /// No description provided for @verifyWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw my request'**
+  String get verifyWithdraw;
+
+  /// No description provided for @verifyWithdrawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request has been withdrawn.'**
+  String get verifyWithdrawn;
+
+  /// No description provided for @verifyRejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request was not accepted'**
+  String get verifyRejectedTitle;
+
+  /// No description provided for @verifyRejectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Answered {when}. You can send a new request as soon as you have dealt with this.'**
+  String verifyRejectedBody(String when);
+
+  /// No description provided for @verifyRejectedWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'What needs to change'**
+  String get verifyRejectedWhy;
+
+  /// No description provided for @verifyAskAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a new request'**
+  String get verifyAskAgain;
+
+  /// No description provided for @verifyDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your identity is verified'**
+  String get verifyDoneTitle;
+
+  /// No description provided for @verifyDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified {when}. Nothing else is needed from you.'**
+  String verifyDoneBody(String when);
+
+  /// No description provided for @verifySent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent.'**
+  String get verifySent;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

@@ -209,22 +209,28 @@ void main() {
     expect(find.text('Accept this resolution'), findsOneWidget);
     expect(find.text('Refuse and ask for a human'), findsOneWidget);
   });
-  testWidgets('a backend that cannot verify offers no button that would fail', (tester) async {
+  testWidgets('a backend that cannot verify offers a request, not an explanation', (tester) async {
     // The live backend cannot record a verification: the schema refuses a
-    // session that tries to verify itself. Until UAE Pass is connected, the
-    // screen has to say who does it instead. Offering the button anyway would
-    // mean telling someone their contract is blocked on their identity, and
-    // then handing them a control that errors every time they press it.
+    // session that tries to verify itself. This screen used to answer that by
+    // explaining who does it instead and giving nothing to press, which left
+    // somebody at a locked door with a description of the lock. Verification is
+    // not optional here, so the screen has to offer the way through it.
     _tallSurface(tester);
     final state = AppState(backend: _CannotVerifyBackend());
     await tester.pumpWidget(_hostedScreen(VerifyIdentityScreen(state: state)));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     final l = await L.delegate.load(const Locale('en'));
 
-    expect(find.text(l.verifiedByHand), findsOneWidget);
-    expect(find.text(l.continueWith('UAE Pass')), findsNothing);
-    expect(find.text(l.verifiedByHandRecord), findsOneWidget);
+    expect(find.text(l.verifyStartTitle), findsOneWidget);
+    expect(find.text(l.verifySubmit), findsOneWidget,
+        reason: 'the whole point is that there is now something to press');
+    expect(find.text(l.continueWith('UAE Pass')), findsNothing,
+        reason: 'the provider button would error every time it was pressed');
+
+    // The absence of an upload is a decision, and unsaid it reads as a
+    // half-finished feature.
+    expect(find.text(l.verifyNoDocumentUpload), findsOneWidget);
   });
 
   testWidgets('a backend that can verify still offers the button', (tester) async {
@@ -502,6 +508,11 @@ Widget _hostedScreen(Widget screen) => MaterialApp(
 class _CannotVerifyBackend extends DemoBackend {
   @override
   bool get canRecordVerification => false;
+
+  // The demo signs in as somebody already verified, which would show the
+  // finished state and hide the very thing this double exists to exercise.
+  @override
+  Future<MyVerification> myVerification() async => MyVerification.unknown;
 }
 
 /// Mounts a screen the way main.dart does.
