@@ -53,3 +53,7 @@ supabase/.temp/
 # nothing fails if they go stale, so carrying half a megabyte of them in the
 # repo would be storing pictures rather than evidence. One command remakes them.
 apps/mobile/tool/goldens/
+
+# Renders from tool/capture_screens.dart. The copies the site actually serves
+# live in apps/web/public/app/ and are committed; these are the working output.
+apps/mobile/tool/screens/

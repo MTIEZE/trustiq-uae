@@ -383,6 +383,31 @@ abstract final class Radii {
 /// ships in Arabic the typography extends instead of being redone.
 const kFontFamily = 'IBMPlexSans';
 
+/// A text style that actually carries the app's typeface.
+///
+/// `ThemeData(fontFamily:)` reaches the text theme, and nothing else. A style
+/// written by hand into a component slot — an app bar title, a button label —
+/// replaces the style rather than merging with it, so it inherits no family and
+/// falls back to whatever the platform ships. The comment above says the family
+/// is set once so there is no second place to forget it; there were eleven,
+/// and every button label in the app was rendering in Roboto.
+TextStyle face({
+  Color? color,
+  double? fontSize,
+  FontWeight? fontWeight,
+  double? letterSpacing,
+  double? height,
+}) =>
+    TextStyle(
+      fontFamily: kFontFamily,
+      fontFamilyFallback: const [kFontFamilyArabic],
+      color: color,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+      height: height,
+    );
+
 /// The Arabic companion. Reached through the fallback chain rather than
 /// selected by locale, so it also covers an Arabic name inside an English
 /// sentence, which is the common case here.
@@ -471,7 +496,7 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
+      titleTextStyle: face(
         color: c.ink,
         fontSize: 20,
         fontWeight: FontWeight.w700,
@@ -500,11 +525,11 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
       filled: true,
       fillColor: c.surfaceSunken,
       contentPadding: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.lg),
-      hintStyle: TextStyle(color: c.inkFaint, fontSize: 14.5),
-      labelStyle: TextStyle(color: c.inkFaint, fontSize: 14.5),
-      floatingLabelStyle: TextStyle(color: c.accent, fontSize: 13, fontWeight: FontWeight.w600),
-      helperStyle: TextStyle(color: c.inkFaint, fontSize: 12, height: 1.4),
-      errorStyle: TextStyle(color: c.critical, fontSize: 12, height: 1.4),
+      hintStyle: face(color: c.inkFaint, fontSize: 14.5),
+      labelStyle: face(color: c.inkFaint, fontSize: 14.5),
+      floatingLabelStyle: face(color: c.accent, fontSize: 13, fontWeight: FontWeight.w600),
+      helperStyle: face(color: c.inkFaint, fontSize: 12, height: 1.4),
+      errorStyle: face(color: c.critical, fontSize: 12, height: 1.4),
       border: _field(c.rule),
       enabledBorder: _field(c.rule),
       focusedBorder: _field(c.accent, width: 1.6),
@@ -519,8 +544,8 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
         ),
-        textStyle: const WidgetStatePropertyAll(
-          TextStyle(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: -0.1),
+        textStyle: WidgetStatePropertyAll(
+          face(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: -0.1),
         ),
         // A disabled primary action should look like it is waiting, not like a
         // dead slab of grey. Tinted, not extinguished.
@@ -544,14 +569,14 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
         backgroundColor: c.surface,
         side: BorderSide(color: c.ruleStrong),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: -0.1),
+        textStyle: face(fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: -0.1),
       ),
     ),
 
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: c.accent,
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        textStyle: face(fontWeight: FontWeight.w600, fontSize: 14),
       ),
     ),
 
@@ -560,14 +585,14 @@ ThemeData buildTheme([TrustIqPalette palette = TrustIqPalette.light]) {
       foregroundColor: c.onAccent,
       elevation: 2,
       highlightElevation: 3,
-      extendedTextStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+      extendedTextStyle: face(fontWeight: FontWeight.w600, fontSize: 14.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
     ),
 
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
-      contentTextStyle: const TextStyle(fontSize: 13.5, height: 1.4, color: Colors.white),
+      contentTextStyle: face(fontSize: 13.5, height: 1.4, color: Colors.white),
     ),
 
     dialogTheme: DialogThemeData(
