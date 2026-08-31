@@ -2762,4 +2762,300 @@ select pg_temp.check(
   'a signed-in party does, because the screen has to ask it too');
 
 \echo ''
+\echo '== How long a contract lasts =='
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-000000000091', 'client@example.ae'),
+  ('0f000000-0000-0000-0000-000000000092', 'freelance@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-000000000091', 'Regular Client', 'client@example.ae'),
+  ('0f000000-0000-0000-0000-000000000092', 'The Freelancer', 'freelance@example.ae');
+select public.record_manual_verification(
+  '0f000000-0000-0000-0000-000000000091', 'Verified inside the schema tests.');
+select public.record_manual_verification(
+  '0f000000-0000-0000-0000-000000000092', 'Verified inside the schema tests.');
+
+\echo ''
+\echo '-- a period that promises what it cannot keep is refused --'
+
+select pg_temp.expect_error(
+  $q$ insert into public.transactions
+      (buyer_id, seller_id, description, terms, total_amount_fils, created_by,
+       starts_on, ends_on)
+      values ('0f000000-0000-0000-0000-000000000091',
+              '0f000000-0000-0000-0000-000000000092',
+              'Backwards', 'Ends before it starts.', 10000,
+              '0f000000-0000-0000-0000-000000000091',
+              '2027-06-01', '2027-01-01') $q$,
+  'a period that ends before it starts is refused');
+
+select pg_temp.expect_error(
+  $q$ insert into public.transactions
+      (buyer_id, seller_id, description, terms, total_amount_fils, created_by,
+       renewal)
+      values ('0f000000-0000-0000-0000-000000000091',
+              '0f000000-0000-0000-0000-000000000092',
+              'Renews nothing', 'Open ended, and yet renewing.', 10000,
+              '0f000000-0000-0000-0000-000000000091',
+              'automatic') $q$,
+  'an open-ended contract cannot promise to renew, because nothing could keep it');
+
+select pg_temp.check(
+  (select count(*) from public.transactions
+   where description in ('Backwards', 'Renews nothing')) = 0,
+  'and neither of those became a contract');
+
+\echo ''
+\echo '-- an annual contract, renewed --'
+
+-- Deliberately across a leap year. Adding 365 days would land on 2 March, and
+-- an annual contract that drifts a day every four years is one somebody will
+-- eventually have to argue about.
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by,
+   starts_on, ends_on, renewal)
+values
+  ('0f000000-0000-0000-0000-0000000000a2',
+   '0f000000-0000-0000-0000-000000000091',
+   '0f000000-0000-0000-0000-000000000092',
+   'A year of retained work',
+   'Twelve months, renewing unless either party says otherwise.',
+   1200000,
+   '0f000000-0000-0000-0000-000000000091',
+   '2027-03-01', '2028-03-01', 'automatic');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000091', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000a2', 'submit');
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000092', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000a2', 'accept');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- Wound back so the period is already due, which is the only way to exercise
+-- the runner without waiting a year.
+--
+-- March 2023 to March 2024 on purpose: that span contains 29 February 2024, so
+-- it is 366 days long. A period added as a day count lands on 2 March the next
+-- time round and drifts a further day every leap year. Winding back to 2024
+-- instead, as this first did, spans 365 days and the two calculations agree,
+-- which made the assertion below look like it was testing something.
+update public.transactions
+set starts_on = '2023-03-01', ends_on = '2024-03-01'
+where id = '0f000000-0000-0000-0000-0000000000a2';
+
+select pg_temp.check(
+  (select count(*) from public.renew_due_contracts()
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a2') = 1,
+  'a due automatic contract is rolled forward');
+
+-- Wound back to 2024, so it was two periods behind. One run catches all of it
+-- up, because a contract should not sit in a period that ended last year while
+-- a daily job walks it forward an anniversary at a time.
+select pg_temp.check(
+  (select ends_on from public.transactions
+   where id = '0f000000-0000-0000-0000-0000000000a2')
+    > (now() at time zone 'Asia/Dubai')::date,
+  'and it is caught up in one run, not left behind for the next one');
+
+select pg_temp.check(
+  (select extract(month from ends_on)::int || '-' || extract(day from ends_on)::int
+   from public.transactions where id = '0f000000-0000-0000-0000-0000000000a2') = '3-1',
+  'still landing on 1 March, so a leap year has not moved the anniversary');
+
+select pg_temp.check(
+  (select count(*) from public.contract_renewals
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a2'
+     and from_ends_on = '2024-03-01' and to_ends_on = '2025-03-01'
+     and source = 'automatic') = 1,
+  'and every period it passed through is on the record, not only the last');
+
+select pg_temp.check(
+  (select count(*) from public.contract_renewals
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a2') >= 2,
+  'so the chain is complete rather than jumping the gap');
+
+select pg_temp.expect_error(
+  $q$ update public.contract_renewals set to_ends_on = '2030-01-01'
+      where transaction_id = '0f000000-0000-0000-0000-0000000000a2' $q$,
+  'and cannot be edited afterwards');
+
+select pg_temp.check(
+  (select count(*) from app.notifications
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a2'
+     and event = 'period_renewed' and needs_you is false) = 2,
+  'both parties are told, and neither of them has to do anything about it');
+
+select pg_temp.check(
+  (select count(*) from public.renew_due_contracts()
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a2') = 0,
+  'and a second run finds nothing left to do');
+
+\echo ''
+\echo '-- what is not renewed --'
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by,
+   starts_on, ends_on, renewal)
+values
+  ('0f000000-0000-0000-0000-0000000000a3',
+   '0f000000-0000-0000-0000-000000000091',
+   '0f000000-0000-0000-0000-000000000092',
+   'A year, then a decision',
+   'Twelve months. Renewing needs both of us to say so.',
+   600000,
+   '0f000000-0000-0000-0000-000000000091',
+   '2024-01-01', '2025-01-01', 'manual');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000091', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000a3', 'submit');
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000092', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000a3', 'accept');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*) from public.renew_due_contracts()
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a3') = 0,
+  'a manual renewal is a decision, so nothing rolls it forward on its own');
+
+select pg_temp.check(
+  (select ends_on from public.transactions
+   where id = '0f000000-0000-0000-0000-0000000000a3') = '2025-01-01'::date,
+  'and its period is left exactly where the parties left it');
+
+\echo ''
+\echo '== Making the deadline mean something =='
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by,
+   acceptance_deadline)
+values
+  ('0f000000-0000-0000-0000-0000000000a4',
+   '0f000000-0000-0000-0000-000000000091',
+   '0f000000-0000-0000-0000-000000000092',
+   'Sent and never answered',
+   'One piece of work, answer within a week.',
+   40000,
+   '0f000000-0000-0000-0000-000000000091',
+   now() - interval '1 day'),
+  ('0f000000-0000-0000-0000-0000000000a5',
+   '0f000000-0000-0000-0000-000000000091',
+   '0f000000-0000-0000-0000-000000000092',
+   'Still has time',
+   'One piece of work, answer within a week.',
+   40000,
+   '0f000000-0000-0000-0000-000000000091',
+   now() + interval '6 days');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000091', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000a4', 'submit');
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000a5', 'submit');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*) from public.expire_overdue_contracts()) >= 1,
+  'the runner expires what is overdue');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = '0f000000-0000-0000-0000-0000000000a4') = 'expired',
+  'the contract nobody answered is expired, which nothing did before this file');
+
+select pg_temp.check(
+  (select state from public.transactions
+   where id = '0f000000-0000-0000-0000-0000000000a5') = 'pending_acceptance',
+  'and the one still in time is left alone');
+
+select pg_temp.check(
+  exists (select 1 from public.transaction_events
+          where transaction_id = '0f000000-0000-0000-0000-0000000000a4'
+            and event = 'expire' and actor = 'system'),
+  'it went through the same audit log as every other transition, as system');
+
+\echo ''
+\echo '-- warning before, not only after --'
+
+select pg_temp.check(
+  (select written from public.write_deadline_notices() where event = 'acceptance_expiring') = 0,
+  'six days out is not yet worth a warning');
+
+select pg_temp.check(
+  (select written from public.write_deadline_notices(interval '7 days')
+   where event = 'acceptance_expiring') = 2,
+  'inside the window, both parties are told');
+
+select pg_temp.check(
+  (select count(*) from app.notifications
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a5'
+     and event = 'acceptance_expiring' and needs_you is true) = 1,
+  'and it is work for exactly one of them, the side that has to answer');
+
+select pg_temp.check(
+  (select written from public.write_deadline_notices(interval '7 days')
+   where event = 'acceptance_expiring') = 0,
+  'saying it twice would be worse than not saying it');
+
+-- The other kind: a period running out. f3 ends in the past, so it is outside
+-- the window; f2 was just renewed to 2026-03-01.
+update public.transactions
+set starts_on = (now() at time zone 'Asia/Dubai')::date - 350,
+    ends_on   = (now() at time zone 'Asia/Dubai')::date + 10
+where id = '0f000000-0000-0000-0000-0000000000a3';
+
+select pg_temp.check(
+  (select written from public.write_deadline_notices(interval '0 days', interval '14 days')
+   where event = 'period_ending') = 2,
+  'a period ten days out warns both parties');
+
+select pg_temp.check(
+  (select count(*) from app.notifications
+   where transaction_id = '0f000000-0000-0000-0000-0000000000a3'
+     and event = 'period_ending' and needs_you is true) = 2,
+  'and on a manual renewal it is work for both, because both have to agree');
+
+\echo ''
+\echo '-- none of this is a client API --'
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'public.expire_overdue_contracts()', 'EXECUTE'),
+  'a signed-in person cannot expire anybody''s contract, including their own');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated', 'public.renew_due_contracts()', 'EXECUTE'),
+  'nor renew one');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated',
+    'public.write_deadline_notices(interval, interval)', 'EXECUTE'),
+  'nor write themselves a notice');
+
+-- Tested by trying it, not by reading the grant. Supabase grants INSERT on
+-- every new public table to `authenticated` by default, and what actually
+-- stands in the way is the absence of an insert policy. Asserting the grant
+-- would have passed on a table anybody could write to.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000091', false);
+
+select pg_temp.expect_error(
+  $q$ insert into public.contract_renewals
+      (transaction_id, from_ends_on, to_ends_on, source)
+      values ('0f000000-0000-0000-0000-0000000000a2', '2030-01-01', '2031-01-01', 'agreed') $q$,
+  'and a party cannot add a renewal to their own contract by hand');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.check(
+  (select count(*) from public.contract_renewals
+   where from_ends_on = '2030-01-01') = 0,
+  'so nothing of the sort is on the record');
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

@@ -1,0 +1,67 @@
+# The things that happen because a date went by.
+#
+# Expiring a contract nobody answered, rolling an automatic period forward, and
+# warning both parties before either. None of it can live in the database:
+# there is no pg_cron and no pg_net, so nothing in there can notice that a day
+# has passed.
+#
+# Once a day, not every fifteen minutes. Everything here is measured in days,
+# and a contract expiring at 04:10 instead of 04:00 is nobody's problem.
+# Deliberately just after midnight in Dubai, which is 20:00 UTC the day before,
+# because every date in these functions is a Dubai date and running an hour
+# before local midnight would expire things a day early.
+#
+# Needs the same two settings the sender already uses: the secret
+# SUPABASE_SERVICE_ROLE_KEY and the repository variable SUPABASE_URL.
+
+name: Run the daily schedule
+
+on:
+  schedule:
+    # 20:10 UTC is 00:10 in Dubai. Ten past rather than on the hour: GitHub
+    # bunches scheduled runs on the hour and delays them under load.
+    - cron: '10 20 * * *'
+  # So it can be run by hand while watching, which is how anybody will look at
+  # it the first time somebody says their contract did not expire.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Every step is safe to run twice, so a second run would do no harm. Skipped
+  # anyway: two runs catching up the same overdue contract at once would each
+  # write half the chain of renewals.
+  group: run-schedule
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Say what is missing before doing anything
+        env:
+          URL: ${{ vars.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          missing=""
+          [ -n "$URL" ] || missing="$missing SUPABASE_URL(variable)"
+          [ -n "$KEY" ] || missing="$missing SUPABASE_SERVICE_ROLE_KEY(secret)"
+          if [ -n "$missing" ]; then
+            echo "::error::Not configured yet:$missing. Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+      - name: Expire, renew, warn
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/run-schedule.mjs
