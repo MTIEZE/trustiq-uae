@@ -19,8 +19,11 @@ import 'package:trustiq_app/widgets/brand.dart';
 Future<void> loadFonts() async {
   final loader = FontLoader('IBMPlexSans');
   for (final weight in ['Regular', 'Medium', 'SemiBold', 'Bold']) {
-    final bytes = await File('assets/fonts/IBMPlexSans-$weight.ttf').readAsBytes();
-    loader.addFont(Future.value(ByteData.view(Uint8List.fromList(bytes).buffer)));
+    final bytes = await File('assets/fonts/IBMPlexSans-$weight.ttf')
+        .readAsBytes();
+    loader.addFont(
+      Future.value(ByteData.view(Uint8List.fromList(bytes).buffer)),
+    );
   }
   await loader.load();
 }
@@ -28,10 +31,15 @@ Future<void> loadFonts() async {
 void main() {
   setUp(() async => loadFonts());
 
-  Future<void> shoot(WidgetTester tester, String name) =>
-      expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
+  Future<void> shoot(WidgetTester tester, String name) => expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFile('goldens/$name.png'),
+  );
 
-  for (final entry in {'dark': TrustIqPalette.dark, 'light': TrustIqPalette.light}.entries) {
+  for (final entry in {
+    'dark': TrustIqPalette.dark,
+    'light': TrustIqPalette.light,
+  }.entries) {
     final palette = entry.value;
 
     testWidgets('the seal coming down, ${entry.key}', (tester) async {
@@ -39,24 +47,37 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(palette),
-        home: Scaffold(
-          backgroundColor: palette.ground,
-          body: Center(
-            child: Wrap(
-              spacing: 26,
-              runSpacing: 26,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final t in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-                  TrustIqMark(size: 76, struck: t),
-              ],
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(palette),
+          home: Scaffold(
+            backgroundColor: palette.ground,
+            body: Center(
+              child: Wrap(
+                spacing: 26,
+                runSpacing: 26,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final t in [
+                    0.1,
+                    0.2,
+                    0.3,
+                    0.4,
+                    0.5,
+                    0.6,
+                    0.7,
+                    0.8,
+                    0.9,
+                    1.0,
+                  ])
+                    TrustIqMark(size: 76, struck: t),
+                ],
+              ),
             ),
           ),
         ),
-      ));
+      );
       await shoot(tester, 'strip_${entry.key}');
     });
 
@@ -65,19 +86,26 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(palette),
-        home: SplashScreen(onDone: () {}),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(palette),
+          home: SplashScreen(onDone: () {}),
+        ),
+      );
 
-      // Four moments across the run, captured as they actually arrive.
+      // Five moments across the run, as fractions of it rather than as
+      // milliseconds. Pinned to a clock, these all landed in the first half
+      // the moment somebody lengthened the sequence, and the images looked
+      // like the animation had stopped working.
       var elapsed = Duration.zero;
-      for (final at in [300, 500, 700, 900, 1200]) {
-        final step = Duration(milliseconds: at) - elapsed;
-        elapsed = Duration(milliseconds: at);
-        await tester.pump(step);
-        await shoot(tester, 'screen_${entry.key}_$at');
+      for (final fraction in [0.25, 0.42, 0.58, 0.75, 1.0]) {
+        final at = Duration(
+          microseconds: (SplashScreen.run.inMicroseconds * fraction).round(),
+        );
+        await tester.pump(at - elapsed);
+        elapsed = at;
+        await shoot(tester, 'screen_${entry.key}_${(fraction * 100).round()}');
       }
     });
   }

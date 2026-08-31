@@ -22,20 +22,39 @@ import '../widgets/brand.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, required this.onDone});
 
+  /// How long the whole sequence takes. The one number to change.
+  ///
+  /// Everything else in the file is a fraction of it, so the choreography
+  /// survives whatever this is set to: the seal still lands at 42% of the way
+  /// through, the wordmark still starts rising at 66%. A sensible range is
+  /// roughly 900 to 3000 milliseconds. Below that the seal never reads as
+  /// landing; above it the sequence stops being an arrival and becomes a wait.
+  ///
+  /// A compile-time constant, so changing it needs a rebuild rather than a
+  /// setting. And it is paid on every launch, not only the first: at 2400ms
+  /// somebody who opens the app four times a day spends most of a minute a
+  /// week watching it.
+  ///
+  /// Public so the tests can time themselves off it. They express everything
+  /// as a fraction of this, so tuning it cannot turn the suite red.
+  static const run = Duration(milliseconds: 3000);
+
   final VoidCallback onDone;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  static const _run = Duration(milliseconds: 1200);
-
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   /// Where in the run the seal lands. The press, the bloom and the ring all
   /// key off this so the impact is one event rather than three near misses.
   static const _impact = 0.42;
 
-  late final AnimationController _c = AnimationController(vsync: this, duration: _run);
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: SplashScreen.run,
+  );
 
   @override
   void initState() {
@@ -105,26 +124,35 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             // The press. It comes down from slightly too big and lands on the
             // impact, not near it, which is the whole reason the ring and the
             // bloom are keyed off the same number.
-            final press = 1.0 + 0.10 * (1 - Curves.easeOutCubic.transform(
-              (t / _impact).clamp(0.0, 1.0)));
+            final press =
+                1.0 +
+                0.10 *
+                    (1 -
+                        Curves.easeOutCubic.transform(
+                          (t / _impact).clamp(0.0, 1.0),
+                        ));
 
             // The light the seal throws. It blooms as the stamp lands and then
             // settles back, because a glow that only ever grows reads as a
             // loading screen rather than as something having happened.
             final rise = Curves.easeOutCubic.transform(
-              ((t - 0.22) / (_impact - 0.22)).clamp(0.0, 1.0));
+              ((t - 0.22) / (_impact - 0.22)).clamp(0.0, 1.0),
+            );
             final settle = Curves.easeOutCubic.transform(
-              ((t - _impact) / 0.30).clamp(0.0, 1.0));
+              ((t - _impact) / 0.30).clamp(0.0, 1.0),
+            );
             final glow = rise * (1 - 0.42 * settle);
 
             // One ring, outward, once. Anything repeating would be a spinner.
             final ring = Curves.easeOutCubic.transform(
-              ((t - _impact) / 0.40).clamp(0.0, 1.0));
+              ((t - _impact) / 0.40).clamp(0.0, 1.0),
+            );
 
             // The wordmark waits for the seal to have landed. Anything sooner
             // and the two read as one thing arriving twice.
             final word = Curves.easeOutCubic.transform(
-              ((t - 0.66) / 0.32).clamp(0.0, 1.0));
+              ((t - 0.66) / 0.32).clamp(0.0, 1.0),
+            );
 
             const bleed = IconSize.launch * 1.3;
 
@@ -143,7 +171,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       top: -bleed,
                       bottom: -bleed,
                       child: CustomPaint(
-                        painter: _ImpactPainter(glow: glow, ring: ring, colour: c.accent),
+                        painter: _ImpactPainter(
+                          glow: glow,
+                          ring: ring,
+                          colour: c.accent,
+                        ),
                       ),
                     ),
                     Transform.scale(
@@ -174,7 +206,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 /// Drawn behind the mark rather than inside it, because `TrustIqMark` is the
 /// app icon and a logo in six other places, and none of those wants a halo.
 class _ImpactPainter extends CustomPainter {
-  _ImpactPainter({required this.glow, required this.ring, required this.colour});
+  _ImpactPainter({
+    required this.glow,
+    required this.ring,
+    required this.colour,
+  });
 
   final double glow;
   final double ring;

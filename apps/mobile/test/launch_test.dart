@@ -59,16 +59,29 @@ void main() {
   });
 
   group('the launch sequence', () {
+    test('the duration is one somebody would want to sit through', () {
+      // Not a style opinion: below this the seal never reads as landing, and
+      // above it the sequence is a wait rather than an arrival. Here so that
+      // tuning the number stays a decision rather than a slip of a keyboard.
+      expect(SplashScreen.run.inMilliseconds, inInclusiveRange(900, 3000));
+    });
+
     Widget wrap(Widget child) => MaterialApp(
           theme: buildTheme(TrustIqPalette.light),
           home: child,
         );
 
+    // Timed as fractions of SplashScreen.run rather than in milliseconds. The
+    // duration is the one thing in this file somebody will want to tune, and a
+    // test that goes red when they do teaches them to distrust the suite.
+    Duration part(double f) =>
+        Duration(microseconds: (SplashScreen.run.inMicroseconds * f).round());
+
     testWidgets('it hands over when it is done, and only then', (tester) async {
       var handed = 0;
       await tester.pumpWidget(wrap(SplashScreen(onDone: () => handed += 1)));
 
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(part(0.5));
       expect(handed, 0, reason: 'it handed over halfway through');
 
       await tester.pumpAndSettle();
@@ -97,9 +110,9 @@ void main() {
 
       double struck() => tester.widget<TrustIqMark>(find.byType(TrustIqMark)).struck;
 
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(part(0.25));
       final early = struck();
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(part(0.30));
       final later = struck();
 
       expect(early, greaterThan(0));
