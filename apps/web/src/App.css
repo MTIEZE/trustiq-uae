@@ -1154,3 +1154,56 @@
   margin: 0; padding-top: 24px; border-top: 1px solid var(--border);
   font-size: 13.5px; line-height: 1.6; color: var(--text-faint); max-width: 76ch;
 }
+
+/* ---------------------------------------------------------------------------
+   The pillars and the app.
+   --------------------------------------------------------------------------- */
+
+.hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.hero-second {
+  display: inline-block; padding: 14px 28px;
+  color: var(--text); text-decoration: none; font-weight: 600;
+  border: 1px solid var(--border-strong); border-radius: 8px;
+}
+.hero-second:hover { border-color: var(--accent); color: var(--accent); }
+
+.pillars { padding: 96px 0; border-top: 1px solid var(--border); }
+.pillar-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px; margin-top: 40px;
+  background: var(--border);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+/* Hairlines between, not four floating cards. They are one idea in four parts
+   and a grid of separate boxes reads as four unrelated features. */
+.pillar { background: var(--surface); padding: 28px 26px; }
+.pillar-n {
+  display: block; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; color: var(--accent); margin-bottom: 14px;
+}
+.pillar h3 { font-size: 17px; letter-spacing: -.01em; margin: 0 0 8px; }
+.pillar p { font-size: 14.5px; line-height: 1.6; color: var(--text-dim); margin: 0; }
+
+.app { padding: 96px 0; border-top: 1px solid var(--border); }
+.shots {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px; margin-top: 44px;
+}
+.shot { margin: 0; }
+/* A frame, not a photorealistic handset. A drawn bezel dates the page the
+   moment the hardware changes, and nobody is buying the phone. */
+.shot-frame {
+  border: 1px solid var(--border-strong); border-radius: 20px;
+  overflow: hidden; background: var(--surface);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--text) 8%, transparent);
+}
+.shot-frame img { display: block; width: 100%; height: auto; }
+.shot-frame picture { display: block; }
+.shot figcaption { display: block; margin-top: 16px; }
+.shot figcaption strong { display: block; font-size: 15px; margin-bottom: 4px; }
+.shot figcaption span { font-size: 13.5px; line-height: 1.55; color: var(--text-dim); }
+
+.app-cta { margin-top: 52px; text-align: center; }
+.app-cta .stores { justify-content: center; }
+.app-cta-note { margin: 18px 0 0; font-size: 14px; color: var(--text-dim); }
+.app-cta-note a { color: var(--accent); }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Nav, Footer, BetaForm } from './components/Shell.jsx'
+import { Nav, Footer, BetaForm, StoreButtons } from './components/Shell.jsx'
 import './App.css'
 
 // A real run of the resolution pipeline, copied out of the production audit
@@ -66,7 +66,10 @@ function Hero() {
           timestamped evidence, and a delivery both sides can follow. When something goes wrong,
           an AI agent reads the evidence and proposes a fair resolution in under 60 seconds.
         </p>
-        <a href="#how-it-works" className="hero-cta">See How It Works</a>
+        <div className="hero-actions">
+          <a href="#app" className="hero-cta">See the app</a>
+          <a href="#how-it-works" className="hero-second">How it works</a>
+        </div>
         <div className="hero-pills">
           <span className="pill"><span className="pill-dot"></span>Digital Contracts</span>
           <span className="pill"><span className="pill-dot"></span>Timestamped Evidence</span>
@@ -342,6 +345,110 @@ function HowItWorks() {
   )
 }
 
+const PILLARS = [
+  {
+    title: 'Agreements that hold',
+    body: 'Terms, amount, who is who, and how long it runs. Once you both accept, neither of you can change it, and every move after that is timestamped.',
+  },
+  {
+    title: 'Identities that were checked',
+    body: 'A contract only becomes binding between two verified people, so the other party knows who agreed. The database refuses it otherwise; it is not a setting.',
+  },
+  {
+    title: 'A resolution, proposed not imposed',
+    body: 'An agent reads both accounts against the evidence and proposes a split. It only ends the dispute if you both accept, and one refusal sends the case to a person.',
+  },
+  {
+    title: 'A record neither side can rewrite',
+    body: 'Evidence is fingerprinted by the server as it arrives. Contract moves, dispute moves and every model run are append-only, including the runs that failed.',
+  },
+]
+
+function Pillars() {
+  return (
+    <section className="pillars" id="pillars">
+      <div className="container">
+        <span className="label">One platform</span>
+        <h2>A stronger footing for an agreement</h2>
+        <p className="section-sub">
+          Four things, and each one is enforced in the database rather than asked of the people
+          using it.
+        </p>
+        <div className="pillar-grid">
+          {PILLARS.map((p, i) => (
+            <div className="pillar" key={p.title}>
+              {/* Numbered because they are read in order, not because numbers
+                  look tidy: each one depends on the one before it. */}
+              <span className="pillar-n">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{p.title}</h3>
+              <p>{p.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const SHOTS = [
+  { src: 'contracts', title: 'Everything you are party to', body: 'What is waiting on you, first. Everything else below it.' },
+  { src: 'new', title: 'Write it down once', body: 'Who, what, how much, in stages if the work has them, and how long it runs.' },
+  { src: 'verify', title: 'Ask to be verified', body: 'A person checks. You are told either way, and if it is no, you are told what to change.' },
+  { src: 'dispute', title: 'When it goes wrong', body: 'Both accounts, the documents filed, and the proposal when it arrives.' },
+]
+
+function TheApp() {
+  return (
+    <section className="app" id="app">
+      <div className="container">
+        <span className="label">The TrustIQ app</span>
+        <h2>Your agreements, in your pocket</h2>
+        <p className="section-sub">
+          Real screens, rendered by the app itself rather than drawn in a design tool. Demo data:
+          nothing in these has ever belonged to anybody.
+        </p>
+
+        <div className="shots">
+          {SHOTS.map((shot) => (
+            <figure className="shot" key={shot.src}>
+              <div className="shot-frame">
+                {/* Both themes, because the app follows the device and so does
+                    this page. Four dark phones on a light page read as four
+                    holes; the browser picks and only one is fetched. */}
+                <picture>
+                  <source
+                    srcSet={`/trustiq-uae/app/${shot.src}-dark.png`}
+                    media="(prefers-color-scheme: dark)"
+                  />
+                  <img
+                    src={`/trustiq-uae/app/${shot.src}-light.png`}
+                    alt={shot.title}
+                    width="390"
+                    height="800"
+                    loading="lazy"
+                  />
+                </picture>
+              </div>
+              <figcaption>
+                <strong>{shot.title}</strong>
+                <span>{shot.body}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+
+        <div className="app-cta">
+          <StoreButtons />
+          <p className="app-cta-note">
+            Not on either store yet. <a href="/trustiq-uae/download.html">See what is left</a>, or
+            join the beta below and be told once.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function RealRun() {
   const r = RECORDED_RUN
   return (
@@ -439,7 +546,9 @@ function App() {
       <Nav />
       <Hero />
       <Problem />
+      <Pillars />
       <HowItWorks />
+      <TheApp />
       <RealRun />
       <section className="problem" id="beta">
         <div className="container">

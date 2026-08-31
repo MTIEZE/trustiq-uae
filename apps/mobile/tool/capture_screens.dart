@@ -52,9 +52,9 @@ Future<void> loadFonts() async {
 void main() {
   setUp(() async => loadFonts());
 
-  Widget host(AppState state, Widget child) => MaterialApp(
+  Widget host(AppState state, Widget child, TrustIqPalette palette) => MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: buildTheme(TrustIqPalette.dark),
+        theme: buildTheme(palette),
         localizationsDelegates: L.localizationsDelegates,
         supportedLocales: L.supportedLocales,
         home: LanguageScope(
@@ -86,49 +86,46 @@ void main() {
     return state;
   }
 
-  testWidgets('contracts', (tester) async {
-    phone(tester);
-    final state = await ready();
-    await tester.pumpWidget(host(state, ContractsScreen(state: state)));
-    await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('screens/contracts.png'));
-  });
+  // Both palettes. The site follows the device now, and four dark phones on a
+  // light page read as four holes rather than as the product.
+  for (final theme in {'light': TrustIqPalette.light, 'dark': TrustIqPalette.dark}.entries) {
+    Future<void> shoot(WidgetTester tester, String name, Widget Function(AppState) build) async {
+      phone(tester);
+      final state = await ready();
+      await tester.pumpWidget(host(state, build(state), theme.value));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('screens/$name-${theme.key}.png'),
+      );
+    }
 
-  testWidgets('detail', (tester) async {
-    phone(tester);
-    final state = await ready();
-    final contract = state.contracts.firstWhere((c) => c.dispute == null);
-    await tester.pumpWidget(
-      host(state, ContractDetailScreen(contractId: contract.id, state: state)));
-    await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('screens/detail.png'));
-  });
+    testWidgets('contracts, ${theme.key}', (tester) async {
+      await shoot(tester, 'contracts', (s) => ContractsScreen(state: s));
+    });
 
-  testWidgets('dispute', (tester) async {
-    phone(tester);
-    final state = await ready();
-    final contract = state.contracts.firstWhere((c) => c.dispute != null);
-    await tester.pumpWidget(
-      host(state, DisputeScreen(contractId: contract.id, state: state)));
-    await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('screens/dispute.png'));
-  });
+    testWidgets('detail, ${theme.key}', (tester) async {
+      await shoot(tester, 'detail', (s) {
+        final contract = s.contracts.firstWhere((c) => c.dispute == null);
+        return ContractDetailScreen(contractId: contract.id, state: s);
+      });
+    });
 
-  testWidgets('new contract', (tester) async {
-    phone(tester);
-    final state = await ready();
-    await tester.pumpWidget(host(state, NewContractScreen(state: state)));
-    await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('screens/new.png'));
-  });
+    testWidgets('dispute, ${theme.key}', (tester) async {
+      await shoot(tester, 'dispute', (s) {
+        final contract = s.contracts.firstWhere((c) => c.dispute != null);
+        return DisputeScreen(contractId: contract.id, state: s);
+      });
+    });
 
-  testWidgets('verification', (tester) async {
-    phone(tester);
-    final state = await ready();
-    await tester.pumpWidget(host(state, VerifyIdentityScreen(state: state)));
-    await tester.pumpAndSettle();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('screens/verify.png'));
-  });
+    testWidgets('new contract, ${theme.key}', (tester) async {
+      await shoot(tester, 'new', (s) => NewContractScreen(state: s));
+    });
+
+    testWidgets('verification, ${theme.key}', (tester) async {
+      await shoot(tester, 'verify', (s) => VerifyIdentityScreen(state: s));
+    });
+  }
 }
 
 /// The demo's data, wearing a live project's face.
