@@ -255,10 +255,7 @@ class _WaitingState extends State<_Waiting> {
     final ok = await widget.state.withdrawVerificationRequest();
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l.verifyWithdrawn)));
-    }
+    _say(context, widget.state, ok, context.l.verifyWithdrawn);
   }
 
   @override
@@ -367,6 +364,27 @@ class _Refused extends StatelessWidget {
   }
 }
 
+/// Says what happened, whichever way it went.
+///
+/// This existed for the success case only. A request that failed left the
+/// button to stop spinning and changed nothing else on the screen, which is
+/// indistinguishable from a button that does nothing, and is how the first
+/// person to use this concluded they had filled in a form for no reason.
+void _say(BuildContext context, AppState state, bool ok, String good) {
+  final messenger = ScaffoldMessenger.of(context);
+  if (ok) {
+    messenger.showSnackBar(SnackBar(content: Text(good)));
+    return;
+  }
+  // Whichever the guard left behind: a sentence the server wrote for a person,
+  // or a described failure when there was no sentence to show.
+  final message = state.error ?? describeFailure(state, context.l)?.title;
+  messenger.showSnackBar(SnackBar(
+    content: Text(message ?? context.l.somethingWentWrong),
+    backgroundColor: context.c.critical,
+  ));
+}
+
 String _documentLabel(BuildContext context, DocumentKind kind) => switch (kind) {
       DocumentKind.emiratesId => context.l.verifyDocEmiratesId,
       DocumentKind.passport => context.l.verifyDocPassport,
@@ -408,10 +426,7 @@ class _AskFormState extends State<_AskForm> {
 
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l.verifySent)));
-    }
+    _say(context, widget.state, ok, context.l.verifySent);
   }
 
   @override

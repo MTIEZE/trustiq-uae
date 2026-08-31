@@ -146,6 +146,38 @@ void main() {
     expect(find.text(l.verifyWithdraw), findsNothing);
   });
 
+  testWidgets('a request that fails says so', (tester) async {
+    // The gap the first real user fell into. The screen only spoke on success,
+    // so a refused request stopped the button spinning and changed nothing
+    // else, which looks exactly like a button that does nothing.
+    tall(tester);
+    final backend = _Refuses('You are already verified.');
+    await tester.pumpWidget(host(AppState(backend: backend)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'Mohamed Al Rashid');
+    await tester.tap(find.text(l.verifySubmit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('You are already verified.'), findsOneWidget,
+        reason: 'the server wrote that sentence for a person to read');
+    expect(find.text(l.verifySent), findsNothing);
+  });
+
+  testWidgets('and so does one that could not reach the server', (tester) async {
+    tall(tester);
+    final backend = _Offline();
+    await tester.pumpWidget(host(AppState(backend: backend)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'Mohamed Al Rashid');
+    await tester.tap(find.text(l.verifySubmit));
+    await tester.pumpAndSettle();
+
+    // Not the raw exception: that one put a project URL in a snackbar once.
+    expect(find.text(l.noConnection), findsOneWidget);
+  });
+
   testWidgets('the explanation gets out of the way once they have asked', (tester) async {
     tall(tester);
 
@@ -236,6 +268,43 @@ class _Standing extends DemoBackend {
     _standing = MyVerification.unknown;
     return true;
   }
+}
+
+/// Refuses the way the database does, with words meant for a person.
+class _Refuses extends DemoBackend {
+  _Refuses(this.why);
+  final String why;
+
+  @override
+  bool get canRecordVerification => false;
+
+  @override
+  Future<MyVerification> myVerification() async => MyVerification.unknown;
+
+  @override
+  Future<void> requestVerification({
+    required String legalName,
+    required DocumentKind documentKind,
+    String? how,
+  }) async =>
+      throw BackendException(why);
+}
+
+/// Fails the way a phone on a bad connection does.
+class _Offline extends DemoBackend {
+  @override
+  bool get canRecordVerification => false;
+
+  @override
+  Future<MyVerification> myVerification() async => MyVerification.unknown;
+
+  @override
+  Future<void> requestVerification({
+    required String legalName,
+    required DocumentKind documentKind,
+    String? how,
+  }) async =>
+      throw Exception('ClientException with SocketException: Failed host lookup');
 }
 
 class _Unreachable extends DemoBackend {
