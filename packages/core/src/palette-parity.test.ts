@@ -24,8 +24,10 @@ function dartPalette(name: string): Record<string, string> {
   const start = source.indexOf(`static const ${name} = TrustIqPalette(`)
   const body = source.slice(start, source.indexOf(');', start))
   const out: Record<string, string> = {}
-  for (const m of body.matchAll(/(\w+):\s*Color\(0x(FF[0-9A-Fa-f]{6})\)/g)) {
-    out[m[1]] = '#' + m[2].slice(2).toUpperCase()
+  for (const [, field, hex] of body.matchAll(/(\w+):\s*Color\(0x(FF[0-9A-Fa-f]{6})\)/g)) {
+    // Destructured rather than indexed: a capture group is string | undefined
+    // to the compiler even when the pattern guarantees it.
+    if (field && hex) out[field] = '#' + hex.slice(2).toUpperCase()
   }
   return out
 }
@@ -35,8 +37,8 @@ function cssBlock(from: number): Record<string, string> {
   const css = readFileSync(TOKENS, 'utf8')
   const end = css.indexOf('}', from)
   const out: Record<string, string> = {}
-  for (const m of css.slice(from, end).matchAll(/(--[\w-]+):\s*(#[0-9A-Fa-f]{6})\s*;/g)) {
-    out[m[1]] = m[2].toUpperCase()
+  for (const [, name, hex] of css.slice(from, end).matchAll(/(--[\w-]+):\s*(#[0-9A-Fa-f]{6})\s*;/g)) {
+    if (name && hex) out[name] = hex.toUpperCase()
   }
   return out
 }

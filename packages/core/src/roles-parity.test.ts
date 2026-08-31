@@ -28,8 +28,8 @@ function migrations(): string {
 /** Every function this project puts in `public`, by name. */
 function declared(sql: string): Set<string> {
   const out = new Set<string>()
-  for (const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+public\.(\w+)\s*\(/gi)) {
-    out.add(m[1])
+  for (const [, name] of sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+public\.(\w+)\s*\(/gi)) {
+    if (name) out.add(name)
   }
   return out
 }
@@ -48,10 +48,10 @@ function grantedToAuthenticated(sql: string, name: string): boolean {
     `(grant|revoke)\\s+(?:all|execute)(?:\\s+privileges)?\\s+on\\s+function\\s+public\\.${name}\\s*\\(([^)]*)\\)\\s*(?:to|from)\\s+([^;]+);`,
     'gi',
   )
-  for (const m of sql.matchAll(pattern)) {
-    const roles = m[3].toLowerCase()
-    if (!roles.includes('authenticated')) continue
-    granted = m[1].toLowerCase() === 'grant'
+  for (const [, verb, , roles] of sql.matchAll(pattern)) {
+    if (!verb || !roles) continue
+    if (!roles.toLowerCase().includes('authenticated')) continue
+    granted = verb.toLowerCase() === 'grant'
   }
   return granted
 }
@@ -60,8 +60,8 @@ function grantedToAuthenticated(sql: string, name: string): boolean {
 function documented(): Map<string, string> {
   const doc = readFileSync(join(ROOT, 'supabase', 'ROLES.md'), 'utf8')
   const out = new Map<string, string>()
-  for (const m of doc.matchAll(/^\|\s*`(\w+)\([^)]*\)`\s*\|\s*([^|]+?)\s*\|\s*$/gm)) {
-    out.set(m[1], m[2])
+  for (const [, name, claim] of doc.matchAll(/^\|\s*`(\w+)\([^)]*\)`\s*\|\s*([^|]+?)\s*\|\s*$/gm)) {
+    if (name && claim) out.set(name, claim)
   }
   return out
 }
