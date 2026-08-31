@@ -1,26 +1,57 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 
-const DEMO_RESPONSE = {
-  transaction_description: "Logo design for a startup",
-  amount: "500",
-  buyer_claim: "The designer delivered low quality work that does not match what was agreed.",
-  seller_claim: "I delivered exactly what was specified in the brief, client keeps changing requirements.",
-  evidence_notes: "Contract signed on June 1st, delivery made June 8th.",
-  ai_resolution: {
-    decision: "Split Resolution",
-    reasoning: "The evidence shows a valid contract was signed and delivery did occur within the agreed window. However, the buyer's claim of quality mismatch and the seller's claim of shifting requirements cannot be fully verified from the notes alone — this is a genuinely ambiguous case rather than a clear-cut fault on either side.",
-    action: "Release 60% of the held amount (300 AED) to the seller for work delivered on schedule, and refund 40% (200 AED) to the buyer to account for the unresolved quality concern.",
-    confidence: "Medium",
-    resolvedIn: "47s"
-  }
+// A real run of the resolution pipeline, copied out of the production audit
+// log. Nothing here is written by hand: the findings, the summary, the split
+// and the numbers below are what claude-opus-5 returned on 30 August 2026, and
+// the audit row is the row that recorded it.
+//
+// The dispute it ran on is a test case rather than a customer's, which is said
+// on the page. What is not a test is the run.
+const RECORDED_RUN = {
+  contract: {
+    reference: 'Logo design for a startup',
+    terms: 'Deliver 3 distinct logo concepts within 7 days. Two rounds of revision included. Final files supplied as SVG and PNG.',
+    amount: '500 AED',
+  },
+  buyerClaim:
+    'Only two usable concepts were delivered. The third is a colour variation of the second, not a distinct concept as the brief required.',
+  sellerClaim:
+    'Three concepts were delivered inside the agreed window. The client changed direction after seeing them.',
+  findings: [
+    'The agreed brief required three distinct logo concepts within seven days, delivered as SVG and PNG.',
+    "The seller's own delivery note records that what was sent was two concepts plus a colour variation, not three distinct concepts.",
+    'Delivery occurred on 8 August 2026, within seven days of the brief signed 1 August 2026, so the deadline was met.',
+  ],
+  decision: 'Split',
+  split: { seller: '325.00 AED', buyer: '175.00 AED', sellerPct: 65 },
+  summary:
+    'Both sides agree three concepts were promised within seven days, with final files in SVG and PNG. The seller\u2019s own delivery note describes what was sent as \u201Ctwo concepts plus a colour variation\u201D, which matches the buyer\u2019s account rather than the seller\u2019s claim of three distinct concepts. Delivery on 8 August was within seven days of the brief signed 1 August, so timing was met, and the seller clearly did substantial work; but one of the three required concepts was not distinct. Nothing submitted shows whether the SVG and PNG files were supplied, and the seller\u2019s claim that the client changed direction is not supported by any evidence, so neither point is weighed. On that basis the seller is credited for roughly the two-thirds of the concept work actually delivered, with a modest deduction reflecting the shortfall against the agreed brief.',
+  audit: {
+    model: 'claude-opus-5',
+    promptVersion: '2026-08-26.1',
+    confidence: '0.720',
+    latency: '12,290 ms',
+    outcome: 'accepted',
+  },
 }
 
-const LOADING_STEPS = [
-  "Receiving dispute payload...",
-  "Routing to AI resolution engine...",
-  "AI agent analyzing evidence...",
-  "Writing resolution to database..."
+// The two the system refused to pass on. These matter more than the one that
+// worked: they are the difference between an agent that answers and an agent
+// that knows when not to.
+const REFUSED_RUNS = [
+  {
+    outcome: 'ESCALATED_BY_POLICY',
+    confidence: '0.150',
+    latency: '5,902 ms',
+    why: 'The model was not confident enough. Below the policy threshold a case goes to a person instead of to the parties.',
+  },
+  {
+    outcome: 'UNGROUNDED_FINDING',
+    confidence: '0.220',
+    latency: '9,614 ms',
+    why: 'One finding cited a document that was never filed. Validation rejected the whole proposal rather than the sentence.',
+  },
 ]
 
 function Nav() {
@@ -30,8 +61,7 @@ function Nav() {
         <div className="nav-logo">Trust<span>IQ</span></div>
         <ul className="nav-links">
           <li><a href="#how-it-works">How It Works</a></li>
-          <li><a href="#demo">Live Demo</a></li>
-          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#resolution">Resolution</a></li>
           <li><a href="#about">About</a></li>
         </ul>
       </div>
@@ -161,8 +191,8 @@ function HowItWorks() {
     },
     {
       num: '03',
-      title: 'Payment is locked in escrow',
-      subtitle: 'ESCROW',
+      title: 'Payment, and where it will sit in v2',
+      subtitle: 'ESCROW \u00b7 V2',
       icon: '🔒',
       phase: 'v2',
       description: 'Once both parties sign, the buyer\'s payment (500 AED) is locked in TrustIQ escrow. The seller can start working, knowing the money is secured. The buyer knows the money won\'t be released until the job is done. Holding funds in the UAE requires a licensed partner, so this step ships in v2. In v1 the parties pay each other directly, and every other step below works exactly as shown.',
@@ -314,7 +344,7 @@ function HowItWorks() {
               </button>
             )}
             {activeStep === 4 && (
-              <a href="#demo" className="step-next-btn">Try the Live Demo ↓</a>
+              <a href="#resolution" className="step-next-btn">See a real resolution ↓</a>
             )}
           </div>
           <div className="step-visual-wrapper">
@@ -326,219 +356,92 @@ function HowItWorks() {
   )
 }
 
-function DemoForm({ onSubmit, loading }) {
-  const [form, setForm] = useState({
-    transaction_description: DEMO_RESPONSE.transaction_description,
-    amount: DEMO_RESPONSE.amount,
-    buyer_claim: DEMO_RESPONSE.buyer_claim,
-    seller_claim: DEMO_RESPONSE.seller_claim,
-    evidence_notes: DEMO_RESPONSE.evidence_notes
-  })
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit(form)
-  }
-
+function RealRun() {
+  const r = RECORDED_RUN
   return (
-    <form className="demo-form" onSubmit={handleSubmit}>
-      <div className="form-group">
-        <label htmlFor="transaction_description">Transaction Description</label>
-        <input id="transaction_description" name="transaction_description" value={form.transaction_description} onChange={handleChange} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="amount">Amount (AED)</label>
-        <input id="amount" name="amount" value={form.amount} onChange={handleChange} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="buyer_claim">Buyer Claim</label>
-        <textarea id="buyer_claim" name="buyer_claim" value={form.buyer_claim} onChange={handleChange} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="seller_claim">Seller Claim</label>
-        <textarea id="seller_claim" name="seller_claim" value={form.seller_claim} onChange={handleChange} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="evidence_notes">Evidence Notes</label>
-        <textarea id="evidence_notes" name="evidence_notes" value={form.evidence_notes} onChange={handleChange} />
-      </div>
-      <button type="submit" className="submit-btn" disabled={loading}>
-        {loading ? 'Processing...' : 'Submit Dispute for AI Resolution'}
-      </button>
-    </form>
-  )
-}
-
-function LoadingState() {
-  const [activeStep, setActiveStep] = useState(0)
-
-  useEffect(() => {
-    const timers = LOADING_STEPS.map((_, i) =>
-      setTimeout(() => setActiveStep(i), i * 450)
-    )
-    return () => timers.forEach(clearTimeout)
-  }, [])
-
-  return (
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <div className="loading-text">AI Resolution Engine</div>
-      <div className="loading-steps">
-        {LOADING_STEPS.map((step, i) => (
-          <div
-            key={i}
-            className={`loading-step ${i === activeStep ? 'active' : i < activeStep ? 'done' : ''}`}
-          >
-            {i < activeStep ? '✓' : i === activeStep ? '›' : '·'} {step}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function VerdictCard({ resolution }) {
-  return (
-    <div className="verdict-card">
-      <div className="verdict-header">
-        <div className="verdict-header-left">
-          <span className="ai-badge"><span className="ai-badge-dot"></span>AI Proposal</span>
-        </div>
-        <span className="verdict-time">Drafted in {resolution.resolvedIn}</span>
-      </div>
-      <div className="verdict-body">
-        <div className="verdict-field">
-          <div className="verdict-field-label">Proposal</div>
-          <div className="verdict-decision">{resolution.decision}</div>
-        </div>
-        <div className="verdict-field">
-          <div className="verdict-field-label">Reasoning</div>
-          <div className="verdict-field-value">{resolution.reasoning}</div>
-        </div>
-        <div className="verdict-field">
-          <div className="verdict-field-label">Action</div>
-          <div className="verdict-field-value">{resolution.action}</div>
-        </div>
-        <div className="verdict-field">
-          <div className="verdict-field-label">Confidence</div>
-          <span className="verdict-confidence">{resolution.confidence}</span>
-        </div>
-        <div className="verdict-field">
-          <div className="verdict-field-label">Next step</div>
-          <div className="verdict-field-value">
-            Both parties review this proposal. It takes effect only if both accept.
-            Either side can refuse and send the case to a human reviewer.
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function PayloadCard({ payload }) {
-  return (
-    <div className="payload-card">
-      <div className="payload-header">
-        <span>Webhook Payload (JSON)</span>
-        <span>POST /webhook/trustiq</span>
-      </div>
-      <div className="payload-body">
-        <pre>{JSON.stringify(payload, null, 2)}</pre>
-      </div>
-    </div>
-  )
-}
-
-function Demo() {
-  const [state, setState] = useState('idle')
-  const [payload, setPayload] = useState(null)
-
-  const handleSubmit = (formData) => {
-    setPayload(formData)
-    setState('loading')
-    setTimeout(() => setState('done'), 2000)
-  }
-
-  return (
-    <section className="demo" id="demo">
+    <section className="run" id="resolution">
       <div className="container">
-        <span className="label">Live Demo — Step 5 in Action</span>
-        <h2 style={{ fontSize: '2rem', marginTop: 12 }}>Test the AI dispute resolution engine</h2>
-        <p className="section-sub">This is what happens at Step 5 when a dispute is opened. Fill in the claims and see the AI agent resolve it.</p>
-        <div className="demo-wrapper">
-          <DemoForm onSubmit={handleSubmit} loading={state === 'loading'} />
-          <div className="demo-result">
-            {state === 'idle' && (
-              <div className="result-placeholder">
-                <div className="icon">⚖️</div>
-                <p>Submit a dispute to see the AI resolution engine in action</p>
+        <span className="label">From the audit log</span>
+        <h2 className="run-title">A resolution the system actually produced</h2>
+        <p className="section-sub">
+          This page used to render an invented answer behind a fake progress bar. The pipeline is
+          real now, so what follows is a run that happened: the findings, the split and the numbers
+          below are what the model returned, and the audit row is the row that recorded it. The
+          dispute is a test case, not a customer&rsquo;s. The run is not.
+        </p>
+
+        <div className="run-grid">
+          <div className="run-case">
+            <h3>What was agreed</h3>
+            <p className="run-terms">{r.contract.terms}</p>
+            <p className="run-amount">{r.contract.amount}</p>
+
+            <h3>What each side said</h3>
+            <blockquote className="run-claim buyer">
+              <span>Buyer</span>
+              {r.buyerClaim}
+            </blockquote>
+            <blockquote className="run-claim seller">
+              <span>Seller</span>
+              {r.sellerClaim}
+            </blockquote>
+          </div>
+
+          <div className="run-answer">
+            <h3>What the agent found</h3>
+            <ol className="run-findings">
+              {r.findings.map((f) => <li key={f}>{f}</li>)}
+            </ol>
+
+            <div className="run-split">
+              <div className="run-split-head">
+                <span className="run-decision">{r.decision}</span>
+                <span className="run-conf">confidence {r.audit.confidence}</span>
               </div>
-            )}
-            {state === 'loading' && <LoadingState />}
-            {state === 'done' && (
-              <>
-                <VerdictCard resolution={DEMO_RESPONSE.ai_resolution} />
-                <PayloadCard payload={payload} />
-              </>
-            )}
+              <div className="run-bar">
+                <div className="run-bar-seller" style={{ width: r.split.sellerPct + '%' }} />
+              </div>
+              <div className="run-bar-legend">
+                <span>Seller {r.split.seller}</span>
+                <span>Buyer {r.split.buyer}</span>
+              </div>
+            </div>
+
+            <p className="run-summary">{r.summary}</p>
+
+            <dl className="run-audit">
+              <div><dt>Model</dt><dd>{r.audit.model}</dd></div>
+              <div><dt>Prompt</dt><dd>{r.audit.promptVersion}</dd></div>
+              <div><dt>Latency</dt><dd>{r.audit.latency}</dd></div>
+              <div><dt>Validation</dt><dd className="ok">{r.audit.outcome}</dd></div>
+            </dl>
           </div>
         </div>
-        <div className="demo-note">
-          <strong>Transparency note:</strong> The resolution shown is an illustrative example of the
-          structured output TrustIQ's AI agent is designed to return. The dispute-resolution backend
-          (Make.com webhook → OpenAI → Supabase) is the target architecture; this demo renders the
-          response locally so you can see the format and flow without a live API call.
-        </div>
-      </div>
-    </section>
-  )
-}
 
-function Architecture() {
-  const nodes = [
-    { icon: '🌐', title: 'Web Interface', sub: 'React App', active: false },
-    { icon: '⚡', title: 'Make Webhook', sub: 'Orchestration', active: true },
-    { icon: '🧠', title: 'OpenAI', sub: 'AI Resolution', active: true },
-    { icon: '🗄️', title: 'Supabase', sub: 'PostgreSQL', active: false },
-  ]
-
-  const details = [
-    { step: '01', title: 'Dispute Submitted', desc: 'When a buyer opens a dispute, both parties submit their claims and evidence through the web interface.' },
-    { step: '02', title: 'Webhook Receives', desc: 'Make.com custom webhook receives the JSON payload and routes it to the AI processing module.' },
-    { step: '03', title: 'AI Analyzes', desc: 'An OpenAI model, prompted as the TrustIQ Dispute Resolution Agent, analyzes evidence from both parties and generates a structured verdict.' },
-    { step: '04', title: 'Resolution Stored', desc: 'The AI decision (verdict, reasoning, action, confidence) is written to the Supabase disputes table and escrow is adjusted accordingly.' },
-  ]
-
-  return (
-    <section className="architecture" id="architecture">
-      <div className="container">
-        <span className="label">Architecture</span>
-        <h2 style={{ fontSize: '2rem', marginTop: 12 }}>How the AI resolution pipeline works</h2>
-        <div className="arch-flow">
-          {nodes.map((node, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className={`arch-node ${node.active ? 'active' : ''}`}>
-                <div className="arch-node-icon">{node.icon}</div>
-                <h3>{node.title}</h3>
-                <p>{node.sub}</p>
+        <div className="run-refused">
+          <h3>And two the system refused to pass on</h3>
+          <p>
+            These matter more than the one that worked. An agent that always answers is not
+            trustworthy; one that knows when to stop is. Nothing unvalidated ever reaches either
+            party, and every run is logged, including the failures.
+          </p>
+          <div className="run-refused-grid">
+            {REFUSED_RUNS.map((x) => (
+              <div className="run-refused-card" key={x.outcome}>
+                <code>{x.outcome}</code>
+                <p>{x.why}</p>
+                <span className="run-refused-meta">
+                  confidence {x.confidence} &middot; {x.latency}
+                </span>
               </div>
-              {i < nodes.length - 1 && <span className="arch-arrow">→</span>}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        <div className="arch-detail">
-          {details.map((d) => (
-            <div key={d.step} className="arch-detail-card">
-              <div className="step-num">STEP {d.step}</div>
-              <h4>{d.title}</h4>
-              <p>{d.desc}</p>
-            </div>
-          ))}
-        </div>
+
+        <p className="run-note">
+          A resolution only ends a dispute if <strong>both</strong> parties accept it. One refusal
+          sends the case to a person. The agent proposes; it does not decide.
+        </p>
       </div>
     </section>
   )
@@ -570,8 +473,7 @@ function App() {
       <Hero />
       <Problem />
       <HowItWorks />
-      <Demo />
-      <Architecture />
+      <RealRun />
       <Footer />
     </>
   )

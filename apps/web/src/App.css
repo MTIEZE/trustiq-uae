@@ -917,3 +917,148 @@
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
+
+/* ---------------------------------------------------------------------------
+   A resolution the system actually produced.
+   Replaces the demo styling, which dressed an invented answer as a live one:
+   a progress bar counting through fabricated steps, and a verdict card with a
+   confidence nobody had measured. What is here shows a recorded run, so it is
+   laid out as a record rather than as a simulation.
+   --------------------------------------------------------------------------- */
+
+.run { padding: 96px 0; border-top: 1px solid var(--border); }
+.run-title { font-size: 2rem; margin-top: 12px; }
+
+.run-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 28px;
+  margin-top: 36px;
+  align-items: start;
+}
+@media (max-width: 860px) { .run-grid { grid-template-columns: 1fr; } }
+
+.run-case, .run-answer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 26px 28px;
+}
+
+.run h3 {
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+.run-case h3:not(:first-child) { margin-top: 28px; }
+
+.run-terms { font-size: 15px; line-height: 1.6; margin: 0 0 10px; color: var(--text); }
+.run-amount {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px; color: var(--text-dim); margin: 0;
+}
+
+/* The two accounts, told apart by which edge is marked rather than by colour
+   alone: on a case where one side is about to be found against, a red quote
+   would be the page taking a view before the reader has. */
+.run-claim {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--border);
+  background: rgba(0, 0, 0, .18);
+  border-radius: 0 6px 6px 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.run-claim:last-child { margin-bottom: 0; }
+.run-claim span {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.run-claim.seller { border-left-color: var(--accent); }
+
+.run-findings {
+  margin: 0 0 26px;
+  padding-left: 20px;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+.run-findings li { margin-bottom: 10px; color: var(--text); }
+.run-findings li::marker { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.run-split { margin-bottom: 22px; }
+.run-split-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+}
+.run-decision { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.run-conf {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12.5px; color: var(--text-dim);
+}
+.run-bar {
+  height: 10px; border-radius: 5px; overflow: hidden;
+  background: rgba(255, 255, 255, .08);
+}
+.run-bar-seller { height: 100%; background: var(--accent); }
+.run-bar-legend {
+  display: flex; justify-content: space-between; margin-top: 8px;
+  font-size: 13px; color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.run-summary {
+  font-size: 14.5px; line-height: 1.65; color: var(--text-dim);
+  margin: 0 0 22px; padding-top: 20px; border-top: 1px solid var(--border);
+}
+
+.run-audit {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px; margin: 0; padding-top: 18px; border-top: 1px solid var(--border);
+}
+.run-audit dt {
+  font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 4px; font-weight: 600;
+}
+.run-audit dd {
+  margin: 0; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px; color: var(--text);
+}
+.run-audit dd.ok { color: var(--accent); }
+
+.run-refused { margin-top: 40px; }
+.run-refused > p { color: var(--text-dim); max-width: 68ch; margin: 0 0 20px; font-size: 15px; }
+.run-refused-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
+}
+.run-refused-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px 22px;
+}
+.run-refused-card code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; color: var(--amber, #E8B36A);
+  display: block; margin-bottom: 10px; letter-spacing: .02em;
+}
+.run-refused-card p { font-size: 14px; line-height: 1.55; color: var(--text); margin: 0 0 12px; }
+.run-refused-meta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; color: var(--text-dim);
+}
+
+.run-note {
+  margin-top: 32px; padding: 18px 20px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
+  font-size: 14.5px; line-height: 1.6; color: var(--text-dim);
+}
+.run-note strong { color: var(--text); }
