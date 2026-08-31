@@ -1,18 +1,4 @@
-:root {
-  --bg: #060908;
-  --surface: #121C19;
-  --surface-elevated: #182522;
-  --border: #24332F;
-  --accent: #2DD4A7;
-  --accent-dim: #1B7A63;
-  --amber: #E8B36A;
-  --coral: #E8716A;
-  --text: #EAF2EF;
-  --text-dim: #8FA39D;
-  --text-faint: #5A6E68;
-  --radius: 16px;
-  --radius-sm: 12px;
-}
+@import './tokens.css';
 
 *, *::before, *::after {
   box-sizing: border-box;

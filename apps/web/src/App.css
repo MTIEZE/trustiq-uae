@@ -6,7 +6,9 @@
   right: 0;
   z-index: 100;
   padding: 16px 0;
-  background: rgba(6, 9, 8, 0.85);
+  /* The ground itself, softened. Written as the old near-black, it stayed
+     dark on the light theme and put dark text on a dark bar. */
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -65,7 +67,7 @@
   transition: box-shadow 0.3s, transform 0.2s;
 }
 .hero-cta:hover {
-  box-shadow: 0 0 24px rgba(45, 212, 167, 0.35);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
   transform: translateY(-1px);
   color: var(--bg);
 }
@@ -188,12 +190,12 @@
 .step-nav-btn:hover { border-color: var(--accent-dim); color: var(--text-dim); }
 .step-nav-btn.active {
   border-color: var(--accent);
-  background: rgba(45, 212, 167, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
 }
 .step-nav-btn.ai-step.active {
   border-color: var(--amber);
-  background: rgba(232, 179, 106, 0.08);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: var(--amber);
 }
 .step-nav-num {
@@ -226,7 +228,7 @@
   padding: 6px 12px;
   margin-bottom: 14px;
   border-left: 2px solid var(--amber);
-  background: rgba(232, 179, 106, 0.08);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: var(--amber);
 }
 .step-display {
@@ -261,7 +263,7 @@
 }
 .step-next-btn:hover {
   border-color: var(--accent);
-  background: rgba(45, 212, 167, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
 }
 
@@ -278,7 +280,7 @@
 .mock-card.wide { flex: 1 1 100%; }
 .mock-card.ai-glow {
   border-color: var(--accent-dim);
-  background: linear-gradient(135deg, rgba(45, 212, 167, 0.06), var(--surface));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), var(--surface));
 }
 .mock-card-header {
   display: flex;
@@ -336,9 +338,9 @@
   border-radius: 999px;
 }
 .mock-sig.signed {
-  background: rgba(45, 212, 167, 0.1);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   color: var(--accent);
-  border: 1px solid rgba(45, 212, 167, 0.25);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .mock-btn {
   padding: 10px 16px;
@@ -370,11 +372,11 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
-.status-pill.pending { background: rgba(138, 163, 157, 0.15); color: var(--text-dim); }
+.status-pill.pending { background: color-mix(in srgb, var(--text-dim) 15%, transparent); color: var(--text-dim); }
 .status-pill.pending .pill-dot { background: var(--text-dim); box-shadow: 0 0 6px var(--text-dim); }
-.status-pill.locked { background: rgba(45, 212, 167, 0.12); color: var(--accent); }
+.status-pill.locked { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
 .status-pill.locked .pill-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-.status-pill.disputed { background: rgba(232, 113, 106, 0.12); color: var(--coral); }
+.status-pill.disputed { background: color-mix(in srgb, var(--coral) 12%, transparent); color: var(--coral); }
 .status-pill.disputed .pill-dot { background: var(--coral); box-shadow: 0 0 6px var(--coral); }
 
 /* Escrow visual */
@@ -584,7 +586,7 @@
   transition: box-shadow 0.3s;
 }
 .submit-btn:hover {
-  box-shadow: 0 0 24px rgba(45, 212, 167, 0.35);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .submit-btn:disabled {
   opacity: 0.5;
@@ -631,7 +633,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, rgba(45, 212, 167, 0.08), transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent);
 }
 .verdict-header-left {
   display: flex;
@@ -643,8 +645,8 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: rgba(45, 212, 167, 0.12);
-  border: 1px solid rgba(45, 212, 167, 0.25);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   border-radius: 999px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
@@ -693,8 +695,8 @@
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  background: rgba(232, 179, 106, 0.12);
-  border: 1px solid rgba(232, 179, 106, 0.25);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--amber) 25%, transparent);
   border-radius: 999px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
@@ -785,8 +787,8 @@
 .demo-note {
   margin-top: 24px;
   padding: 16px 20px;
-  background: rgba(45, 212, 167, 0.06);
-  border: 1px solid rgba(45, 212, 167, 0.15);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 15%, transparent);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   color: var(--text-dim);
@@ -821,7 +823,7 @@
 }
 .arch-node.active {
   border-color: var(--accent-dim);
-  background: linear-gradient(135deg, rgba(45, 212, 167, 0.08), var(--surface));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), var(--surface));
 }
 .arch-node-icon {
   font-size: 1.8rem;
@@ -968,7 +970,9 @@
   margin: 0 0 12px;
   padding: 14px 16px;
   border-left: 3px solid var(--border);
-  background: rgba(0, 0, 0, .18);
+  /* A token, not a black wash. On the light theme a translucent black
+     turned the quotes into grey smudges. */
+  background: var(--surface-elevated);
   border-radius: 0 6px 6px 0;
   font-size: 14.5px;
   line-height: 1.55;
@@ -1007,7 +1011,9 @@
 }
 .run-bar {
   height: 10px; border-radius: 5px; overflow: hidden;
-  background: rgba(255, 255, 255, .08);
+  /* Same reason in the other direction: a white wash disappeared
+     entirely against the light theme's white surface. */
+  background: var(--border);
 }
 .run-bar-seller { height: 100%; background: var(--accent); }
 .run-bar-legend {
@@ -1046,7 +1052,7 @@
 }
 .run-refused-card code {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12px; color: var(--amber, #E8B36A);
+  font-size: 12px; color: var(--amber);
   display: block; margin-bottom: 10px; letter-spacing: .02em;
 }
 .run-refused-card p { font-size: 14px; line-height: 1.55; color: var(--text); margin: 0 0 12px; }
@@ -1103,7 +1109,7 @@
 .beta input[type="email"]:focus { outline: none; border-color: var(--accent); }
 .beta button {
   padding: 13px 24px; font: inherit; font-size: 15px; font-weight: 700;
-  color: var(--bg); background: var(--accent);
+  color: var(--on-accent); background: var(--accent);
   border: none; border-radius: 8px; cursor: pointer; white-space: nowrap;
 }
 .beta button:disabled { opacity: .6; cursor: default; }
