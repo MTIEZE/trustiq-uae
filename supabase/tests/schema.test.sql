@@ -3148,4 +3148,183 @@ reset role;
 select set_config('request.jwt.claim.sub', '', false);
 
 \echo ''
+\echo '== The control centre =='
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-0000000000b1', 'watched@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000b2', 'second.operator@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-0000000000b1', 'Someone Watched', 'watched@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000b2', 'Second Operator', 'second.operator@example.ae');
+insert into app.admins (user_id, note) values
+  ('0f000000-0000-0000-0000-0000000000b2', 'A second operator, for the tests');
+
+-- The operator added far above, in the section on aggregates.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+\echo ''
+\echo '-- looking at somebody leaves a trace --'
+
+select pg_temp.check(
+  (select count(*) from public.admin_person('0f000000-0000-0000-0000-0000000000b1')) = 1,
+  'an operator can open a person''s file');
+
+reset role;
+select pg_temp.check(
+  (select count(*) from app.admin_access_log
+   where actor_id = '0f000000-0000-0000-0000-000000000001'
+     and subject_id = '0f000000-0000-0000-0000-0000000000b1'
+     and what = 'person') = 1,
+  'and the fact that they looked is written down');
+
+-- The whole reason the panel is allowed to show names at all. Without this the
+-- functions above are just a wider hole in the rule 0020 set.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+select * from public.admin_people('watched');
+reset role;
+
+select pg_temp.check(
+  (select query from app.admin_access_log
+   where actor_id = '0f000000-0000-0000-0000-000000000001' and what = 'people'
+   order by looked_at desc limit 1) = 'watched',
+  'a search records what was searched for');
+
+\echo ''
+\echo '-- and the audited cannot read the audit --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_access_history() $q$,
+  'an operator cannot read the access log');
+
+select pg_temp.expect_error(
+  $q$ select * from app.admin_access_log $q$,
+  'nor reach the table behind it');
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select pg_temp.expect_error(
+  $q$ delete from app.admin_access_log $q$,
+  'and nobody can erase it, service role included');
+
+select pg_temp.check(
+  (select count(*) from public.admin_access_history()) >= 2,
+  'somebody at a terminal can read it');
+
+\echo ''
+\echo '-- suspending an account --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.expect_error(
+  $q$ select public.admin_set_suspended(
+        '0f000000-0000-0000-0000-0000000000b1', true, 'no') $q$,
+  'a suspension with no real reason is refused');
+
+select pg_temp.expect_error(
+  $q$ select public.admin_set_suspended(
+        '0f000000-0000-0000-0000-000000000001', true,
+        'Locking myself out by accident.') $q$,
+  'an operator cannot suspend themselves');
+
+-- The one that turns a bad afternoon into nobody being able to fix anything.
+select pg_temp.expect_error(
+  $q$ select public.admin_set_suspended(
+        '0f000000-0000-0000-0000-0000000000b2', true,
+        'Disagreement about how to run the place.') $q$,
+  'nor another operator');
+
+select pg_temp.check(
+  (select public.admin_set_suspended(
+     '0f000000-0000-0000-0000-0000000000b1', true,
+     'Signed up with somebody else''s Emirates ID.')) is true,
+  'an ordinary account can be suspended');
+
+select pg_temp.check(
+  (select suspended from public.admin_person('0f000000-0000-0000-0000-0000000000b1')) is true,
+  'and the file says so');
+
+reset role;
+select pg_temp.check(
+  (select count(*) from app.admin_access_log
+   where subject_id = '0f000000-0000-0000-0000-0000000000b1' and what = 'suspend') = 1,
+  'the suspension is on the access log with its reason');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.check(
+  (select public.admin_set_suspended(
+     '0f000000-0000-0000-0000-0000000000b1', false,
+     'Cleared after the check; it was their own document.')) is true,
+  'and it can be lifted');
+
+select pg_temp.check(
+  (select suspended from public.admin_person('0f000000-0000-0000-0000-0000000000b1')) is false,
+  'which the file also says');
+
+\echo ''
+\echo '-- none of it is open to anybody else --'
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000002', false);
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_people() $q$,
+  'somebody who is not an operator cannot search people');
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_person('0f000000-0000-0000-0000-0000000000b1') $q$,
+  'nor open a file');
+
+select pg_temp.expect_error(
+  $q$ select public.admin_set_suspended(
+        '0f000000-0000-0000-0000-0000000000b1', true, 'Because I feel like it.') $q$,
+  'nor suspend anybody');
+
+select pg_temp.expect_error(
+  $q$ select * from public.admin_disputes() $q$,
+  'nor look at the disputes');
+
+reset role;
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.admin_people(text, integer)', 'EXECUTE'),
+  'and anon holds no grant on any of it');
+
+select pg_temp.check(
+  not has_function_privilege('authenticated',
+    'public.admin_access_history(integer)', 'EXECUTE'),
+  'the access log is not a client API at all');
+
+\echo ''
+\echo '-- the feed is what happened, not who --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.check(
+  (select count(*) from public.admin_activity(10)) between 1 and 10,
+  'the activity feed answers and respects its limit');
+
+reset role;
+
+-- It names nobody, which is why it is not logged as an access.
+select pg_temp.check(
+  not exists (
+    select 1 from public.admin_activity(200) f
+    join app.real_profiles p on f.detail = p.full_name or f.actor = p.full_name),
+  'and carries no names, only roles and event codes');
+
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

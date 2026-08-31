@@ -10,7 +10,13 @@ create schema if not exists auth;
 
 create table if not exists auth.users (
   id    uuid primary key default gen_random_uuid(),
-  email text
+  email text,
+
+  -- Supabase's own column, and the one suspension writes. Added when the
+  -- control centre needed it: a stub missing what production has is how a
+  -- test suite ends up safer than the thing it tests, which has already
+  -- happened here once with default privileges.
+  banned_until timestamptz
 );
 
 -- Mirrors Supabase's auth.uid(), reading the request-scoped JWT claim.

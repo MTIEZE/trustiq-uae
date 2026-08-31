@@ -45,8 +45,16 @@ been half-verified.
 | Accept or refuse a proposal | a party, and it takes both to end it | `app.dispute_transitions` |
 | Take over an escalated dispute | a reviewer | `app.is_reviewer` |
 | Read the platform's numbers | an operator | `app.is_admin` |
+| Open somebody's file, or suspend an account | an operator, and it is logged | `app.note_admin_access` writes a row first |
+| Read who looked at whom | nobody through the API | service role, `app.admin_access_log` is append-only |
 | Verify somebody, or withdraw it | nobody through the API | service role, `scripts/verifications.mjs` |
 | Expire, renew, warn | nobody through the API | service role, the daily schedule |
+
+An operator can now see personal data, which 0020 deliberately prevented. The
+rule was not abandoned, it was paid for: every read of a person's record writes
+a row saying who looked and at whom, that log is append-only, and **an operator
+cannot read it**. An audit trail the audited can read is a list of what to avoid
+next time.
 
 Two things are true of every row and worth saying once. The actor is always
 derived from `auth.uid()` and never accepted as an argument, so "act as the
@@ -69,11 +77,18 @@ database built from `supabase/migrations` and production is not only that.
 | --- | --- |
 | `accept_milestone(p_milestone_id uuid)` | signed in |
 | `accept_resolution_proposal(p_proposal_id uuid)` | signed in |
+| `admin_access_history(p_days integer)` | system only |
+| `admin_activity(p_limit integer)` | signed in |
 | `admin_ai_quality()` | signed in |
 | `admin_beta_waiting()` | signed in |
 | `admin_daily(p_days integer)` | signed in |
+| `admin_disputes()` | signed in |
 | `admin_overview()` | signed in |
+| `admin_people(p_query text, p_limit integer)` | signed in |
+| `admin_person(p_user_id uuid)` | signed in |
+| `admin_set_suspended(p_user_id uuid, p_suspended boolean, p_reason text)` | signed in |
 | `admin_verification_pending()` | signed in |
+| `admin_verification_queue()` | signed in |
 | `apply_dispute_event(p_dispute_id uuid, p_event dispute_event)` | signed in |
 | `apply_transaction_event(p_transaction_id uuid, p_event transaction_event)` | signed in |
 | `beta_list()` | system only |

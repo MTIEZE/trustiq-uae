@@ -4,188 +4,226 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>TrustIQ operations</title>
+<title>TrustIQ Control Centre</title>
 <!--
-  The operator's view of the platform.
+  The operator's console.
 
-  Reachable by anyone; useful to almost nobody. Everything it shows comes from
-  four functions in supabase/migrations/0020_admin_and_activity.sql, each of
-  which refuses any caller who is not in app.admins, a table no client can
-  write to. So this page holds no authority of its own: it is a form and some
-  arithmetic in front of a door that the database keeps.
+  It carries no authority of its own. Every panel below is one function in
+  supabase/migrations, each of which refuses any caller who is not in
+  app.admins, a table no client can write to. This page is a form and some
+  arithmetic in front of a door the database keeps.
+
+  Everything that returns a person's details writes an access log row before it
+  answers: who looked, at whom, and what they searched for. That log is
+  append-only and an operator cannot read it. It is the price of this page
+  being allowed to show names at all, and it is charged in the database rather
+  than promised here.
 
   No SDK, no CDN, no framework. A page where somebody types the password to an
   account that can read the whole platform is the last place to load a script
-  from a host we do not control. Two fetch calls do everything.
+  from a host we do not control.
 
-  The publishable key is written into this file. It ships inside the APK and
-  is designed to be readable; hiding it here would be theatre. It grants
-  nothing on its own, which the schema tests assert in both directions.
-
-  The session lives in memory. Closing the tab signs you out, and that is the
-  intended behaviour rather than an omission: this is not a page to stay
-  logged into on a laptop somebody else can open.
+  The session lives in memory. Closing the tab signs you out.
 -->
 <style>
   :root {
-    --bg: #060908; --surface: #121C19; --raised: #18241F; --border: #24332F;
-    --accent: #2DD4A7; --amber: #E8B36A; --red: #E88A7A;
-    --text: #EAF2EF; --dim: #8FA39D; --faint: #5A6E68;
+    --bg: #F5F7F7; --surface: #FFFFFF; --sunken: #F7F9F9;
+    --border: #E4E9E9; --border-strong: #D1DADA;
+    --accent: #0D5F66; --accent-soft: #E3EFEF; --on-accent: #FFFFFF;
+    --text: #0E1518; --dim: #4A575E; --faint: #7C8890;
+    --ok: #3B6438; --ok-soft: #E7F0E5;
+    --warn: #8A6110; --warn-soft: #F8F1DE;
+    --bad: #9E3323; --bad-soft: #F8E9E6;
     --font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D1214; --surface: #151C1E; --sunken: #1A2325;
+      --border: #222B2D; --border-strong: #2F3B3D;
+      --accent: #4FBFC7; --accent-soft: #10312F; --on-accent: #06191B;
+      --text: #E9EEEE; --dim: #A6B3B5; --faint: #78868A;
+      --ok: #7FBE7A; --ok-soft: #17281A;
+      --warn: #D9A94E; --warn-soft: #2A2314;
+      --bad: #E38878; --bad-soft: #2E1A17;
+    }
+  }
+
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 36px 22px 96px; background: var(--bg); color: var(--text);
-    font-family: var(--font); font-size: 16px; line-height: 1.6;
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); font-size: 15px; line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 960px; margin: 0 auto; }
-
-  h1 { font-size: 26px; letter-spacing: -.02em; margin: 0; }
-  h2 {
-    font-size: 15px; letter-spacing: .06em; text-transform: uppercase;
-    color: var(--faint); margin: 44px 0 14px; font-weight: 600;
-  }
-  p { color: var(--dim); margin: 0 0 14px; }
+  h1, h2, h3 { margin: 0; letter-spacing: -.015em; }
+  p { margin: 0 0 12px; color: var(--dim); }
   a { color: var(--accent); }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
-  .host { color: var(--faint); font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  .top .spacer { flex: 1; }
-
-  button {
-    font: inherit; font-size: 14px; color: var(--text); background: var(--raised);
-    border: 1px solid var(--border); border-radius: 4px; padding: 8px 14px; cursor: pointer;
+  button, input {
+    font: inherit; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border-strong); border-radius: 6px; padding: 9px 14px;
   }
-  button:hover { border-color: var(--faint); }
-  button.primary { background: var(--accent); color: #05100C; border-color: var(--accent); font-weight: 600; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary {
+    background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600;
+  }
+  button.danger { color: var(--bad); border-color: var(--bad); }
   button[disabled] { opacity: .5; cursor: default; }
+  input:focus { outline: none; border-color: var(--accent); }
 
-  label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; }
-  input {
-    font: inherit; width: 100%; color: var(--text); background: var(--bg);
-    border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px;
+  /* ---- shell ---- */
+  .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+  @media (max-width: 820px) { .shell { grid-template-columns: 1fr; } }
+
+  .side {
+    background: var(--surface); border-right: 1px solid var(--border);
+    padding: 22px 16px; display: flex; flex-direction: column; gap: 4px;
   }
-  input:focus { border-color: var(--accent); outline: none; }
+  @media (max-width: 820px) {
+    .side { border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; overflow-x: auto; }
+  }
+  .brand { font-size: 17px; font-weight: 700; padding: 0 10px 18px; }
+  .brand span { color: var(--accent); }
+  .side nav { display: contents; }
+  .tab {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 9px 10px; border-radius: 6px; border: none; background: none;
+    color: var(--dim); font-size: 14.5px; text-align: left; white-space: nowrap;
+  }
+  .tab:hover { background: var(--sunken); border-color: transparent; }
+  .tab[aria-current="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tab .count {
+    font-family: var(--mono); font-size: 11.5px; padding: 1px 7px; border-radius: 20px;
+    background: var(--warn-soft); color: var(--warn);
+  }
+  .side-foot { margin-top: auto; padding: 14px 10px 0; border-top: 1px solid var(--border); }
+  @media (max-width: 820px) { .side-foot { display: none; } }
+  .who { font-family: var(--mono); font-size: 11.5px; color: var(--faint); word-break: break-all; }
 
-  /* Class only. As `form.gate` this out-specified `.hidden` and the sign-in
-     form stayed on screen underneath the panel it had just opened. */
-  .gate { max-width: 340px; display: grid; gap: 16px; margin-top: 40px; }
+  main { padding: 28px 30px 80px; max-width: 1100px; }
+  .head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .head h2 { font-size: 21px; }
+  .head .spacer { flex: 1; }
+  .lede { margin-bottom: 22px; max-width: 70ch; }
 
+  /* ---- states ---- */
   .note {
-    background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--amber); border-radius: 4px;
-    padding: 14px 16px; margin: 0 0 18px; font-size: 14.5px;
+    padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; font-size: 14.5px;
+    background: var(--sunken); border: 1px solid var(--border);
   }
-  .note.bad { border-left-color: var(--red); }
-  .note p:last-child { margin-bottom: 0; }
+  .note.bad { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+  .note.warn { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+  .empty {
+    padding: 44px 20px; text-align: center; color: var(--faint);
+    border: 1px dashed var(--border-strong); border-radius: 10px;
+  }
+  .loading { color: var(--faint); padding: 20px 0; }
 
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .tile {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 16px 18px;
-  }
-  .tile .n {
-    font-size: 30px; line-height: 1.1; letter-spacing: -.02em;
-    font-variant-numeric: tabular-nums;
-  }
-  .tile .k { font-size: 13px; color: var(--faint); margin-top: 4px; }
-  .tile .sub { font-size: 12.5px; color: var(--dim); margin-top: 8px; }
+  /* ---- numbers ---- */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 26px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 15px 17px; }
+  .tile .n { font-size: 26px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .tile .k { font-size: 12.5px; color: var(--faint); margin-top: 3px; }
+  .tile .sub { font-size: 12px; color: var(--dim); margin-top: 6px; }
 
-  /* The headline. Kept apart from the tiles because it is the one number the
-     product stands or falls on, and a grid would make it look like the rest. */
   .thesis {
     background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--accent); border-radius: 6px; padding: 22px 24px;
+    border-left: 3px solid var(--accent); border-radius: 8px; padding: 20px 22px; margin-bottom: 26px;
   }
-  .thesis .n { font-size: 44px; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-  .thesis .k { font-size: 14px; color: var(--dim); margin-top: 10px; max-width: 52ch; }
+  .thesis .n { font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .thesis .k { font-size: 13.5px; color: var(--dim); margin-top: 8px; max-width: 58ch; }
 
-  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-  .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
-  .chart .k { font-size: 13px; color: var(--faint); }
-  .chart .n { font-size: 22px; font-variant-numeric: tabular-nums; margin: 2px 0 10px; }
-  .chart svg { display: block; width: 100%; height: 56px; }
-  .chart .foot { font-size: 12px; color: var(--faint); margin-top: 8px; }
-
+  /* ---- tables ---- */
   .scroll { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 460px; }
-  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-  th { color: var(--faint); font-weight: 600; font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; }
-  td.n { text-align: right; font-variant-numeric: tabular-nums; }
-  tr:last-child td { border-bottom: none; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+  th, td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th {
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600; border-bottom-color: var(--border-strong);
+  }
+  /* Right aligned, but only flush when it is the last column. Written as a
+     flat padding-right: 0 it made the contracts count collide with the action
+     buttons in the next cell. */
+  td.n, th.n { text-align: right; padding-right: 18px; font-variant-numeric: tabular-nums; }
+  td.n:last-child, th.n:last-child { padding-right: 0; }
+  tbody tr:hover { background: var(--sunken); }
+  .mono { font-family: var(--mono); font-size: 12.5px; color: var(--faint); }
 
-  .bar { display: grid; grid-template-columns: 15ch 1fr 5ch; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 14px; }
-  .bar .track { background: var(--raised); border-radius: 3px; height: 20px; overflow: hidden; }
-  .bar .fill { display: block; background: var(--accent); height: 100%; opacity: .82; }
-  .bar .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--dim); }
+  .pill {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.flat { background: var(--sunken); color: var(--faint); }
 
-  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--faint); }
-  .hidden { display: none; }
+  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row-actions button { padding: 5px 10px; font-size: 13px; }
+
+  .search { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .search input { flex: 1 1 240px; min-width: 0; }
+
+  .gate { max-width: 340px; display: grid; gap: 14px; margin: 12vh auto; }
+  .gate h1 { font-size: 22px; }
+
+  dialog {
+    border: 1px solid var(--border); border-radius: 10px; padding: 24px 26px;
+    background: var(--surface); color: var(--text); max-width: 460px; width: calc(100% - 32px);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog h3 { font-size: 17px; margin-bottom: 10px; }
+  dialog input { width: 100%; margin: 10px 0 16px; }
+  .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<main>
 
-  <div class="top">
-    <h1>TrustIQ operations</h1>
-    <span class="spacer"></span>
-    <span class="host" id="host"></span>
+<form class="gate" id="gate">
+  <h1>TrustIQ <span style="color:var(--accent)">Control Centre</span></h1>
+  <p class="mono" id="host"></p>
+  <div id="problem" class="note bad hidden"></div>
+  <div>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required style="width:100%;margin-top:6px">
   </div>
-  <p id="lede">Numbers only. Nothing on this page can name a person.</p>
-
-  <div id="problem" class="note bad hidden"><p id="problem-text"></p></div>
-
-  <form class="gate" id="gate">
-    <div>
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username" required>
-    </div>
-    <div>
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-    </div>
-    <button class="primary" type="submit" id="go">Sign in</button>
-  </form>
-
-  <div id="panel" class="hidden">
-
-    <div class="top" style="margin-bottom:18px">
-      <span class="host" id="who"></span>
-      <span class="spacer"></span>
-      <button id="refresh">Refresh</button>
-      <button id="out">Sign out</button>
-    </div>
-
-    <h2>Where the thesis stands</h2>
-    <div class="thesis">
-      <div class="n" id="rate">—</div>
-      <div class="k" id="rate-note"></div>
-    </div>
-
-    <h2>People</h2>
-    <div class="tiles" id="people"></div>
-
-    <h2>Last 30 days</h2>
-    <div class="charts" id="charts"></div>
-
-    <h2>How far contracts get</h2>
-    <div id="funnel"></div>
-
-    <h2>The model</h2>
-    <div class="scroll"><table id="ai"><tbody></tbody></table></div>
-    <p id="ai-note" style="font-size:13.5px;margin-top:12px"></p>
-
+  <div>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required style="width:100%;margin-top:6px">
   </div>
+  <button class="primary" type="submit" id="go">Sign in</button>
+  <p style="font-size:13px;color:var(--faint)">
+    Your ordinary TrustIQ account. Being an operator is a row in a table only
+    SQL can write to; signing in is not enough.
+  </p>
+</form>
 
-  <footer>
-    Read-only. Verifying an identity, taking over a dispute or closing an
-    account are still done with the scripts in <code>scripts/</code>, which
-    need the service-role key and therefore cannot live in a browser.
-  </footer>
+<div class="shell hidden" id="shell">
+  <aside class="side">
+    <div class="brand">Trust<span>IQ</span></div>
+    <nav id="tabs"></nav>
+    <div class="side-foot">
+      <div class="who" id="who"></div>
+      <button style="margin-top:10px;width:100%" id="out">Sign out</button>
+    </div>
+  </aside>
+  <main id="view"></main>
+</div>
 
-</main>
+<dialog id="ask">
+  <h3 id="ask-title"></h3>
+  <p id="ask-body"></p>
+  <label class="mono" for="ask-reason" id="ask-label">Reason</label>
+  <input id="ask-reason" type="text" maxlength="200">
+  <div class="dialog-actions">
+    <button id="ask-no">Cancel</button>
+    <button class="primary" id="ask-yes">Confirm</button>
+  </div>
+</dialog>
 
 <script>
 (function () {
@@ -193,20 +231,18 @@
 
   var URL_ = 'https://ieccihxvmlapfuhbjuxf.supabase.co'
   var KEY = 'sb_publishable_LvMn5CI5ZJJLt6aXaACbcQ_tE237fV4'
-
-  // In memory, deliberately. See the comment at the top of the file.
   var token = null
 
   var $ = function (id) { return document.getElementById(id) }
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    })
+  }
+  var n = function (v) { return Number(v || 0).toLocaleString('en-GB') }
+  var day = function (v) { return v ? String(v).slice(0, 10) : '—' }
 
   $('host').textContent = URL_.replace(/^https?:\/\//, '')
-
-  function problem (text) {
-    var box = $('problem')
-    if (!text) { box.classList.add('hidden'); return }
-    $('problem-text').textContent = text
-    box.classList.remove('hidden')
-  }
 
   function rpc (name, body) {
     return fetch(URL_ + '/rest/v1/rpc/' + name, {
@@ -220,8 +256,8 @@
     }).then(function (r) {
       return r.json().then(function (data) {
         if (r.ok) return data
-        // Postgres puts our own refusal in `message`. Passing it through beats
-        // inventing a friendlier one that says less.
+        // Postgres carries our own refusal in `message`. Passing it through
+        // beats inventing a friendlier one that says less.
         var e = new Error(data && data.message ? data.message : 'HTTP ' + r.status)
         e.status = r.status
         throw e
@@ -229,129 +265,381 @@
     })
   }
 
-  function n (v) { return Number(v || 0).toLocaleString('en-GB') }
+  /* ---------------------------------------------------------------- *
+   * Asking before anything irreversible
+   *
+   * Every one of these takes a reason, and the reason is not decoration:
+   * the database refuses a suspension without one, and it lands in the
+   * access log next to who did it.
+   * ---------------------------------------------------------------- */
+  function ask (opts) {
+    return new Promise(function (resolve) {
+      $('ask-title').textContent = opts.title
+      $('ask-body').textContent = opts.body
+      $('ask-label').textContent = opts.label || 'Reason'
+      $('ask-reason').value = ''
+      $('ask-yes').textContent = opts.confirm || 'Confirm'
+      $('ask-yes').className = opts.danger ? 'danger' : 'primary'
 
-  function tile (value, key, sub) {
-    return '<div class="tile"><div class="n">' + value + '</div>' +
-      '<div class="k">' + key + '</div>' +
-      (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>'
-  }
-
-  /** A filled sparkline. No library, no axes: the shape and the total. */
-  function spark (values) {
-    var w = 240, h = 56, max = Math.max.apply(null, values.concat([1]))
-    var step = values.length > 1 ? w / (values.length - 1) : w
-    var pts = values.map(function (v, i) {
-      return (i * step).toFixed(1) + ',' + (h - (v / max) * (h - 6) - 3).toFixed(1)
+      var dlg = $('ask')
+      function done (value) {
+        dlg.close()
+        $('ask-yes').onclick = null
+        $('ask-no').onclick = null
+        resolve(value)
+      }
+      $('ask-yes').onclick = function () {
+        var reason = $('ask-reason').value.trim()
+        if (reason.length < 10) {
+          $('ask-reason').focus()
+          return
+        }
+        done(reason)
+      }
+      $('ask-no').onclick = function () { done(null) }
+      dlg.showModal()
     })
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true">' +
-      '<polygon fill="var(--accent)" fill-opacity=".16" points="0,' + h + ' ' + pts.join(' ') + ' ' + w + ',' + h + '"/>' +
-      '<polyline fill="none" stroke="var(--accent)" stroke-width="1.6" points="' + pts.join(' ') + '"/>' +
-      '</svg>'
   }
 
-  function chart (key, values, total, foot) {
-    // `total` is passed in rather than summed for the one series where a sum
-    // would be a lie: adding up daily actives counts somebody once for every
-    // day they came back, which is the opposite of what the word means.
-    if (total == null) total = values.reduce(function (a, b) { return a + Number(b || 0) }, 0)
-    return '<div class="chart"><div class="k">' + key + '</div>' +
-      '<div class="n">' + n(total) + '</div>' + spark(values.map(Number)) +
-      (foot ? '<div class="foot">' + foot + '</div>' : '') + '</div>'
+  /* ---------------------------------------------------------------- *
+   * The sections
+   * ---------------------------------------------------------------- */
+
+  var TABS = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'verification', label: 'Verification', badge: 'pending' },
+    { id: 'people', label: 'People' },
+    { id: 'disputes', label: 'Disputes' },
+    { id: 'activity', label: 'Activity' },
+  ]
+
+  var current = 'overview'
+  var badges = {}
+
+  function drawTabs () {
+    $('tabs').innerHTML = TABS.map(function (t) {
+      var badge = t.badge && badges[t.badge]
+        ? '<span class="count">' + n(badges[t.badge]) + '</span>' : ''
+      return '<button class="tab" data-tab="' + t.id + '" aria-current="' +
+        (current === t.id) + '">' + esc(t.label) + badge + '</button>'
+    }).join('')
+    Array.prototype.forEach.call($('tabs').children, function (b) {
+      b.onclick = function () { show(b.dataset.tab) }
+    })
   }
 
-  function bar (label, value, of) {
-    var pct = of > 0 ? (value / of) * 100 : 0
-    return '<div class="bar"><span>' + label + '</span>' +
-      '<span class="track"><span class="fill" style="width:' + pct.toFixed(1) + '%"></span></span>' +
-      '<span class="v">' + n(value) + '</span></div>'
+  function frame (title, lede, body) {
+    return '<div class="head"><h2>' + esc(title) + '</h2></div>' +
+      (lede ? '<p class="lede">' + lede + '</p>' : '') + body
   }
 
-  function render (o, daily, ai) {
-    // The headline. A percentage computed from three proposals is not a rate,
-    // and printing one anyway is the kind of number that makes somebody decide
-    // something. So below ten it says the count and refuses the percentage.
-    var issued = Number(o.proposals_issued || 0)
-    var agreed = Number(o.proposals_accepted || 0)
-    if (issued === 0) {
-      $('rate').textContent = 'No proposals yet'
-      $('rate-note').textContent =
-        'The acceptance rate is the number this product lives on: a resolution ' +
-        'only ends a dispute if both parties accept it. Nothing to measure until ' +
-        'the model has been asked.'
-    } else if (issued < 10) {
-      $('rate').textContent = agreed + ' of ' + issued + ' accepted'
-      $('rate-note').textContent =
-        'Too few to be a rate. ' + n(o.proposals_half_accepted) + ' more had one ' +
-        'party accept and the other not, and ' + n(o.escalated_to_human) +
-        ' disputes went to a human.'
-    } else {
-      $('rate').textContent = Math.round((agreed / issued) * 100) + '%'
-      $('rate-note').textContent =
-        agreed + ' of ' + issued + ' proposals accepted by both parties. ' +
-        n(o.proposals_half_accepted) + ' accepted by one only, ' +
-        n(o.escalated_to_human) + ' escalated to a human.'
+  function fail (e) {
+    if (e.status === 403 || /operator action/.test(e.message)) {
+      return '<div class="note bad">Signed in, but this account is not on the operator list. ' +
+        'That list is only writable from SQL, which is the point of it.</div>'
+    }
+    return '<div class="note bad">' + esc(e.message) + '</div>'
+  }
+
+  var SECTIONS = {}
+
+  SECTIONS.overview = function () {
+    return Promise.all([rpc('admin_overview'), rpc('admin_ai_quality'),
+      rpc('admin_verification_pending'), rpc('admin_beta_waiting')])
+      .then(function (r) {
+        var o = Array.isArray(r[0]) ? r[0][0] : r[0]
+        var ai = r[1] || []
+        badges.pending = r[2]
+        drawTabs()
+
+        var issued = Number(o.proposals_issued || 0)
+        var agreed = Number(o.proposals_accepted || 0)
+        var head, note
+        if (issued === 0) {
+          head = 'No proposals yet'
+          note = 'The acceptance rate is the number this product lives on: a resolution only ' +
+            'ends a dispute if both parties accept it. Nothing to measure until the model has ' +
+            'been asked.'
+        } else if (issued < 10) {
+          head = agreed + ' of ' + issued + ' accepted'
+          note = 'Too few to be a rate. ' + n(o.proposals_half_accepted) +
+            ' had one party accept and the other not, and ' + n(o.escalated_to_human) +
+            ' disputes went to a human.'
+        } else {
+          head = Math.round((agreed / issued) * 100) + '%'
+          note = agreed + ' of ' + issued + ' proposals accepted by both parties. ' +
+            n(o.proposals_half_accepted) + ' by one only, ' + n(o.escalated_to_human) +
+            ' escalated.'
+        }
+
+        function tile (v, k, sub) {
+          return '<div class="tile"><div class="n">' + v + '</div><div class="k">' + k +
+            '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>'
+        }
+
+        var rows = ai.map(function (x) {
+          return '<tr><td>' + esc(x.outcome) + '</td><td class="n">' + n(x.calls) +
+            '</td><td class="n">' + (x.mean_confidence == null ? '—' : x.mean_confidence) +
+            '</td><td class="n">' + (x.mean_latency_ms == null ? '—' : n(x.mean_latency_ms) + ' ms') +
+            '</td><td class="n mono">' + day(x.last_call) + '</td></tr>'
+        }).join('')
+
+        return frame('Overview', 'Counts only. Nothing on this screen names anybody.',
+          '<div class="thesis"><div class="n">' + esc(head) + '</div>' +
+          '<div class="k">' + esc(note) + '</div></div>' +
+          '<div class="tiles">' +
+            tile(n(o.people), 'accounts', n(o.verified) + ' verified') +
+            tile(n(o.active_today), 'here today') +
+            tile(n(o.active_7d), 'here this week') +
+            tile(n(o.active_30d), 'here this month') +
+            tile(n(r[2]), 'awaiting verification') +
+            tile(n(r[3]), 'on the beta list') +
+          '</div>' +
+          '<div class="tiles">' +
+            tile(n(o.contracts), 'contracts', n(o.contracts_binding) + ' binding') +
+            tile(n(o.contracts_confirmed), 'confirmed done') +
+            tile(n(o.disputes), 'disputes', n(o.disputes_open) + ' open') +
+            tile(n(o.evidence_filed), 'documents filed') +
+          '</div>' +
+          '<div class="head" style="margin-top:26px"><h2 style="font-size:16px">The model</h2></div>' +
+          '<div class="scroll"><table><tr><th>Outcome</th><th class="n">Runs</th>' +
+          '<th class="n">Confidence</th><th class="n">Latency</th><th class="n">Last</th></tr>' +
+          (rows || '<tr><td colspan="5" style="color:var(--faint)">No runs yet.</td></tr>') +
+          '</table></div>' +
+          '<p class="lede" style="margin-top:14px;font-size:13.5px">Anything other than ' +
+          '&ldquo;accepted&rdquo; is a run the pipeline refused to show anybody. They are here ' +
+          'on purpose: a model that often fails validation is a signal.</p>')
+      })
+  }
+
+  SECTIONS.verification = function () {
+    return rpc('admin_verification_queue').then(function (rows) {
+      badges.pending = rows.length
+      drawTabs()
+
+      if (!rows.length) {
+        return frame('Verification', null, '<div class="empty">Nobody is waiting.</div>')
+      }
+
+      var body = rows.map(function (r) {
+        return '<tr>' +
+          '<td><strong>' + esc(r.legal_name) + '</strong><br>' +
+          '<span class="mono">' + esc(r.email) + '</span>' +
+          (r.name_differs
+            ? '<br><span class="pill warn" style="margin-top:4px">name differs from account</span>'
+            : '') +
+          '</td>' +
+          '<td>' + esc(String(r.document_kind).replace(/_/g, ' ')) + '</td>' +
+          '<td>' + (r.how ? esc(r.how) : '<span style="color:var(--faint)">—</span>') + '</td>' +
+          '<td class="mono">' + day(r.waiting_since) + '</td>' +
+          '<td><div class="row-actions">' +
+          '<button class="primary" data-approve="' + r.request_id + '">Approve</button>' +
+          '<button class="danger" data-reject="' + r.request_id + '">Refuse</button>' +
+          '</div></td></tr>'
+      }).join('')
+
+      return frame('Verification',
+        'Approving stamps the profile through the one function that does that, and writes what ' +
+        'you looked at to a record nobody can edit. A refusal has to say why, and the person ' +
+        'reads it word for word.',
+        '<div class="scroll"><table><tr><th>Who</th><th>Document</th><th>How</th>' +
+        '<th>Waiting since</th><th></th></tr>' + body + '</table></div>')
+    })
+  }
+
+  SECTIONS.people = function (term) {
+    return rpc('admin_people', { p_query: term || null, p_limit: 40 }).then(function (rows) {
+      var body = rows.length ? rows.map(function (p) {
+        var state = p.suspended
+          ? '<span class="pill bad">suspended</span>'
+          : p.verified_at
+            ? '<span class="pill ok">verified</span>'
+            : '<span class="pill flat">unverified</span>'
+        return '<tr>' +
+          '<td><strong>' + esc(p.full_name) + '</strong><br>' +
+          '<span class="mono">' + esc(p.email) + '</span></td>' +
+          '<td>' + state + '</td>' +
+          '<td class="mono">' + day(p.joined) + '</td>' +
+          '<td class="mono">' + (p.last_seen ? day(p.last_seen) : '—') + '</td>' +
+          '<td class="n">' + n(p.contracts) + '</td>' +
+          '<td><div class="row-actions">' +
+          (p.suspended
+            ? '<button data-restore="' + p.user_id + '">Restore</button>'
+            : '<button class="danger" data-suspend="' + p.user_id + '">Suspend</button>') +
+          '</div></td></tr>'
+      }).join('') : ''
+
+      return frame('People',
+        'Opening this wrote a line saying you did. Searching writes the term as well. That log ' +
+        'is append-only and you cannot read it, which is what makes showing names here ' +
+        'defensible.',
+        '<form class="search" id="search-form">' +
+        '<input id="search" type="search" placeholder="Name or email" value="' +
+        esc(term || '') + '">' +
+        '<button class="primary" type="submit">Search</button>' +
+        (term ? '<button type="button" id="search-clear">Clear</button>' : '') +
+        '</form>' +
+        (body
+          ? '<div class="scroll"><table><tr><th>Who</th><th>Standing</th><th>Joined</th>' +
+            '<th>Last seen</th><th class="n">Contracts</th><th></th></tr>' + body + '</table></div>'
+          : '<div class="empty">' + (term ? 'Nobody matches that.' : 'No accounts yet.') + '</div>'))
+    })
+  }
+
+  SECTIONS.disputes = function () {
+    return rpc('admin_disputes').then(function (rows) {
+      if (!rows.length) {
+        return frame('Disputes', null, '<div class="empty">No disputes on real contracts.</div>')
+      }
+      var body = rows.map(function (d) {
+        var needs = d.state === 'escalated' || d.state === 'human_review'
+        return '<tr>' +
+          '<td><span class="pill ' + (needs ? 'bad' : 'flat') + '">' +
+          esc(String(d.state).replace(/_/g, ' ')) + '</span></td>' +
+          '<td>' + esc(d.buyer_name) + ' <span style="color:var(--faint)">vs</span> ' +
+          esc(d.seller_name) + '</td>' +
+          '<td class="n">' + (Number(d.amount_fils) / 100).toFixed(2) + ' AED</td>' +
+          '<td class="mono">' + day(d.opened_at) + '</td>' +
+          '<td>' + (d.has_proposal
+            ? esc(d.accepted_by) + ' of 2 accepted'
+            : '<span style="color:var(--faint)">no proposal</span>') + '</td>' +
+          '<td class="n">' + n(d.runs) + '</td></tr>'
+      }).join('')
+
+      return frame('Disputes',
+        'Escalated cases first, because those are the ones waiting on a person. Taking one over ' +
+        'is a reviewer action and happens in the app, not here.',
+        '<div class="scroll"><table><tr><th>State</th><th>Between</th><th class="n">Amount</th>' +
+        '<th>Opened</th><th>Proposal</th><th class="n">Runs</th></tr>' + body + '</table></div>')
+    })
+  }
+
+  SECTIONS.activity = function () {
+    return rpc('admin_activity', { p_limit: 60 }).then(function (rows) {
+      if (!rows.length) {
+        return frame('Activity', null, '<div class="empty">Nothing has happened yet.</div>')
+      }
+      var body = rows.map(function (a) {
+        return '<tr><td class="mono">' + esc(String(a.at).slice(0, 16).replace('T', ' ')) +
+          '</td><td><span class="pill flat">' + esc(a.kind) + '</span></td>' +
+          '<td>' + esc(String(a.detail).replace(/_/g, ' ')) + '</td>' +
+          '<td>' + esc(a.actor) + '</td></tr>'
+      }).join('')
+
+      return frame('Activity',
+        'Built from the logs that exist: contract moves, dispute moves, model runs and identity ' +
+        'decisions. <strong>Failed sign-ins are not here</strong>, because nothing in this schema ' +
+        'records them; they live in the platform&rsquo;s own logs. This is what people did, which ' +
+        'is a different thing from a security feed and is not dressed up as one.',
+        '<div class="scroll"><table><tr><th>When</th><th>Kind</th><th>What</th><th>By</th></tr>' +
+        body + '</table></div>')
+    })
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Rendering, and the actions inside a section
+   * ---------------------------------------------------------------- */
+
+  function show (id, arg) {
+    current = id
+    drawTabs()
+    $('view').innerHTML = '<div class="loading">Loading…</div>'
+    SECTIONS[id](arg)
+      .then(function (html) {
+        $('view').innerHTML = html
+        wire(id)
+      })
+      .catch(function (e) { $('view').innerHTML = fail(e) })
+  }
+
+  function wire (id) {
+    if (id === 'people') {
+      var form = $('search-form')
+      if (form) {
+        form.onsubmit = function (e) { e.preventDefault(); show('people', $('search').value) }
+      }
+      if ($('search-clear')) $('search-clear').onclick = function () { show('people') }
     }
 
-    $('people').innerHTML =
-      tile(n(o.people), 'accounts', n(o.verified) + ' identity checked') +
-      tile(n(o.active_today), 'here today') +
-      tile(n(o.active_7d), 'here this week') +
-      tile(n(o.active_30d), 'here this month')
-
-    $('charts').innerHTML =
-      chart('New accounts', daily.map(function (d) { return d.signups })) +
-      chart('People here', daily.map(function (d) { return d.active }),
-            o.active_30d, 'distinct, not the sum of the days') +
-      chart('Contracts started', daily.map(function (d) { return d.contracts }))
-
-    var made = Number(o.contracts || 0)
-    $('funnel').innerHTML =
-      bar('Written', made, made) +
-      bar('Both accepted', o.contracts_binding, made) +
-      bar('Confirmed done', o.contracts_confirmed, made) +
-      bar('Disputed', o.contracts_disputed, made) +
-      '<div class="bar" style="margin-top:14px"><span>Evidence filed</span>' +
-      '<span></span><span class="v">' + n(o.evidence_filed) + '</span></div>'
-
-    var rows = '<tr><th>Outcome</th><th class="n" style="text-align:right">Runs</th>' +
-      '<th class="n" style="text-align:right">Confidence</th>' +
-      '<th class="n" style="text-align:right">Latency</th>' +
-      '<th style="text-align:right">Last</th></tr>'
-    ai.forEach(function (r) {
-      rows += '<tr><td>' + r.outcome + '</td>' +
-        '<td class="n">' + n(r.calls) + '</td>' +
-        '<td class="n">' + (r.mean_confidence == null ? '—' : r.mean_confidence) + '</td>' +
-        '<td class="n">' + (r.mean_latency_ms == null ? '—' : n(r.mean_latency_ms) + ' ms') + '</td>' +
-        '<td style="text-align:right;color:var(--faint)">' +
-        (r.last_call ? String(r.last_call).slice(0, 10) : '—') + '</td></tr>'
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-suspend]'), function (b) {
+      b.onclick = function () {
+        ask({
+          title: 'Suspend this account',
+          body: 'They will not be able to sign in. Nothing is deleted, and no contract changes: ' +
+                'the other party keeps their copy either way.',
+          confirm: 'Suspend',
+          danger: true,
+        }).then(function (reason) {
+          if (!reason) return
+          rpc('admin_set_suspended', {
+            p_user_id: b.dataset.suspend, p_suspended: true, p_reason: reason,
+          }).then(function () { show('people', $('search') ? $('search').value : '') })
+            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+        })
+      }
     })
-    $('ai').querySelector('tbody').innerHTML = rows
-    $('ai-note').textContent =
-      'Anything other than "accepted" is a run the pipeline refused to show ' +
-      'anybody. Those are here on purpose: a model that often fails validation ' +
-      'is a signal, and hiding the failures would hide it.'
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-restore]'), function (b) {
+      b.onclick = function () {
+        ask({
+          title: 'Let them back in',
+          body: 'Signing in works again immediately.',
+          confirm: 'Restore',
+        }).then(function (reason) {
+          if (!reason) return
+          rpc('admin_set_suspended', {
+            p_user_id: b.dataset.restore, p_suspended: false, p_reason: reason,
+          }).then(function () { show('people', $('search') ? $('search').value : '') })
+            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+        })
+      }
+    })
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-approve]'), function (b) {
+      b.onclick = function () {
+        ask({
+          title: 'Verify this person',
+          body: 'Say what you actually looked at. It goes on a record that cannot be edited ' +
+                'afterwards, and it is what somebody reads if this is ever questioned.',
+          label: 'What you saw',
+          confirm: 'Verify',
+        }).then(function (note) {
+          if (!note) return
+          rpc('decide_verification', {
+            p_request_id: b.dataset.approve, p_approve: true, p_note: note,
+          }).then(function () { show('verification') })
+            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+        })
+      }
+    })
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-reject]'), function (b) {
+      b.onclick = function () {
+        ask({
+          title: 'Refuse this request',
+          body: 'They read this word for word, and it is the only thing they have to act on. ' +
+                'Write it to them, not about them.',
+          label: 'What needs to change',
+          confirm: 'Refuse',
+          danger: true,
+        }).then(function (reason) {
+          if (!reason) return
+          rpc('decide_verification', {
+            p_request_id: b.dataset.reject, p_approve: false, p_note: reason,
+          }).then(function () { show('verification') })
+            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+        })
+      }
+    })
   }
 
-  function load () {
-    problem(null)
-    return Promise.all([rpc('admin_overview'), rpc('admin_daily', { p_days: 30 }), rpc('admin_ai_quality')])
-      .then(function (r) {
-        render(Array.isArray(r[0]) ? r[0][0] : r[0], r[1] || [], r[2] || [])
-      })
-      .catch(function (e) {
-        if (e.status === 403 || /operator action/.test(e.message)) {
-          problem('Signed in, but this account is not on the operator list. ' +
-            'That list is only writable from SQL, which is the point of it.')
-        } else {
-          problem(e.message)
-        }
-      })
-  }
+  /* ---------------------------------------------------------------- *
+   * Getting in
+   * ---------------------------------------------------------------- */
 
   $('gate').addEventListener('submit', function (ev) {
     ev.preventDefault()
-    problem(null)
+    $('problem').classList.add('hidden')
     $('go').disabled = true
 
     fetch(URL_ + '/auth/v1/token?grant_type=password', {
@@ -363,25 +651,23 @@
       .then(function (res) {
         if (!res.ok) throw new Error(res.d.error_description || res.d.msg || 'Sign in refused')
         token = res.d.access_token
-        $('who').textContent = res.d.user && res.d.user.email ? res.d.user.email : ''
-        $('gate').classList.add('hidden')
-        $('lede').classList.add('hidden')
-        $('panel').classList.remove('hidden')
+        $('who').textContent = (res.d.user && res.d.user.email) || ''
         $('password').value = ''
-        return load()
+        $('gate').classList.add('hidden')
+        $('shell').classList.remove('hidden')
+        show('overview')
       })
-      .catch(function (e) { problem(e.message) })
+      .catch(function (e) {
+        $('problem').textContent = e.message
+        $('problem').classList.remove('hidden')
+      })
       .then(function () { $('go').disabled = false })
   })
 
-  $('refresh').addEventListener('click', load)
-
   $('out').addEventListener('click', function () {
     token = null
-    $('panel').classList.add('hidden')
+    $('shell').classList.add('hidden')
     $('gate').classList.remove('hidden')
-    $('lede').classList.remove('hidden')
-    problem(null)
   })
 })()
 </script>
