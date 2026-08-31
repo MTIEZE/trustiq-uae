@@ -1319,6 +1319,23 @@ class LEn extends L {
   }
 
   @override
+  String get whatComesLater => 'Not yet';
+
+  @override
+  String laterOnce(String action, String state) {
+    return '$action — once the contract is $state';
+  }
+
+  @override
+  String get laterNote =>
+      'Read from the same table the app checks before it lets anything happen, so this cannot promise something the rules do not.';
+
+  @override
+  String theirMove(String name) {
+    return 'Waiting on $name';
+  }
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

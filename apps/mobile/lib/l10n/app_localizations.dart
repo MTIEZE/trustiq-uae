@@ -2346,6 +2346,30 @@ abstract class L {
   /// **'You both decide by {when}'**
   String contractDecideBy(String when);
 
+  /// No description provided for @whatComesLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get whatComesLater;
+
+  /// No description provided for @laterOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'{action} — once the contract is {state}'**
+  String laterOnce(String action, String state);
+
+  /// No description provided for @laterNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Read from the same table the app checks before it lets anything happen, so this cannot promise something the rules do not.'**
+  String get laterNote;
+
+  /// No description provided for @theirMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting on {name}'**
+  String theirMove(String name);
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

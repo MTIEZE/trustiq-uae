@@ -512,6 +512,13 @@
   "contractEndsOn": "Ends {when}, and does not renew",
   "@contractEndsOn": {"placeholders": {"when": {"type": "String"}}},
   "contractDecideBy": "You both decide by {when}",
+
+  "whatComesLater": "Not yet",
+  "laterOnce": "{action} — once the contract is {state}",
+  "@laterOnce": {"placeholders": {"action": {"type": "String"}, "state": {"type": "String"}}},
+  "laterNote": "Read from the same table the app checks before it lets anything happen, so this cannot promise something the rules do not.",
+  "theirMove": "Waiting on {name}",
+  "@theirMove": {"placeholders": {"name": {"type": "String"}}},
   "@contractDecideBy": {"placeholders": {"when": {"type": "String"}}},
 
   "amountMustBePositive": "The amount must be more than zero.",

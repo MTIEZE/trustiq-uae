@@ -1311,6 +1311,23 @@ class LAr extends L {
   }
 
   @override
+  String get whatComesLater => 'ليس بعد';
+
+  @override
+  String laterOnce(String action, String state) {
+    return '$action — بمجرد أن يصبح العقد $state';
+  }
+
+  @override
+  String get laterNote =>
+      'مقروء من الجدول نفسه الذي يتحقّق منه التطبيق قبل أن يسمح بأي إجراء، فلا يمكن أن يَعِد بما لا تسمح به القواعد.';
+
+  @override
+  String theirMove(String name) {
+    return 'في انتظار $name';
+  }
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

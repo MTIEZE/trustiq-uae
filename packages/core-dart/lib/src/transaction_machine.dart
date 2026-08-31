@@ -138,6 +138,75 @@ List<TransactionEvent> availableEventsFor(TransactionState state, Actor actor) =
         .map((r) => r.event)
         .toList();
 
+/// Every state the contract could still get to from here, itself included.
+///
+/// A walk of the table rather than a list written by hand. The point of asking
+/// is to tell somebody what will become possible later, and a hand-written list
+/// would keep promising an action after a change to the table made it
+/// unreachable.
+Set<TransactionState> reachableFrom(TransactionState state) {
+  final seen = <TransactionState>{state};
+  final queue = <TransactionState>[state];
+  while (queue.isNotEmpty) {
+    final here = queue.removeLast();
+    for (final rule in transitions) {
+      if (rule.from == here && seen.add(rule.to)) queue.add(rule.to);
+    }
+  }
+  return seen;
+}
+
+/// What this actor cannot do now but will be able to do, and the earliest state
+/// that allows it.
+///
+/// This exists because a screen that lists only what is possible tells somebody
+/// nothing about what is missing. Somebody looking for "open a dispute" on a
+/// contract nobody has accepted needs to be told it arrives later, not left to
+/// conclude the button is gone.
+///
+/// Terminal states return nothing at all, which is correct: on a completed
+/// contract there is no later.
+Map<TransactionEvent, TransactionState> comingLaterFor(
+  TransactionState state,
+  Actor actor,
+) {
+  final now = availableEventsFor(state, actor).toSet();
+  final reachable = reachableFrom(state)..remove(state);
+  final out = <TransactionEvent, TransactionState>{};
+
+  // Ordered by how far away the state is, so the first mention of an event is
+  // the soonest it can happen rather than whichever row came first in the table.
+  final ordered = _byDistanceFrom(state);
+  for (final to in ordered) {
+    if (!reachable.contains(to)) continue;
+    for (final rule in transitions) {
+      if (rule.from != to || !rule.actors.contains(actor)) continue;
+      if (now.contains(rule.event) || out.containsKey(rule.event)) continue;
+      out[rule.event] = to;
+    }
+  }
+  return out;
+}
+
+List<TransactionState> _byDistanceFrom(TransactionState state) {
+  final order = <TransactionState>[];
+  final seen = <TransactionState>{state};
+  var frontier = <TransactionState>[state];
+  while (frontier.isNotEmpty) {
+    final next = <TransactionState>[];
+    for (final here in frontier) {
+      for (final rule in transitions) {
+        if (rule.from == here && seen.add(rule.to)) {
+          order.add(rule.to);
+          next.add(rule.to);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return order;
+}
+
 bool canTransition(TransactionState state, TransactionEvent event, Actor actor) {
   final rule = _index['${state.name}::${event.name}'];
   return rule != null && rule.actors.contains(actor);

@@ -39,6 +39,15 @@ class ContractDetailScreen extends StatelessWidget {
         };
         final offerable = actions.where((e) => !blocked.contains(e)).toList();
 
+        // The other party's move now, and this party's move later. Both come
+        // from the machine rather than from a list written beside it.
+        final you = state.actorOn(contract);
+        final them = you == Actor.buyer ? Actor.seller : Actor.buyer;
+        final theirs = availableEventsFor(contract.state, them)
+            .where((e) => !actions.contains(e))
+            .toList();
+        final later = comingLaterFor(contract.state, you);
+
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -191,6 +200,34 @@ class ContractDetailScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 RuleNote(l.movesRuleNote, icon: Icons.rule_outlined),
               ],
+
+              // What is missing, and why. The screen listed only what was
+              // possible, which left somebody looking for the dispute button on
+              // a contract nobody had accepted to conclude it had been removed.
+              // Both lists below are read out of the transition table, so
+              // neither can promise something the rules would refuse.
+              if (theirs.isNotEmpty) ...[
+                const SizedBox(height: Space.lg),
+                SectionLabel(l.theirMove(other.name)),
+                const SizedBox(height: 8),
+                for (final event in theirs)
+                  _Awaited(text: transactionEventLabel(event, l)),
+              ],
+
+              if (later.isNotEmpty) ...[
+                const SizedBox(height: Space.lg),
+                SectionLabel(l.whatComesLater),
+                const SizedBox(height: 8),
+                for (final entry in later.entries)
+                  _Awaited(
+                    text: l.laterOnce(
+                      transactionEventLabel(entry.key, l),
+                      transactionStateStyle(entry.value, c, l).label.toLowerCase(),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                RuleNote(l.laterNote, icon: Icons.schema_outlined),
+              ],
             ],
           ),
         );
@@ -227,6 +264,37 @@ class ContractDetailScreen extends StatelessWidget {
 /// The end date and what follows it are two different facts and are said as
 /// two lines. A contract that ends on the same date it renews reads as a
 /// contradiction if both are crammed into one sentence.
+/// A line for something that is not a button.
+///
+/// Deliberately not shaped like one. Somebody scanning for what to press should
+/// be able to tell at a glance that this row is not it.
+class _Awaited extends StatelessWidget {
+  const _Awaited({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(top: 3, end: Space.inline),
+            child: Icon(Icons.remove, size: IconSize.sm, color: c.inkFaint),
+          ),
+          Expanded(
+            child: Text(text,
+                style: TextStyle(fontSize: 14, height: 1.45, color: c.inkSoft)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PeriodBlock extends StatelessWidget {
   const _PeriodBlock({required this.period});
 

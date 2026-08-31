@@ -11,6 +11,10 @@
  *   renew_due_contracts        a period that ran out under an automatic policy
  *   write_deadline_notices     warning both parties before either happens
  *
+ * And one thing that is not an action at all: client_reachable_functions, asked
+ * every day because the schema tests can only prove things about a database
+ * built from the migrations folder, and production is not only that.
+ *
  * Order matters. Expiring first means a contract that timed out is not also
  * warned about; writing notices last means a renewal that just happened does
  * not also get a "period ending" notice for the period it left behind.
@@ -93,6 +97,26 @@ try {
   console.log(`  renewed   ${renewed.length}`)
   for (const row of renewed) {
     console.log(`            ${row.transaction_id}  ${row.from_ends_on} -> ${row.to_ends_on}`)
+  }
+} catch (e) {
+  console.error(`  FAILED    ${e.message}`)
+  failed = true
+}
+
+try {
+  // Not a scheduled action, an assertion. The schema tests prove nothing in
+  // `public` is callable with the key that ships inside the app, against a
+  // database built from the migrations folder. Production also holds whatever
+  // Supabase put there, and gets whatever Supabase adds later; that is how
+  // rls_auto_enable came to be anon-reachable while the tests stayed green.
+  // Asked here daily so the two cannot drift again unnoticed.
+  const reachable = await rpc('client_reachable_functions')
+  if (reachable.length) {
+    console.error(`  REACHABLE ${reachable.length} function(s) callable with the app's key:`)
+    for (const row of reachable) console.error(`            ${row.signature}`)
+    failed = true
+  } else {
+    console.log('  grants    nothing in public is callable with the app key')
   }
 } catch (e) {
   console.error(`  FAILED    ${e.message}`)
