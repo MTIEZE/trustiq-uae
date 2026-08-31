@@ -19,6 +19,10 @@ export default defineConfig({
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         download: resolve(import.meta.dirname, 'download.html'),
+        product: resolve(import.meta.dirname, 'product.html'),
+        trust: resolve(import.meta.dirname, 'trust.html'),
+        business: resolve(import.meta.dirname, 'business.html'),
+        about: resolve(import.meta.dirname, 'about.html'),
       },
     },
   },

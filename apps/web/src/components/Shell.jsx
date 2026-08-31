@@ -10,8 +10,10 @@ import { STORES, joinBeta } from '../lib/site.js'
  */
 
 const LINKS = [
-  { href: '/trustiq-uae/#how-it-works', label: 'How it works' },
-  { href: '/trustiq-uae/#resolution', label: 'Resolution' },
+  { href: '/trustiq-uae/product.html', label: 'Product' },
+  { href: '/trustiq-uae/trust.html', label: 'Trust' },
+  { href: '/trustiq-uae/business.html', label: 'Business' },
+  { href: '/trustiq-uae/about.html', label: 'About' },
   { href: '/trustiq-uae/download.html', label: 'Get the app' },
 ]
 
@@ -47,6 +49,10 @@ export function Footer() {
             </p>
           </div>
           <ul className="footer-links">
+            <li><a href="/trustiq-uae/product.html">Product</a></li>
+            <li><a href="/trustiq-uae/trust.html">Trust and security</a></li>
+            <li><a href="/trustiq-uae/business.html">For business</a></li>
+            <li><a href="/trustiq-uae/about.html">About</a></li>
             <li><a href="/trustiq-uae/download.html">Get the app</a></li>
             <li><a href="/trustiq-uae/privacy.html">Privacy</a></li>
             <li><a href="/trustiq-uae/delete-account.html">Delete your account</a></li>

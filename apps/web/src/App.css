@@ -32,7 +32,21 @@
 }
 .nav-links a:hover { color: var(--accent); }
 @media (max-width: 768px) {
-  .nav-links { display: none; }
+  /* Kept, scrolled. It was hidden with nothing in its place, which was
+     survivable when the site was one page and leaves a six-page site with no
+     navigation at all on the device most people will read it on. A row that
+     scrolls sideways needs no state, no button and no trap for a screen
+     reader, which a drawer would. */
+  .nav-links {
+    gap: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-left: 16px;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a { white-space: nowrap; font-size: 14px; }
+  .nav-inner { gap: 0; }
 }
 
 /* ── Hero ── */
@@ -1207,3 +1221,41 @@
 .app-cta .stores { justify-content: center; }
 .app-cta-note { margin: 18px 0 0; font-size: 14px; color: var(--text-dim); }
 .app-cta-note a { color: var(--accent); }
+
+/* ---------------------------------------------------------------------------
+   The inner pages.
+   --------------------------------------------------------------------------- */
+
+.part { padding: 80px 0; border-top: 1px solid var(--border); }
+/* Alternating ground rather than a card: six sections of cards on one page is
+   a slide deck, and these are meant to be read through. */
+.part-alt { background: var(--surface-elevated); }
+.part h2 { font-size: 1.7rem; letter-spacing: -.02em; margin: 12px 0 0; }
+.part-body { margin: 16px 0 0; font-size: 15.5px; line-height: 1.7; color: var(--text-dim); max-width: 62ch; }
+
+.part-grid {
+  display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  gap: 44px; align-items: start;
+}
+@media (max-width: 860px) { .part-grid { grid-template-columns: 1fr; gap: 28px; } }
+
+.part-detail { display: grid; gap: 18px; margin: 0; }
+.part-detail dt {
+  font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent); font-weight: 600; margin-bottom: 5px;
+}
+.part-detail dd { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--text-dim); }
+
+.decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 36px; }
+.decision {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px 30px;
+}
+.decision h3 { font-size: 18px; letter-spacing: -.01em; margin: 0 0 12px; }
+.decision p { font-size: 14.5px; line-height: 1.65; color: var(--text-dim); margin: 0 0 14px; }
+/* The consequence, set apart. It is the half people skip, and it is the half
+   that explains why the decision was worth making. */
+.decision-so {
+  margin: 0; padding-top: 14px; border-top: 1px solid var(--border);
+  color: var(--text) !important;
+}
