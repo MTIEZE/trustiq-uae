@@ -4,8 +4,10 @@ import 'package:trustiq_core/trustiq_core.dart';
 import '../l10n/app_localizations.dart';
 
 import '../app_state.dart';
+import '../data/backend.dart';
 import '../data/demo_data.dart';
 import '../theme.dart';
+import 'verify_identity_screen.dart';
 import '../widgets/common.dart';
 import 'add_evidence_screen.dart';
 import 'open_dispute_screen.dart';
@@ -148,10 +150,18 @@ class DisputeScreen extends StatelessWidget {
                 ),
               ] else if (dispute.state == DisputeState.open) ...[
                 const SizedBox(height: 12),
-                RuleNote(
-                  l.bothAccountsIn,
-                  icon: Icons.schedule_outlined,
-                ),
+                // Waiting for the other side is a different thing from being
+                // ready and needing somebody to press. The screen used to show
+                // the first sentence in both cases, and there was nothing to
+                // press in either: this is where the product's whole promise
+                // was unreachable from the app.
+                if (_bothAccountsIn(dispute))
+                  _AskForResolution(contract: contract, state: state)
+                else
+                  RuleNote(
+                    l.bothAccountsIn,
+                    icon: Icons.schedule_outlined,
+                  ),
               ],
               if (dispute.proposal != null) ...[
                 const SizedBox(height: 12),
@@ -189,6 +199,150 @@ class DisputeScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// True once neither side is still owed an account of what happened.
+bool _bothAccountsIn(Dispute dispute) =>
+    dispute.buyerClaim.trim().isNotEmpty &&
+    (dispute.sellerClaim ?? '').trim().isNotEmpty;
+
+/// Asking the model, or being told why not.
+///
+/// The eligibility comes from the same database function the edge function
+/// consults before spending anything, so this cannot show a button the server
+/// would refuse, and cannot hide one it would allow.
+class _AskForResolution extends StatefulWidget {
+  const _AskForResolution({required this.contract, required this.state});
+
+  final Contract contract;
+  final AppState state;
+
+  @override
+  State<_AskForResolution> createState() => _AskForResolutionState();
+}
+
+class _AskForResolutionState extends State<_AskForResolution> {
+  ResolutionEligibility? _may;
+  bool _running = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final may = await widget.state.mayRequestResolution(widget.contract.id);
+    if (mounted) setState(() => _may = may);
+  }
+
+  Future<void> _ask() async {
+    setState(() => _running = true);
+    final outcome = await widget.state.requestResolution(widget.contract.id);
+    if (!mounted) return;
+    setState(() => _running = false);
+
+    final messenger = ScaffoldMessenger.of(context);
+    switch (outcome) {
+      case ResolutionProposed():
+      case ResolutionEscalated():
+        // Both are designed endings and the screen already renders each of
+        // them from the refreshed dispute, so neither needs a sentence here
+        // explaining what is now visible above.
+        messenger.showSnackBar(SnackBar(content: Text(context.l.resolutionStarted)));
+      case ResolutionRefused():
+        await _check();
+      case ResolutionFailed(:final message):
+        messenger.showSnackBar(SnackBar(
+          content: Text(message.isEmpty ? context.l.resolutionFailed : message),
+          backgroundColor: context.c.critical,
+        ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final c = context.c;
+    final may = _may;
+
+    if (may == null) return const SizedBox.shrink();
+
+    if (may.block == ResolutionBlock.notVerified) {
+      return InfoCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.badge_outlined, size: IconSize.lg, color: c.caution),
+                const SizedBox(width: Space.inline),
+                Expanded(
+                  child: Text(l.resolutionNeedsVerified,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600, height: 1.4)),
+                ),
+              ],
+            ),
+            const SizedBox(height: Space.sm),
+            Text(l.resolutionNeedsVerifiedWhy,
+                style: TextStyle(fontSize: 14, height: 1.5, color: c.inkSoft)),
+            const SizedBox(height: Space.md),
+            FilledButton(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => VerifyIdentityScreen(state: widget.state),
+                  ),
+                );
+                // They may have been verified while they were away, and coming
+                // back to the same refusal would be its own small insult.
+                if (mounted) await _check();
+              },
+              child: Text(l.resolutionVerifyAction),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!may.allowed) return const SizedBox.shrink();
+
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionLabel(l.askResolutionTitle),
+          const SizedBox(height: 8),
+          Text(l.askResolutionBody,
+              style: const TextStyle(fontSize: 14, height: 1.5)),
+          const SizedBox(height: Space.md),
+          FilledButton(
+            onPressed: _running ? null : _ask,
+            child: _running
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.5, color: c.onAccent),
+                      ),
+                      const SizedBox(width: Space.inline),
+                      Text(l.askResolutionRunning),
+                    ],
+                  )
+                : Text(l.askResolutionAction),
+          ),
+          const SizedBox(height: Space.sm),
+          // Said before the press, not after. Evidence filed afterwards is
+          // evidence nobody read.
+          RuleNote(l.askResolutionOnce, icon: Icons.looks_one_outlined),
+        ],
+      ),
     );
   }
 }

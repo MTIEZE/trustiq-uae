@@ -82,27 +82,47 @@ Deno.serve(async (request: Request): Promise<Response> => {
     global: { headers: { Authorization: authorization } },
   })
 
-  const { data: visible, error: visibleError } = await asCaller
-    .from('disputes')
-    .select('id, state')
-    .eq('id', disputeId)
-    .maybeSingle()
+  // The gate, asked of the database with the caller's own token. The same
+  // function backs the button in the app, so the rule has one definition and
+  // the screen cannot drift from the server. Everything it refuses, it refuses
+  // before a single token is spent.
+  const { data: verdictRows, error: verdictError } = await asCaller
+    .rpc('may_request_resolution', { p_dispute_id: disputeId })
 
-  if (visibleError) {
-    console.error('authorisation read failed', visibleError.message)
+  if (verdictError) {
+    console.error('authorisation check failed', verdictError.message)
     return json({ error: 'Could not check your access to this dispute.' }, 500)
   }
-  if (visible === null) {
-    // Deliberately the same answer whether the dispute is missing or simply
-    // not theirs. Telling a stranger which one it is confirms that a given
-    // dispute exists.
-    return json({ error: 'No such dispute.' }, 404)
-  }
 
-  if (visible.state !== 'open') {
+  const verdict = Array.isArray(verdictRows) ? verdictRows[0] : verdictRows
+  if (!verdict?.allowed) {
+    const reason = verdict?.reason ?? 'not_found'
+
+    if (reason === 'not_found') {
+      // Deliberately the same answer whether the dispute is missing or simply
+      // not theirs. Telling a stranger which one it is confirms that a given
+      // dispute exists.
+      return json({ error: 'No such dispute.' }, 404)
+    }
+
+    if (reason === 'not_verified') {
+      // Reached when a verification was withdrawn after the contract became
+      // binding, which is the only way somebody unverified can be in a
+      // dispute at all. Answered with a code the app can act on rather than a
+      // sentence it would have to match on.
+      return json(
+        {
+          error: 'Your account needs to be verified before a resolution can be requested.',
+          reason,
+        },
+        403,
+      )
+    }
+
     return json(
       {
-        error: `This dispute is ${visible.state}, not open. Analysis runs once, when both accounts are in.`,
+        error: `This dispute is ${reason}, not open. Analysis runs once, when both accounts are in.`,
+        reason,
       },
       409,
     )

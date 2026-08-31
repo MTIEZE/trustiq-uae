@@ -441,6 +441,34 @@ class AppState extends ChangeNotifier {
   /// somebody the button to ask rather than a badge they do not have: the
   /// wrong answer in the other direction sends them into a refusal further
   /// down, with no way to see why.
+  /// Whether this dispute can be sent to the model, and if not, why.
+  ///
+  /// Asked so the screen can show the right thing. Not trusted: the edge
+  /// function asks the same database function again with the same session
+  /// before spending anything, so this decides what is drawn and nothing else.
+  Future<ResolutionEligibility> mayRequestResolution(String contractId) async {
+    try {
+      return await _backend.mayRequestResolution(contractId);
+    } catch (e) {
+      debugPrint('TrustIQ: could not check resolution eligibility: $e');
+      // The harmless reading: hide the button rather than offer one that will
+      // be refused after somebody has got their hopes up.
+      return const ResolutionEligibility.blocked(ResolutionBlock.alreadyRun);
+    }
+  }
+
+  Future<ResolutionOutcome> requestResolution(String contractId) async {
+    late ResolutionOutcome outcome;
+    await _guard(() async {
+      outcome = await _backend.requestResolution(contractId);
+    });
+    // Whatever came back, the dispute moved: to proposal_issued, to escalated,
+    // or not at all. Re-read rather than inferred, because the pipeline decides
+    // and it has three endings.
+    await refresh();
+    return outcome;
+  }
+
   Future<void> loadStanding({bool force = false}) async {
     if (_standingLoaded && !force) return;
     _standingLoaded = true;

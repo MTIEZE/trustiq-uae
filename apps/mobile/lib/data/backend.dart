@@ -176,6 +176,17 @@ abstract interface class Backend {
 
   Future<void> rejectProposal(String contractId);
 
+  /// Whether the caller may send this dispute to the model, and if not, why.
+  ///
+  /// The same database function backs the gate inside the edge function, so the
+  /// screen and the server cannot disagree. Asked here only to decide what to
+  /// show; nothing is trusted from this answer, and asking anyway is refused
+  /// again on the way in.
+  Future<ResolutionEligibility> mayRequestResolution(String contractId);
+
+  /// Sends the dispute to the model. Runs once, and only from `open`.
+  Future<ResolutionOutcome> requestResolution(String contractId);
+
   /// Whether this backend can record a verification from the app at all.
   ///
   /// False on the live backend, where the verification columns are
@@ -380,6 +391,55 @@ class MyVerification {
   bool get isWaiting => standing == VerificationStanding.pending;
   bool get canAsk => standing == VerificationStanding.none ||
       standing == VerificationStanding.rejected;
+}
+
+/// Why the model cannot be asked, when it cannot.
+///
+/// `notFound` covers "no such dispute" and "not yours" together, deliberately:
+/// separating them tells a stranger which disputes exist.
+enum ResolutionBlock { notFound, notVerified, alreadyRun }
+
+class ResolutionEligibility {
+  const ResolutionEligibility._(this.allowed, this.block, this.stateName);
+
+  const ResolutionEligibility.allowed() : this._(true, null, null);
+  const ResolutionEligibility.blocked(ResolutionBlock block, [String? stateName])
+      : this._(false, block, stateName);
+
+  final bool allowed;
+  final ResolutionBlock? block;
+
+  /// The dispute's state, when that is the reason. Kept so a screen can say
+  /// which one rather than a flat "not now".
+  final String? stateName;
+}
+
+/// What came back from a run.
+sealed class ResolutionOutcome {
+  const ResolutionOutcome();
+}
+
+/// The model produced something that passed validation.
+class ResolutionProposed extends ResolutionOutcome {
+  const ResolutionProposed();
+}
+
+/// A designed outcome, not a failure: the case is going to a person.
+class ResolutionEscalated extends ResolutionOutcome {
+  const ResolutionEscalated(this.reason);
+  final String reason;
+}
+
+/// Refused before anything was spent.
+class ResolutionRefused extends ResolutionOutcome {
+  const ResolutionRefused(this.block);
+  final ResolutionBlock block;
+}
+
+/// It broke. The message is meant for a person.
+class ResolutionFailed extends ResolutionOutcome {
+  const ResolutionFailed(this.message);
+  final String message;
 }
 
 class BackendException implements Exception {

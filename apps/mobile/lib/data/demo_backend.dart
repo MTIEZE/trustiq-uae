@@ -378,6 +378,14 @@ class DemoBackend implements Backend {
   @override
   Future<void> recordActivity() async {}
 
+  @override
+  Future<ResolutionEligibility> mayRequestResolution(String contractId) async =>
+      const ResolutionEligibility.allowed();
+
+  @override
+  Future<ResolutionOutcome> requestResolution(String contractId) async =>
+      const ResolutionProposed();
+
   // The demo signs in as somebody already verified, so the journey below is
   // reachable in a demo build only by asking for it in a test.
   MyVerification _standing = const MyVerification(

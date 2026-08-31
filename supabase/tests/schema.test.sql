@@ -2613,4 +2613,153 @@ select pg_temp.check(
   'and nothing is left waiting');
 
 \echo ''
+\echo '== Who may ask the model =='
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+-- Its own scene, rather than a dispute an earlier section left somewhere. The
+-- states this function cares about are exact, and reusing a row whose history
+-- other assertions are free to change makes the failure look like this code.
+
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-0000000000e1', 'asks@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000e2', 'other.side@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-0000000000e1', 'Asking Party', 'asks@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000e2', 'Other Side',   'other.side@example.ae');
+
+-- Both, because a contract cannot become binding otherwise, which is exactly
+-- why this gate is narrow.
+select public.record_manual_verification(
+  '0f000000-0000-0000-0000-0000000000e1', 'Verified inside the schema tests.');
+select public.record_manual_verification(
+  '0f000000-0000-0000-0000-0000000000e2', 'Verified inside the schema tests.');
+
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('0f000000-0000-0000-0000-0000000000f1',
+   '0f000000-0000-0000-0000-0000000000e1',
+   '0f000000-0000-0000-0000-0000000000e2',
+   'Something to fall out over',
+   'A fixed scope, delivered in one go.',
+   80000,
+   '0f000000-0000-0000-0000-0000000000e1');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000e1', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000f1', 'submit');
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000e2', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000f1', 'accept');
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000e1', false);
+select public.apply_transaction_event('0f000000-0000-0000-0000-0000000000f1', 'open_dispute');
+
+-- The event moves the contract; the row is a separate insert, exactly as the
+-- app does it. Two steps rather than one, which is worth knowing: a contract
+-- can sit in `disputed` with no dispute attached if the second half fails.
+insert into public.disputes
+  (transaction_id, opened_by, opened_by_role, buyer_claim, disputed_amount_fils)
+values
+  ('0f000000-0000-0000-0000-0000000000f1',
+   '0f000000-0000-0000-0000-0000000000e1',
+   'buyer',
+   'The work delivered is not what the terms describe.',
+   80000);
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+
+select set_config('trustiq.dispute', (
+  select d.id::text from public.disputes d
+  where d.transaction_id = '0f000000-0000-0000-0000-0000000000f1'), false);
+
+select pg_temp.check(
+  (select state::text from public.disputes
+   where id = current_setting('trustiq.dispute')::uuid) = 'open',
+  'the dispute is open, which is the only state the model is asked from');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000e1', false);
+
+select pg_temp.check(
+  (select allowed from public.may_request_resolution(
+     current_setting('trustiq.dispute')::uuid)) is true,
+  'a verified party may ask');
+
+\echo ''
+\echo '-- a stranger is told nothing at all --'
+
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-0000000000c9', 'nothing.to.do.with.it@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-0000000000c9', 'Nothing To Do With It', 'nothing.to.do.with.it@example.ae');
+set role authenticated;
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000c9', false);
+
+select pg_temp.check(
+  (select reason from public.may_request_resolution(
+     current_setting('trustiq.dispute')::uuid)) = 'not_found',
+  'somebody who is not a party is told the dispute does not exist');
+
+-- The order of the checks is the point. This person is also unverified, and if
+-- verification were checked first they would be told "not_verified", which
+-- confirms that the dispute is real and that they simply need a badge.
+select pg_temp.check(
+  (select reason from public.may_request_resolution(
+     current_setting('trustiq.dispute')::uuid)) <> 'not_verified',
+  'and never told why in a way that confirms the dispute exists');
+
+select pg_temp.check(
+  (select reason from public.may_request_resolution(
+     '00000000-0000-0000-0000-000000000000'::uuid)) = 'not_found',
+  'a dispute that does not exist gets the same answer as one that is not theirs');
+
+\echo ''
+\echo '-- a verification that was withdrawn --'
+
+-- The case this function exists for. Both parties were verified when the
+-- contract became binding, which is the only way it could have. Then one of
+-- them turned out not to be who they said.
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select public.revoke_verification(
+  '0f000000-0000-0000-0000-0000000000e1',
+  'The Emirates ID given at signup belongs to somebody else.');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000e1', false);
+
+select pg_temp.check(
+  (select allowed from public.may_request_resolution(
+     current_setting('trustiq.dispute')::uuid)) is false,
+  'somebody whose verification was withdrawn may no longer ask');
+
+select pg_temp.check(
+  (select reason from public.may_request_resolution(
+     current_setting('trustiq.dispute')::uuid)) = 'not_verified',
+  'and is told which of the reasons it is, because they are a party and it is theirs to fix');
+
+-- Put back, so the rest of the suite sees the world it expects.
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+select public.record_manual_verification(
+  '0f000000-0000-0000-0000-0000000000e1',
+  'Restored inside the schema tests after exercising the withdrawal path.');
+
+\echo ''
+\echo '-- and it is not a client API in the first place --'
+
+select pg_temp.check(
+  not has_function_privilege('anon', 'public.may_request_resolution(uuid)', 'EXECUTE'),
+  'anon holds no grant on it');
+
+select pg_temp.check(
+  has_function_privilege('authenticated', 'public.may_request_resolution(uuid)', 'EXECUTE'),
+  'a signed-in party does, because the screen has to ask it too');
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

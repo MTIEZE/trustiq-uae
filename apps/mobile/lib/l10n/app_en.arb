@@ -474,6 +474,17 @@
   "@verifyDoneBody": {"placeholders": {"when": {"type": "String"}}},
   "verifySent": "Request sent.",
 
+  "askResolutionTitle": "Both accounts are in",
+  "askResolutionBody": "An AI agent reads both sides against the documents filed and proposes a resolution. It only ends the dispute if you both accept it, and either of you can refuse and ask for a person instead.",
+  "askResolutionAction": "Ask for a resolution",
+  "askResolutionRunning": "Reading the case",
+  "askResolutionOnce": "This runs once. Add anything else you want read before you ask.",
+  "resolutionNeedsVerified": "Your account needs to be verified before you can ask for a resolution.",
+  "resolutionNeedsVerifiedWhy": "A resolution is a document both of you can point at afterwards, so it is only issued between identities that were checked.",
+  "resolutionVerifyAction": "Verify my account",
+  "resolutionFailed": "The analysis could not be started. Nothing has changed, and you can try again.",
+  "resolutionStarted": "The case has been read.",
+
   "amountMustBePositive": "The amount must be more than zero.",
   "amountTwoDecimals": "Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.",
   "amountFormat": "Enter an amount in AED, like 500 or 1250.50.",

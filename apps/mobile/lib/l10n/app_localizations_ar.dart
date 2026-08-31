@@ -1192,6 +1192,41 @@ class LAr extends L {
   String get verifySent => 'أُرسل الطلب.';
 
   @override
+  String get askResolutionTitle => 'وصلت روايتا الطرفين';
+
+  @override
+  String get askResolutionBody =>
+      'يقرأ وكيل ذكاء اصطناعي الروايتين في ضوء المستندات المودعة ويقترح تسوية. ولا تُنهي التسوية النزاع إلا إذا قبلتماها معًا، ولأيٍّ منكما أن يرفض ويطلب شخصًا بدلًا من ذلك.';
+
+  @override
+  String get askResolutionAction => 'اطلب تسوية';
+
+  @override
+  String get askResolutionRunning => 'جارٍ قراءة الملف';
+
+  @override
+  String get askResolutionOnce =>
+      'تجري هذه القراءة مرة واحدة. أضف ما تريد أن يُقرأ قبل أن تطلبها.';
+
+  @override
+  String get resolutionNeedsVerified =>
+      'يلزم التحقق من حسابك قبل أن تطلب تسوية.';
+
+  @override
+  String get resolutionNeedsVerifiedWhy =>
+      'التسوية وثيقة يمكن لكليكما الاحتجاج بها لاحقًا، فلا تصدر إلا بين هويتين جرى التحقق منهما.';
+
+  @override
+  String get resolutionVerifyAction => 'تحقّق من حسابي';
+
+  @override
+  String get resolutionFailed =>
+      'تعذّر بدء التحليل. لم يتغيّر شيء، ويمكنك المحاولة مرة أخرى.';
+
+  @override
+  String get resolutionStarted => 'تمت قراءة الملف.';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

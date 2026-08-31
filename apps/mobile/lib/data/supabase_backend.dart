@@ -677,6 +677,83 @@ class SupabaseBackend implements Backend {
     DocumentKind.tradeLicence: 'trade_licence',
   };
 
+  /// Turns the database's own word for the refusal into something typed.
+  ///
+  /// Anything unrecognised is treated as "already run", which is the harmless
+  /// reading: it hides a button rather than offering one that will be refused.
+  static ResolutionEligibility _eligibility(String? reason) => switch (reason) {
+        null => const ResolutionEligibility.allowed(),
+        'not_found' => const ResolutionEligibility.blocked(ResolutionBlock.notFound),
+        'not_verified' => const ResolutionEligibility.blocked(ResolutionBlock.notVerified),
+        _ => ResolutionEligibility.blocked(ResolutionBlock.alreadyRun, reason),
+      };
+
+  @override
+  Future<ResolutionEligibility> mayRequestResolution(String contractId) async {
+    final disputeId = await _disputeIdFor(contractId);
+    if (disputeId == null) {
+      return const ResolutionEligibility.blocked(ResolutionBlock.notFound);
+    }
+
+    final rows = await _rpc<List<dynamic>>(
+      'may_request_resolution', {'p_dispute_id': disputeId},
+      'checking whether this can be sent for analysis');
+    if (rows.isEmpty) {
+      return const ResolutionEligibility.blocked(ResolutionBlock.notFound);
+    }
+
+    final row = Map<String, dynamic>.from(rows.first as Map);
+    if (row['allowed'] == true) return const ResolutionEligibility.allowed();
+    return _eligibility(row['reason'] as String?);
+  }
+
+  @override
+  Future<ResolutionOutcome> requestResolution(String contractId) async {
+    final disputeId = await _disputeIdFor(contractId);
+    if (disputeId == null) {
+      return const ResolutionRefused(ResolutionBlock.notFound);
+    }
+
+    // The edge function, because it is the only thing holding the model key.
+    // It asks the same database function again with this same session before
+    // spending anything, so the check above is a courtesy to the screen and
+    // not the thing standing in the way.
+    final response = await _client.functions.invoke(
+      'resolve-dispute',
+      body: {'disputeId': disputeId},
+    );
+
+    final body = response.data is Map
+        ? Map<String, dynamic>.from(response.data as Map)
+        : const <String, dynamic>{};
+
+    if (response.status == 200) {
+      return switch (body['outcome']) {
+        'escalated' => ResolutionEscalated((body['reason'] as String?) ?? ''),
+        _ => const ResolutionProposed(),
+      };
+    }
+
+    // The function answers a refusal with the database's own reason code, so
+    // this does not have to match on a sentence that could be reworded.
+    final reason = body['reason'] as String?;
+    if (reason != null) {
+      return ResolutionRefused(_eligibility(reason).block ?? ResolutionBlock.alreadyRun);
+    }
+    return ResolutionFailed(
+      (body['error'] as String?) ?? 'The analysis could not be started.');
+  }
+
+  /// The dispute attached to a contract, if there is one.
+  Future<String?> _disputeIdFor(String contractId) async {
+    final row = await _client
+        .from('disputes')
+        .select('id')
+        .eq('transaction_id', contractId)
+        .maybeSingle();
+    return row?['id'] as String?;
+  }
+
   @override
   Future<MyVerification> myVerification() async {
     if (_client.auth.currentUser == null) return MyVerification.unknown;

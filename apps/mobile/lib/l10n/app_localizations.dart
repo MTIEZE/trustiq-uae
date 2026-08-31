@@ -2148,6 +2148,66 @@ abstract class L {
   /// **'Request sent.'**
   String get verifySent;
 
+  /// No description provided for @askResolutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Both accounts are in'**
+  String get askResolutionTitle;
+
+  /// No description provided for @askResolutionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'An AI agent reads both sides against the documents filed and proposes a resolution. It only ends the dispute if you both accept it, and either of you can refuse and ask for a person instead.'**
+  String get askResolutionBody;
+
+  /// No description provided for @askResolutionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a resolution'**
+  String get askResolutionAction;
+
+  /// No description provided for @askResolutionRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the case'**
+  String get askResolutionRunning;
+
+  /// No description provided for @askResolutionOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'This runs once. Add anything else you want read before you ask.'**
+  String get askResolutionOnce;
+
+  /// No description provided for @resolutionNeedsVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account needs to be verified before you can ask for a resolution.'**
+  String get resolutionNeedsVerified;
+
+  /// No description provided for @resolutionNeedsVerifiedWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'A resolution is a document both of you can point at afterwards, so it is only issued between identities that were checked.'**
+  String get resolutionNeedsVerifiedWhy;
+
+  /// No description provided for @resolutionVerifyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify my account'**
+  String get resolutionVerifyAction;
+
+  /// No description provided for @resolutionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The analysis could not be started. Nothing has changed, and you can try again.'**
+  String get resolutionFailed;
+
+  /// No description provided for @resolutionStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'The case has been read.'**
+  String get resolutionStarted;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

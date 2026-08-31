@@ -1200,6 +1200,41 @@ class LEn extends L {
   String get verifySent => 'Request sent.';
 
   @override
+  String get askResolutionTitle => 'Both accounts are in';
+
+  @override
+  String get askResolutionBody =>
+      'An AI agent reads both sides against the documents filed and proposes a resolution. It only ends the dispute if you both accept it, and either of you can refuse and ask for a person instead.';
+
+  @override
+  String get askResolutionAction => 'Ask for a resolution';
+
+  @override
+  String get askResolutionRunning => 'Reading the case';
+
+  @override
+  String get askResolutionOnce =>
+      'This runs once. Add anything else you want read before you ask.';
+
+  @override
+  String get resolutionNeedsVerified =>
+      'Your account needs to be verified before you can ask for a resolution.';
+
+  @override
+  String get resolutionNeedsVerifiedWhy =>
+      'A resolution is a document both of you can point at afterwards, so it is only issued between identities that were checked.';
+
+  @override
+  String get resolutionVerifyAction => 'Verify my account';
+
+  @override
+  String get resolutionFailed =>
+      'The analysis could not be started. Nothing has changed, and you can try again.';
+
+  @override
+  String get resolutionStarted => 'The case has been read.';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override
