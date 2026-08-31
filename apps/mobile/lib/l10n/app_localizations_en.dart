@@ -1090,6 +1090,26 @@ class LEn extends L {
       'Try again. If it keeps happening, tell us what you were doing.';
 
   @override
+  String get heldPausedTitle => 'TrustIQ is paused';
+
+  @override
+  String get heldPausedBody =>
+      'The service is briefly unavailable. Nothing you have already agreed is affected, and no contract can change while it is paused.';
+
+  @override
+  String get heldOutdatedTitle => 'This version is too old to use';
+
+  @override
+  String get heldOutdatedBody =>
+      'Update TrustIQ from the store you installed it from. Your contracts and documents are untouched and will be there when you come back.';
+
+  @override
+  String get heldRetry => 'Check again';
+
+  @override
+  String get heldChecking => 'Checking';
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

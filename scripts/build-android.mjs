@@ -138,6 +138,18 @@ function main() {
   if (cfg.TRUSTIQ_VERIFY_CONTACT) {
     args.push(`--dart-define=TRUSTIQ_VERIFY_CONTACT=${cfg.TRUSTIQ_VERIFY_CONTACT}`)
   }
+
+  // The build number the app will report about itself, taken from the one
+  // place that already decides it. Read from pubspec rather than passed in, so
+  // the number in the binary and the versionCode Play sees are the same number
+  // and cannot be set to disagree.
+  const pubspec = readFileSync(join(MOBILE, 'pubspec.yaml'), 'utf8')
+  const version = /^version:\s*[0-9.]+\+([0-9]+)\s*$/m.exec(pubspec)
+  if (!version) {
+    console.error('\n  Could not read the build number from pubspec.yaml (version: x.y.z+N).\n')
+    return 1
+  }
+  args.push(`--dart-define=TRUSTIQ_BUILD=${version[1]}`)
   // One APK that installs on any phone, unless asked otherwise. Three files
   // are smaller each but somebody has to know which one to send.
   if (split) args.push('--split-per-abi')

@@ -1956,6 +1956,42 @@ abstract class L {
   /// **'Try again. If it keeps happening, tell us what you were doing.'**
   String get somethingWentWrongBody;
 
+  /// No description provided for @heldPausedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TrustIQ is paused'**
+  String get heldPausedTitle;
+
+  /// No description provided for @heldPausedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is briefly unavailable. Nothing you have already agreed is affected, and no contract can change while it is paused.'**
+  String get heldPausedBody;
+
+  /// No description provided for @heldOutdatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This version is too old to use'**
+  String get heldOutdatedTitle;
+
+  /// No description provided for @heldOutdatedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Update TrustIQ from the store you installed it from. Your contracts and documents are untouched and will be there when you come back.'**
+  String get heldOutdatedBody;
+
+  /// No description provided for @heldRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get heldRetry;
+
+  /// No description provided for @heldChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking'**
+  String get heldChecking;
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

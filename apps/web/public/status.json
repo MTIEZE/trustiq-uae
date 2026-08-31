@@ -1,0 +1,36 @@
+{
+  "_readme": [
+    "The remote stop button. Every TrustIQ app reads this file at launch.",
+    "",
+    "It lives here, on a static host, rather than in the database, for two",
+    "reasons. The schema tests hold an absolute line that no function in public",
+    "is callable with the key that ships inside the app, and a status readable",
+    "before sign-in would have needed a hole in it. And a stop button housed in",
+    "the system it is meant to stop is not a stop button: the day Supabase has",
+    "an incident is exactly when you want to say so, and exactly when the",
+    "database would be unreachable.",
+    "",
+    "mode: 'open' or 'maintenance'. Anything else means open. The app fails",
+    "open on every path: a bad connection, a 404, malformed JSON, a slow",
+    "server. A switch that bricks the app when the network is poor is worse",
+    "than no switch, and TrustIQ has testers on 3G.",
+    "",
+    "minimumBuild: the oldest build allowed to run. Match it to the '+N' in",
+    "apps/mobile/pubspec.yaml, which is also the Play versionCode. A build that",
+    "does not know its own number is never held back.",
+    "",
+    "notice: shown to the person, in their language. Say what is happening and",
+    "when it ends. Leave both empty for the app's own wording.",
+    "",
+    "Changing this needs a commit and a Pages deploy, two or three minutes.",
+    "That is the price of it being somewhere that survives everything else."
+  ],
+
+  "mode": "open",
+  "minimumBuild": 0,
+  "notice": {
+    "en": "",
+    "ar": ""
+  },
+  "updated": "2026-08-31"
+}

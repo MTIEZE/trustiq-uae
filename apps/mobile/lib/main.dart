@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,9 +10,11 @@ import 'data/config.dart';
 import 'data/demo_backend.dart';
 import 'data/language.dart';
 import 'data/onboarding.dart';
+import 'data/service_status.dart';
 import 'data/supabase_backend.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/contracts_screen.dart';
+import 'screens/held_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/splash_screen.dart';
@@ -41,10 +45,18 @@ Future<void> main() async {
   final language = await LanguageController.load();
   final onboarding = await OnboardingGate.load();
 
+  // Fired off, not awaited. The answer is almost always "carry on", and making
+  // every launch wait for a file on a marketing site to say so would spend
+  // everybody's time on the rare case. It lands during the launch sequence,
+  // which is time the app was going to spend anyway.
+  final status = ServiceStatusGate();
+  unawaited(status.check());
+
   runApp(TrustIqApp(
     backend: backend,
     language: language,
     onboarding: onboarding,
+    status: status,
     opensWithSplash: true,
   ));
 }
@@ -55,8 +67,12 @@ class TrustIqApp extends StatefulWidget {
     required this.backend,
     LanguageController? language,
     OnboardingGate? onboarding,
+    ServiceStatusGate? status,
     this.opensWithSplash = false,
   })  : language = language ?? LanguageController.forTests(),
+        // A gate nobody has checked reports open, so a tree built without one
+        // behaves exactly like a launch where the file said carry on.
+        status = status ?? ServiceStatusGate(),
         // Tests and demo trees start past the introduction. A widget test that
         // has to dismiss four panels before it can look at a contract list is
         // a test about the wrong thing.
@@ -65,6 +81,7 @@ class TrustIqApp extends StatefulWidget {
   final Backend backend;
   final LanguageController language;
   final OnboardingGate onboarding;
+  final ServiceStatusGate status;
 
   /// Whether to play the launch sequence. Off by default for the same reason
   /// the introduction is skipped: a test about the contract list should not
@@ -141,7 +158,7 @@ class _TrustIqAppState extends State<TrustIqApp> {
       home: LanguageScope(
         controller: widget.language,
         child: ListenableBuilder(
-          listenable: _state,
+          listenable: Listenable.merge([_state, widget.status]),
           builder: (context, _) => AnimatedSwitcher(
             duration: const Duration(milliseconds: 320),
             child: _home(),
@@ -165,6 +182,12 @@ class _TrustIqAppState extends State<TrustIqApp> {
     // is time the app was going to spend anyway.
     if (!_opened) {
       return SplashScreen(onDone: () => setState(() => _opened = true));
+    }
+    // Ahead of the introduction and the sign-in form both. Somebody meeting
+    // TrustIQ for the first time during an incident should be told there is
+    // one, not walked through four panels and then failed at the account step.
+    if (widget.status.held) {
+      return HeldScreen(gate: widget.status);
     }
     if (!_introduced) {
       return OnboardingScreen(

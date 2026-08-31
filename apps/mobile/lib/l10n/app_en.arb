@@ -436,6 +436,13 @@
   "somethingWentWrong": "Something went wrong.",
   "somethingWentWrongBody": "Try again. If it keeps happening, tell us what you were doing.",
 
+  "heldPausedTitle": "TrustIQ is paused",
+  "heldPausedBody": "The service is briefly unavailable. Nothing you have already agreed is affected, and no contract can change while it is paused.",
+  "heldOutdatedTitle": "This version is too old to use",
+  "heldOutdatedBody": "Update TrustIQ from the store you installed it from. Your contracts and documents are untouched and will be there when you come back.",
+  "heldRetry": "Check again",
+  "heldChecking": "Checking",
+
   "amountMustBePositive": "The amount must be more than zero.",
   "amountTwoDecimals": "Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.",
   "amountFormat": "Enter an amount in AED, like 500 or 1250.50.",

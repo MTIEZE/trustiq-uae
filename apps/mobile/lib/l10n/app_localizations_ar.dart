@@ -1082,6 +1082,26 @@ class LAr extends L {
       'حاول مرة أخرى. وإن تكرّر، أخبرنا بما كنت تفعل.';
 
   @override
+  String get heldPausedTitle => 'تريست آي كيو متوقّف مؤقتًا';
+
+  @override
+  String get heldPausedBody =>
+      'الخدمة غير متاحة لفترة قصيرة. لا شيء ممّا اتفقتم عليه يتأثر، ولا يمكن لأي عقد أن يتغيّر أثناء التوقف.';
+
+  @override
+  String get heldOutdatedTitle => 'هذه النسخة قديمة ولا يمكن استخدامها';
+
+  @override
+  String get heldOutdatedBody =>
+      'حدّث تريست آي كيو من المتجر الذي ثبّته منه. عقودك ومستنداتك كما هي وستجدها عند عودتك.';
+
+  @override
+  String get heldRetry => 'تحقّق مرة أخرى';
+
+  @override
+  String get heldChecking => 'جارٍ التحقق';
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

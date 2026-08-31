@@ -50,6 +50,25 @@ class TrustIqConfig {
   static const verificationContact =
       String.fromEnvironment('TRUSTIQ_VERIFY_CONTACT');
 
+  /// This build's number, the '+N' from pubspec.yaml and the Play versionCode.
+  ///
+  /// Zero when nobody said, which is every `flutter run`. A build that does not
+  /// know its own number is never held back by `minimumBuild`, because locking
+  /// a developer out of their own app with a file they cannot see would be a
+  /// worse failure than the one the switch exists to prevent.
+  static const buildNumber = int.fromEnvironment('TRUSTIQ_BUILD');
+
+  /// The remote stop button.
+  ///
+  /// Hardcoded rather than optional, and the default must keep working
+  /// forever: an app installed today will still be asking this address in two
+  /// years, whatever domain the project has moved to by then. Overridable so a
+  /// test or a fork can point somewhere else, and empty to switch it off.
+  static const statusUrl = String.fromEnvironment(
+    'TRUSTIQ_STATUS_URL',
+    defaultValue: 'https://mtieze.github.io/trustiq-uae/status.json',
+  );
+
   bool get isLive => url.isNotEmpty && anonKey.isNotEmpty;
 
   /// The project host, for showing which backend a build is talking to.
