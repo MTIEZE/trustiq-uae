@@ -315,7 +315,102 @@ class _NewContractScreenState extends State<NewContractScreen> {
 
           const SizedBox(height: Space.xxl),
           const SizedBox(height: Space.section),
-          _Step(number: 4, title: l.stages, blurb: l.stagesOptional),
+          _Step(number: 4, title: l.stepHowLong, blurb: l.stepHowLongBlurb),
+          const SizedBox(height: Space.md),
+          InfoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: Space.inline,
+                  runSpacing: Space.inline,
+                  children: [
+                    ChoiceChip(
+                      label: Text(l.periodOneOff),
+                      selected: !_overTime,
+                      onSelected: (_) => setState(() => _overTime = false),
+                    ),
+                    ChoiceChip(
+                      label: Text(l.periodOverTime),
+                      selected: _overTime,
+                      onSelected: (_) => setState(() => _overTime = true),
+                    ),
+                  ],
+                ),
+                if (_overTime) ...[
+                  const SizedBox(height: Space.lg),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _DateField(
+                          label: l.periodStarts,
+                          value: _startsOn,
+                          placeholder: l.periodPickDate,
+                          onTap: () => _pickDate(start: true),
+                        ),
+                      ),
+                      const SizedBox(width: Space.md),
+                      Expanded(
+                        child: _DateField(
+                          label: l.periodEnds,
+                          value: _endsOn,
+                          placeholder: l.periodOpenEnded,
+                          onTap: () => _pickDate(start: false),
+                          onClear: _endsOn == null
+                              ? null
+                              : () => setState(() {
+                                    _endsOn = null;
+                                    _renewal = RenewalPolicy.none;
+                                  }),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!_period.isCoherent && _bothDates) ...[
+                    const SizedBox(height: Space.sm),
+                    Text(l.periodEndsBeforeStarts,
+                        style: TextStyle(fontSize: 13.5, color: c.critical)),
+                  ],
+                  const SizedBox(height: Space.lg),
+                  SectionLabel(l.periodRenewal),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: Space.inline,
+                    runSpacing: Space.inline,
+                    children: [
+                      for (final policy in RenewalPolicy.values)
+                        ChoiceChip(
+                          label: Text(_renewalLabel(context, policy)),
+                          selected: _renewal == policy,
+                          // Greyed rather than hidden: somebody looking for the
+                          // option should see it and see why it is not offered.
+                          onSelected: _bothDates
+                              ? (_) => setState(() => _renewal = policy)
+                              : null,
+                        ),
+                    ],
+                  ),
+                  if (!_bothDates) ...[
+                    const SizedBox(height: Space.sm),
+                    Text(l.renewalNeedsBothDates,
+                        style: TextStyle(fontSize: 13.5, color: c.inkFaint)),
+                  ] else if (_renewal == RenewalPolicy.automatic) ...[
+                    const SizedBox(height: Space.md),
+                    RuleNote(l.renewalAutomaticNote, icon: Icons.autorenew_outlined),
+                  ] else if (_renewal == RenewalPolicy.manual) ...[
+                    const SizedBox(height: Space.md),
+                    RuleNote(l.renewalManualNote, icon: Icons.handshake_outlined),
+                  ],
+                  const SizedBox(height: Space.md),
+                  RuleNote(l.periodFixedAfterSending, icon: Icons.lock_outline),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: Space.xxl),
+          const SizedBox(height: Space.section),
+          _Step(number: 5, title: l.stages, blurb: l.stagesOptional),
           const SizedBox(height: Space.md),
           for (final (index, stage) in _stages.indexed) ...[
             _StageFields(
@@ -358,9 +453,50 @@ class _NewContractScreenState extends State<NewContractScreen> {
     );
   }
 
+  /// Off by default, because most work is one job and a form that asks
+  /// everybody for dates is a form most people answer wrongly.
+  bool _overTime = false;
+  DateTime? _startsOn;
+  DateTime? _endsOn;
+  RenewalPolicy _renewal = RenewalPolicy.none;
+
+  ContractPeriod get _period => _overTime
+      ? ContractPeriod(startsOn: _startsOn, endsOn: _endsOn, renewal: _renewal)
+      : ContractPeriod.oneOff;
+
+  bool get _bothDates => _startsOn != null && _endsOn != null;
+
+  Future<void> _pickDate({required bool start}) async {
+    final now = DateTime.now();
+    final initial = (start ? _startsOn : _endsOn) ?? _startsOn ?? now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      // Two years back so a contract already running can be written down, and
+      // ten forward, which is longer than anything this product should carry.
+      firstDate: DateTime(now.year - 2),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (start) {
+        _startsOn = picked;
+      } else {
+        _endsOn = picked;
+      }
+      // The database refuses a renewal without both dates. Dropping it here
+      // rather than letting the insert fail keeps the refusal in the one place
+      // somebody can see it.
+      if (!_bothDates) _renewal = RenewalPolicy.none;
+    });
+  }
+
   Future<void> _create() async {
     final amount = _parsedAmount;
     if (amount == null) return;
+    // The same rules the database holds. Refused here so the person sees it
+    // against the field they got wrong rather than in a snackbar afterwards.
+    if (!_period.isCoherent) return;
 
     Contract? contract;
     try {
@@ -371,6 +507,7 @@ class _NewContractScreenState extends State<NewContractScreen> {
         youAre: _youAre,
         counterparty: _counterparty.text.trim(),
         stages: _draftStages,
+        period: _period,
       );
     } on CounterpartyHasNoAccount catch (e) {
       if (!mounted) return;
@@ -524,6 +661,78 @@ class _StageFields extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+String _renewalLabel(BuildContext context, RenewalPolicy policy) => switch (policy) {
+      RenewalPolicy.none => context.l.renewalNone,
+      RenewalPolicy.manual => context.l.renewalManual,
+      RenewalPolicy.automatic => context.l.renewalAutomatic,
+    };
+
+/// A date, or the reason there is not one.
+///
+/// A tap target rather than a text field: a typed date is a date somebody gets
+/// wrong, in a format that differs between the two languages this app speaks.
+class _DateField extends StatelessWidget {
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.placeholder,
+    required this.onTap,
+    this.onClear,
+  });
+
+  final String label;
+  final DateTime? value;
+  final String placeholder;
+  final VoidCallback onTap;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final locale = Localizations.localeOf(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionLabel(label),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.md),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: Space.md, vertical: Space.sm + 2),
+            decoration: BoxDecoration(
+              border: Border.all(color: c.rule),
+              borderRadius: BorderRadius.circular(Radii.md),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value == null ? placeholder : formatDay(value!, locale),
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      color: value == null ? c.inkFaint : c.ink,
+                    ),
+                  ),
+                ),
+                if (onClear != null)
+                  InkWell(
+                    onTap: onClear,
+                    child: Icon(Icons.close, size: IconSize.md, color: c.inkFaint),
+                  )
+                else
+                  Icon(Icons.event_outlined, size: IconSize.md, color: c.inkFaint),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

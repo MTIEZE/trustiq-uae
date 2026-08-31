@@ -1235,6 +1235,90 @@ class LEn extends L {
   String get resolutionStarted => 'The case has been read.';
 
   @override
+  String get stepHowLong => 'How long it runs';
+
+  @override
+  String get stepHowLongBlurb =>
+      'Most work is one job with no period. Say otherwise only if this is an arrangement that runs for a stretch of time.';
+
+  @override
+  String get periodOneOff => 'One piece of work';
+
+  @override
+  String get periodOverTime => 'It runs for a period';
+
+  @override
+  String get periodStarts => 'Starts';
+
+  @override
+  String get periodEnds => 'Ends';
+
+  @override
+  String get periodPickDate => 'Choose a date';
+
+  @override
+  String get periodOpenEnded => 'No end date';
+
+  @override
+  String get periodEndsBeforeStarts => 'The end has to come after the start.';
+
+  @override
+  String get periodRenewal => 'When it ends';
+
+  @override
+  String get renewalNone => 'It just ends';
+
+  @override
+  String get renewalManual => 'We decide together';
+
+  @override
+  String get renewalAutomatic => 'It renews itself';
+
+  @override
+  String get renewalNeedsBothDates =>
+      'Set both dates to choose what happens at the end.';
+
+  @override
+  String get renewalAutomaticNote =>
+      'On the end date the period rolls forward by the same length, and you are both told. It is on the record either way.';
+
+  @override
+  String get renewalManualNote =>
+      'You are both warned two weeks before. Nothing renews unless you agree.';
+
+  @override
+  String get periodFixedAfterSending =>
+      'Like the rest of the terms, this can only be changed while the contract is a draft.';
+
+  @override
+  String get contractPeriod => 'Period';
+
+  @override
+  String contractPeriodFrom(String from, String to) {
+    return '$from to $to';
+  }
+
+  @override
+  String contractPeriodFromOpen(String from) {
+    return 'From $from, no end date';
+  }
+
+  @override
+  String contractRenewsOn(String when) {
+    return 'Renews $when';
+  }
+
+  @override
+  String contractEndsOn(String when) {
+    return 'Ends $when, and does not renew';
+  }
+
+  @override
+  String contractDecideBy(String when) {
+    return 'You both decide by $when';
+  }
+
+  @override
   String get amountMustBePositive => 'The amount must be more than zero.';
 
   @override

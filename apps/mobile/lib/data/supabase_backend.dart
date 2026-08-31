@@ -192,7 +192,8 @@ class SupabaseBackend implements Backend {
       () => _client
           .from('transactions')
           .select('id, state, buyer_id, seller_id, description, terms, '
-              'total_amount_fils, acceptance_deadline, created_at')
+              'total_amount_fils, acceptance_deadline, created_at, '
+              'starts_on, ends_on, renewal')
           .order('created_at', ascending: false),
       'contracts',
     );
@@ -360,6 +361,15 @@ class SupabaseBackend implements Backend {
       seller: partyFromProfile(peopleById[sellerId], sellerId),
       createdAt: createdAt,
       acceptanceDeadline: readOptionalTime(transaction, 'acceptance_deadline'),
+      period: ContractPeriod(
+        startsOn: _readDay(transaction['starts_on']),
+        endsOn: _readDay(transaction['ends_on']),
+        renewal: _renewalWire.entries
+                .where((e) => e.value == transaction['renewal'])
+                .map((e) => e.key)
+                .firstOrNull ??
+            RenewalPolicy.none,
+      ),
       // Already ordered by position from the query, so the plan reads the way
       // it was written rather than the way Postgres felt like returning it.
       milestones: [
@@ -397,6 +407,7 @@ class SupabaseBackend implements Backend {
     required Role youAre,
     required String counterpartyEmail,
     List<DraftStage> stages = const [],
+    ContractPeriod period = ContractPeriod.oneOff,
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw BackendException('Sign in first.');
@@ -421,6 +432,11 @@ class SupabaseBackend implements Backend {
             'terms': terms,
             'total_amount_fils': amount.value,
             'created_by': userId,
+            // Dates, not timestamps: a contract runs for days, and sending a
+            // moment would make its last day depend on the reader's timezone.
+            if (period.startsOn != null) 'starts_on': _day(period.startsOn!),
+            if (period.endsOn != null) 'ends_on': _day(period.endsOn!),
+            'renewal': _renewalWire[period.renewal],
           })
           .select('id')
           .single();
@@ -669,6 +685,33 @@ class SupabaseBackend implements Backend {
   Future<void> setPreferredLocale(String code) async {
     if (_client.auth.currentUser == null) return;
     await _rpc<void>('set_preferred_locale', {'p_locale': code}, 'saving your language');
+  }
+
+  static const _renewalWire = {
+    RenewalPolicy.none: 'none',
+    RenewalPolicy.manual: 'manual',
+    RenewalPolicy.automatic: 'automatic',
+  };
+
+  /// A calendar day, as the column stores it. Written from the local date the
+  /// person chose, not from a UTC instant: somebody in Dubai picking the 1st
+  /// should not have their contract start on the 31st.
+  static String _day(DateTime at) =>
+      '${at.year.toString().padLeft(4, '0')}-'
+      '${at.month.toString().padLeft(2, '0')}-'
+      '${at.day.toString().padLeft(2, '0')}';
+
+  /// And back. Parsed as a plain date so it never shifts by a timezone on the
+  /// way in either.
+  static DateTime? _readDay(Object? value) {
+    if (value is! String || value.isEmpty) return null;
+    final parts = value.split('-');
+    if (parts.length < 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2].substring(0, 2));
+    if (y == null || m == null || d == null) return null;
+    return DateTime(y, m, d);
   }
 
   static const _documentWire = {

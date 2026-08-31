@@ -79,6 +79,11 @@ abstract interface class Backend {
   /// Throws [CounterpartyHasNoAccount] when the address belongs to nobody.
   /// A typed failure rather than a message the caller has to read, because
   /// the screen turns that one case into an offer to invite them instead.
+  /// Creates a contract in draft.
+  ///
+  /// [period] is only ever settable here and while the contract is still a
+  /// draft: the update policy on `transactions` refuses an edit once it has
+  /// been sent, which is the point of a contract.
   Future<Contract> createContract({
     required String description,
     required String terms,
@@ -86,6 +91,7 @@ abstract interface class Backend {
     required Role youAre,
     required String counterpartyEmail,
     List<DraftStage> stages,
+    ContractPeriod period = ContractPeriod.oneOff,
   });
 
   /// Records the same contract for somebody who has no account, and returns

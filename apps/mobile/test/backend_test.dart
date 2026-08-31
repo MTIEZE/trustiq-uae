@@ -652,6 +652,7 @@ class _NoSuchPersonBackend extends DemoBackend {
     required Role youAre,
     required String counterpartyEmail,
     List<DraftStage> stages = const [],
+    ContractPeriod period = ContractPeriod.oneOff,
   }) async {
     throw CounterpartyHasNoAccount(counterpartyEmail);
   }

@@ -1227,6 +1227,90 @@ class LAr extends L {
   String get resolutionStarted => 'تمت قراءة الملف.';
 
   @override
+  String get stepHowLong => 'مدّة سريانه';
+
+  @override
+  String get stepHowLongBlurb =>
+      'معظم الأعمال مهمة واحدة بلا مدّة. لا تحدّد مدّة إلا إن كان هذا ترتيبًا يسري على فترة زمنية.';
+
+  @override
+  String get periodOneOff => 'عمل واحد';
+
+  @override
+  String get periodOverTime => 'يسري على فترة';
+
+  @override
+  String get periodStarts => 'يبدأ';
+
+  @override
+  String get periodEnds => 'ينتهي';
+
+  @override
+  String get periodPickDate => 'اختر تاريخًا';
+
+  @override
+  String get periodOpenEnded => 'بلا تاريخ انتهاء';
+
+  @override
+  String get periodEndsBeforeStarts => 'يجب أن يأتي الانتهاء بعد البداية.';
+
+  @override
+  String get periodRenewal => 'عند انتهائه';
+
+  @override
+  String get renewalNone => 'ينتهي وحسب';
+
+  @override
+  String get renewalManual => 'نقرّر معًا';
+
+  @override
+  String get renewalAutomatic => 'يتجدّد تلقائيًا';
+
+  @override
+  String get renewalNeedsBothDates =>
+      'حدّد التاريخين لاختيار ما يحدث عند الانتهاء.';
+
+  @override
+  String get renewalAutomaticNote =>
+      'في تاريخ الانتهاء تُمدَّد الفترة بالمدّة نفسها، وتُبلَّغان بذلك. وهو مثبت في السجل في الحالتين.';
+
+  @override
+  String get renewalManualNote =>
+      'تُنبَّهان قبل أسبوعين. ولا شيء يتجدّد ما لم تتفقا.';
+
+  @override
+  String get periodFixedAfterSending =>
+      'كسائر الشروط، لا يمكن تعديل هذا إلا ما دام العقد مسوّدة.';
+
+  @override
+  String get contractPeriod => 'الفترة';
+
+  @override
+  String contractPeriodFrom(String from, String to) {
+    return 'من $from إلى $to';
+  }
+
+  @override
+  String contractPeriodFromOpen(String from) {
+    return 'من $from، بلا تاريخ انتهاء';
+  }
+
+  @override
+  String contractRenewsOn(String when) {
+    return 'يتجدّد في $when';
+  }
+
+  @override
+  String contractEndsOn(String when) {
+    return 'ينتهي في $when، ولا يتجدّد';
+  }
+
+  @override
+  String contractDecideBy(String when) {
+    return 'تقرّران معًا قبل $when';
+  }
+
+  @override
   String get amountMustBePositive => 'يجب أن يكون المبلغ أكبر من صفر.';
 
   @override

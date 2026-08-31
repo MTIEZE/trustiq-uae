@@ -121,6 +121,15 @@ class ContractDetailScreen extends StatelessWidget {
                       contract.terms,
                       style: const TextStyle(fontSize: 14, height: 1.5),
                     ),
+                    // Only when there is one. Most work is a single job, and a
+                    // row saying "no period" on every contract is noise on all
+                    // of them to be useful on a few.
+                    if (contract.period.hasDates) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      _PeriodBlock(period: contract.period),
+                    ],
                     if (contract.milestones.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       const Divider(),
@@ -211,6 +220,72 @@ class ContractDetailScreen extends StatelessWidget {
     }
   }
 
+}
+
+/// How long the contract runs, and what happens at the end.
+///
+/// The end date and what follows it are two different facts and are said as
+/// two lines. A contract that ends on the same date it renews reads as a
+/// contradiction if both are crammed into one sentence.
+class _PeriodBlock extends StatelessWidget {
+  const _PeriodBlock({required this.period});
+
+  final ContractPeriod period;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final c = context.c;
+    final locale = Localizations.localeOf(context);
+    final day = (DateTime at) => formatDay(at, locale);
+
+    final start = period.startsOn;
+    final end = period.endsOn;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionLabel(l.contractPeriod),
+        const SizedBox(height: 8),
+        Text(
+          start == null
+              ? day(end!)
+              : end == null
+                  ? l.contractPeriodFromOpen(day(start))
+                  : l.contractPeriodFrom(day(start), day(end)),
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        if (end != null) ...[
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                switch (period.renewal) {
+                  RenewalPolicy.automatic => Icons.autorenew_outlined,
+                  RenewalPolicy.manual => Icons.handshake_outlined,
+                  RenewalPolicy.none => Icons.event_busy_outlined,
+                },
+                size: IconSize.sm,
+                color: c.inkFaint,
+              ),
+              const SizedBox(width: Space.inline),
+              Expanded(
+                child: Text(
+                  switch (period.renewal) {
+                    RenewalPolicy.automatic => l.contractRenewsOn(day(end)),
+                    RenewalPolicy.manual => l.contractDecideBy(day(end)),
+                    RenewalPolicy.none => l.contractEndsOn(day(end)),
+                  },
+                  style: TextStyle(fontSize: 13.5, height: 1.45, color: c.inkSoft),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _PartyRow extends StatelessWidget {

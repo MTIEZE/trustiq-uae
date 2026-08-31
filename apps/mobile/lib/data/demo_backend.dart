@@ -102,6 +102,7 @@ class DemoBackend implements Backend {
     required Role youAre,
     required String counterpartyEmail,
     List<DraftStage> stages = const [],
+    ContractPeriod period = ContractPeriod.oneOff,
   }) async {
     final me = Party(
       id: 'usr_you',
@@ -124,6 +125,7 @@ class DemoBackend implements Backend {
       buyer: youAre == Role.buyer ? me : them,
       seller: youAre == Role.seller ? me : them,
       createdAt: DateTime.now(),
+      period: period,
     );
 
     _contracts = [contract, ..._contracts];

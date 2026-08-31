@@ -545,6 +545,7 @@ class AppState extends ChangeNotifier {
     required Role youAre,
     required String counterparty,
     List<DraftStage> stages = const [],
+    ContractPeriod period = ContractPeriod.oneOff,
   }) async {
     Contract? created;
     CounterpartyHasNoAccount? noAccount;
@@ -558,6 +559,7 @@ class AppState extends ChangeNotifier {
           youAre: youAre,
           counterpartyEmail: counterparty,
           stages: stages,
+          period: period,
         );
       } on CounterpartyHasNoAccount catch (e) {
         // Not a banner. This is the one failure with a way forward, and the

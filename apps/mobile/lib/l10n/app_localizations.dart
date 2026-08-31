@@ -2208,6 +2208,144 @@ abstract class L {
   /// **'The case has been read.'**
   String get resolutionStarted;
 
+  /// No description provided for @stepHowLong.
+  ///
+  /// In en, this message translates to:
+  /// **'How long it runs'**
+  String get stepHowLong;
+
+  /// No description provided for @stepHowLongBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'Most work is one job with no period. Say otherwise only if this is an arrangement that runs for a stretch of time.'**
+  String get stepHowLongBlurb;
+
+  /// No description provided for @periodOneOff.
+  ///
+  /// In en, this message translates to:
+  /// **'One piece of work'**
+  String get periodOneOff;
+
+  /// No description provided for @periodOverTime.
+  ///
+  /// In en, this message translates to:
+  /// **'It runs for a period'**
+  String get periodOverTime;
+
+  /// No description provided for @periodStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get periodStarts;
+
+  /// No description provided for @periodEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get periodEnds;
+
+  /// No description provided for @periodPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date'**
+  String get periodPickDate;
+
+  /// No description provided for @periodOpenEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get periodOpenEnded;
+
+  /// No description provided for @periodEndsBeforeStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'The end has to come after the start.'**
+  String get periodEndsBeforeStarts;
+
+  /// No description provided for @periodRenewal.
+  ///
+  /// In en, this message translates to:
+  /// **'When it ends'**
+  String get periodRenewal;
+
+  /// No description provided for @renewalNone.
+  ///
+  /// In en, this message translates to:
+  /// **'It just ends'**
+  String get renewalNone;
+
+  /// No description provided for @renewalManual.
+  ///
+  /// In en, this message translates to:
+  /// **'We decide together'**
+  String get renewalManual;
+
+  /// No description provided for @renewalAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'It renews itself'**
+  String get renewalAutomatic;
+
+  /// No description provided for @renewalNeedsBothDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Set both dates to choose what happens at the end.'**
+  String get renewalNeedsBothDates;
+
+  /// No description provided for @renewalAutomaticNote.
+  ///
+  /// In en, this message translates to:
+  /// **'On the end date the period rolls forward by the same length, and you are both told. It is on the record either way.'**
+  String get renewalAutomaticNote;
+
+  /// No description provided for @renewalManualNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You are both warned two weeks before. Nothing renews unless you agree.'**
+  String get renewalManualNote;
+
+  /// No description provided for @periodFixedAfterSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Like the rest of the terms, this can only be changed while the contract is a draft.'**
+  String get periodFixedAfterSending;
+
+  /// No description provided for @contractPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get contractPeriod;
+
+  /// No description provided for @contractPeriodFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} to {to}'**
+  String contractPeriodFrom(String from, String to);
+
+  /// No description provided for @contractPeriodFromOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'From {from}, no end date'**
+  String contractPeriodFromOpen(String from);
+
+  /// No description provided for @contractRenewsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Renews {when}'**
+  String contractRenewsOn(String when);
+
+  /// No description provided for @contractEndsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends {when}, and does not renew'**
+  String contractEndsOn(String when);
+
+  /// No description provided for @contractDecideBy.
+  ///
+  /// In en, this message translates to:
+  /// **'You both decide by {when}'**
+  String contractDecideBy(String when);
+
   /// No description provided for @amountMustBePositive.
   ///
   /// In en, this message translates to:

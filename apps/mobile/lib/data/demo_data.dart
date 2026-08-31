@@ -161,6 +161,54 @@ class Dispute {
   final String? escalationReason;
 }
 
+/// What the parties agreed happens when a period runs out.
+///
+/// Recorded whether or not anything automates it: it is part of the terms, and
+/// the terms are the thing this product keeps. Only `automatic` is acted on by
+/// the scheduler; `manual` means both of them have to decide, and the app's job
+/// is to warn them in time.
+enum RenewalPolicy { none, manual, automatic }
+
+/// How long a contract runs.
+///
+/// All three fields are absent for one-off work, which is most of it. The
+/// database refuses a renewal policy without both dates, because a promise to
+/// renew an open-ended period is one nothing could ever keep, and this mirrors
+/// that rather than discovering it at insert time.
+class ContractPeriod {
+  const ContractPeriod({
+    this.startsOn,
+    this.endsOn,
+    this.renewal = RenewalPolicy.none,
+  });
+
+  /// One piece of work with no period, which is the default and the common case.
+  static const oneOff = ContractPeriod();
+
+  final DateTime? startsOn;
+  final DateTime? endsOn;
+  final RenewalPolicy renewal;
+
+  bool get hasDates => startsOn != null || endsOn != null;
+  bool get isOpenEnded => startsOn != null && endsOn == null;
+
+  /// When the next decision or rollover falls due, which is the end of the
+  /// current period. Null when nothing is going to happen at the end.
+  DateTime? get renewsOn => renewal == RenewalPolicy.none ? null : endsOn;
+
+  /// The same rules the database holds, so the form can refuse before the
+  /// server has to.
+  bool get isCoherent {
+    if (startsOn != null && endsOn != null && endsOn!.isBefore(startsOn!)) {
+      return false;
+    }
+    if (renewal != RenewalPolicy.none && (startsOn == null || endsOn == null)) {
+      return false;
+    }
+    return true;
+  }
+}
+
 class Contract {
   const Contract({
     required this.id,
@@ -177,7 +225,10 @@ class Contract {
     this.timeline = const [],
     this.evidence = const [],
     this.dispute,
+    this.period = ContractPeriod.oneOff,
   });
+
+  final ContractPeriod period;
 
   final String id;
   final String reference;
