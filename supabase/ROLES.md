@@ -101,7 +101,7 @@ database built from `supabase/migrations` and production is not only that.
 | `expire_overdue_contracts()` | system only |
 | `find_counterparty(p_email text)` | signed in |
 | `invite_counterparty(p_email text, p_invitee_is party_role, p_description text, p_terms text, p_total_amount_fils bigint)` | signed in |
-| `issue_ai_proposal(p_dispute_id uuid, p_decision resolution_decision, p_summary text, p_disputed_amount_fils bigint, p_seller_amount_fils bigint, p_buyer_amount_fils bigint, p_confidence numeric, p_model_id text, p_issued_at timestamp with time zone, p_findings jsonb)` | system only |
+| `issue_ai_proposal(p_dispute_id uuid, p_decision resolution_decision, p_summary text, p_disputed_amount_fils bigint, p_seller_amount_fils bigint, p_buyer_amount_fils bigint, p_confidence numeric, p_model_id text, p_issued_at timestamp with time zone, p_findings jsonb, p_ai_call_id bigint)` | system only |
 | `issue_human_resolution(p_dispute_id uuid, p_decision resolution_decision, p_summary text, p_seller_amount_fils bigint, p_buyer_amount_fils bigint, p_findings jsonb)` | signed in |
 | `mark_notifications_read(p_before timestamp with time zone)` | signed in |
 | `mark_notifications_sent(p_ids bigint[], p_error text)` | system only |

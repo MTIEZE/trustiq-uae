@@ -376,48 +376,66 @@ select pg_temp.expect_error(
               '11111111-1111-1111-1111-111111111111', 'buyer', 50000) $q$,
   'a contract cannot have two open disputes at once');
 
+-- Every AI proposal names the run that produced it (0027), so the direct
+-- inserts below need one. Without it they are all refused by that constraint
+-- before reaching the constraint each of them is actually about, which would
+-- leave four assertions passing for the wrong reason.
+insert into public.ai_call_log
+  (dispute_id, model_id, prompt_version, request_payload, validation_outcome, confidence)
+values
+  ('dd000000-0000-0000-0000-000000000001', 'claude-sonnet-5', 'test/1',
+   '{"probe":true}'::jsonb, 'accepted', 0.62);
+
+create temporary view pg_temp.run_one as
+  select max(id) as id from public.ai_call_log
+  where dispute_id = 'dd000000-0000-0000-0000-000000000001';
+
 -- The allocation invariant: one fil short must not be storable.
 select pg_temp.expect_error(
   $q$ insert into public.resolution_proposals
         (dispute_id, source, decision, summary, disputed_amount_fils,
-         seller_amount_fils, buyer_amount_fils, confidence, model_id)
+         seller_amount_fils, buyer_amount_fils, confidence, model_id, ai_call_id)
       values ('dd000000-0000-0000-0000-000000000001', 'ai', 'split', 'Ambiguous case.',
-              50000, 30000, 19999, 0.62, 'claude-sonnet-5') $q$,
+              50000, 30000, 19999, 0.62, 'claude-sonnet-5',
+              (select id from pg_temp.run_one)) $q$,
   'an allocation that is one fil short is refused');
 
 select pg_temp.expect_error(
   $q$ insert into public.resolution_proposals
         (dispute_id, source, decision, summary, disputed_amount_fils,
-         seller_amount_fils, buyer_amount_fils, confidence, model_id)
+         seller_amount_fils, buyer_amount_fils, confidence, model_id, ai_call_id)
       values ('dd000000-0000-0000-0000-000000000001', 'ai', 'refund_to_buyer', 'Contradictory.',
-              50000, 30000, 20000, 0.62, 'claude-sonnet-5') $q$,
+              50000, 30000, 20000, 0.62, 'claude-sonnet-5',
+              (select id from pg_temp.run_one)) $q$,
   'a decision that contradicts its own allocation is refused');
 
 select pg_temp.expect_error(
   $q$ insert into public.resolution_proposals
         (dispute_id, source, decision, summary, disputed_amount_fils,
-         seller_amount_fils, buyer_amount_fils, confidence, model_id)
+         seller_amount_fils, buyer_amount_fils, confidence, model_id, ai_call_id)
       values ('dd000000-0000-0000-0000-000000000001', 'ai', 'split', 'Wrong total.',
-              49000, 29000, 20000, 0.62, 'claude-sonnet-5') $q$,
+              49000, 29000, 20000, 0.62, 'claude-sonnet-5',
+              (select id from pg_temp.run_one)) $q$,
   'a proposal for a different amount than the dispute is refused');
 
 select pg_temp.expect_error(
   $q$ insert into public.resolution_proposals
         (dispute_id, source, decision, summary, disputed_amount_fils,
-         seller_amount_fils, buyer_amount_fils)
+         seller_amount_fils, buyer_amount_fils, ai_call_id)
       values ('dd000000-0000-0000-0000-000000000001', 'ai', 'split', 'Unattributed AI output.',
-              50000, 30000, 20000) $q$,
+              50000, 30000, 20000, (select id from pg_temp.run_one)) $q$,
   'an AI proposal without a model id and confidence is refused');
 
 -- The valid one.
 insert into public.resolution_proposals
   (id, dispute_id, source, decision, summary, disputed_amount_fils,
-   seller_amount_fils, buyer_amount_fils, confidence, model_id)
+   seller_amount_fils, buyer_amount_fils, confidence, model_id, ai_call_id)
 values
   ('99000000-0000-0000-0000-000000000001',
    'dd000000-0000-0000-0000-000000000001', 'ai', 'split',
    'Delivery was on time but quality could not be verified from the evidence.',
-   50000, 30000, 20000, 0.62, 'claude-sonnet-5');
+   50000, 30000, 20000, 0.62, 'claude-sonnet-5',
+   (select id from pg_temp.run_one));
 
 select pg_temp.check(true, 'a balanced, attributed proposal is accepted');
 
@@ -663,12 +681,25 @@ values
 
 select public.apply_dispute_event('dd000000-0000-0000-0000-000000000002', 'submit_for_ai');
 
+-- Every proposal now names the run that produced it, so the suite needs one.
+-- On the live project the server writes this row before it dares store
+-- anything, which is the whole reason the link only travels forwards.
+insert into public.ai_call_log
+  (dispute_id, model_id, prompt_version, request_payload, validation_outcome, confidence)
+values
+  ('dd000000-0000-0000-0000-000000000002', 'claude-opus-5', 'test/1',
+   '{"probe":true}'::jsonb, 'accepted', 0.78);
+
+create temporary view pg_temp.run as
+  select max(id) as id from public.ai_call_log
+  where dispute_id = 'dd000000-0000-0000-0000-000000000002';
+
 -- A party must not be able to author the proposal that decides their own case.
 -- Two independent barriers, tested separately because either one alone would
 -- be enough to hide a hole in the other.
 select pg_temp.check(
   not has_function_privilege('authenticated',
-    'public.issue_ai_proposal(uuid, public.resolution_decision, text, bigint, bigint, bigint, numeric, text, timestamptz, jsonb)',
+    'public.issue_ai_proposal(uuid, public.resolution_decision, text, bigint, bigint, bigint, numeric, text, timestamptz, jsonb, bigint)',
     'EXECUTE'),
   'authenticated holds no EXECUTE grant on issue_ai_proposal');
 
@@ -677,7 +708,7 @@ select pg_temp.expect_error(
   $q$ select public.issue_ai_proposal(
         'dd000000-0000-0000-0000-000000000002', 'split', 'Written by a party.',
         50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
-        '[{"statement":"Mine.","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb) $q$,
+        '[{"statement":"Mine.","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb, (select id from pg_temp.run)) $q$,
   'issue_ai_proposal refuses a caller holding a user session');
 select set_config('request.jwt.claim.sub', '', false);
 
@@ -686,14 +717,14 @@ select pg_temp.expect_error(
   $q$ select public.issue_ai_proposal(
         'dddddddd-dead-dead-dead-dddddddddddd', 'split', 'Nowhere to put this.',
         50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
-        '[{"statement":"x","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb) $q$,
+        '[{"statement":"x","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb, (select id from pg_temp.run)) $q$,
   'issue_ai_proposal refuses an unknown dispute id');
 
 -- A proposal with no findings at all is not a proposal.
 select pg_temp.expect_error(
   $q$ select public.issue_ai_proposal(
         'dd000000-0000-0000-0000-000000000002', 'split', 'No basis given.',
-        50000, 30000, 20000, 0.9, 'claude-opus-5', now(), '[]'::jsonb) $q$,
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(), '[]'::jsonb, (select id from pg_temp.run)) $q$,
   'issue_ai_proposal refuses a proposal carrying no findings');
 
 -- The hallucinated citation, arriving through the function rather than as a
@@ -704,7 +735,7 @@ select pg_temp.expect_error(
         'dd000000-0000-0000-0000-000000000002', 'split', 'Cites a document nobody filed.',
         50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
         '[{"statement":"There was a signed addendum.",
-           "evidenceIds":["ee000000-0000-0000-0000-0000000000fe"]}]'::jsonb) $q$,
+           "evidenceIds":["ee000000-0000-0000-0000-0000000000fe"]}]'::jsonb, (select id from pg_temp.run)) $q$,
   'issue_ai_proposal refuses a finding citing evidence nobody submitted');
 
 select pg_temp.check(
@@ -721,7 +752,7 @@ select pg_temp.expect_deferred_error(
         '[{"statement":"The brief asked for 800 words.",
            "evidenceIds":["ee000000-0000-0000-0000-000000000003"]},
           {"statement":"The seller was obviously careless.",
-           "evidenceIds":[]}]'::jsonb) $q$,
+           "evidenceIds":[]}]'::jsonb, (select id from pg_temp.run)) $q$,
   'issue_ai_proposal refuses a proposal containing an ungrounded finding');
 
 select pg_temp.check(
@@ -747,7 +778,7 @@ begin
        "evidenceIds":["ee000000-0000-0000-0000-000000000003"]},
       {"statement":"The delivered draft was shorter than agreed.",
        "evidenceIds":["ee000000-0000-0000-0000-000000000003",
-                      "ee000000-0000-0000-0000-000000000004"]}]'::jsonb);
+                      "ee000000-0000-0000-0000-000000000004"]}]'::jsonb, (select id from pg_temp.run));
 
   -- Force the deferred grounding check here rather than at the end of the
   -- suite, so this assertion is what proves it passed.
@@ -785,6 +816,38 @@ select pg_temp.check(
 select pg_temp.check(
   (select state from public.disputes where id = 'dd000000-0000-0000-0000-000000000002') = 'proposal_issued',
   'the same call publishes the proposal to the parties');
+
+select pg_temp.check(
+  (select p.ai_call_id from public.resolution_proposals p
+   where p.dispute_id = 'dd000000-0000-0000-0000-000000000002')
+  = (select id from pg_temp.run),
+  'the stored proposal names the run that produced it');
+
+-- The gap 0027 closed. ai_call_log is append-only, so a run can never be told
+-- afterwards what it produced; if the proposal does not carry the link at
+-- insert time, nothing ever will.
+select pg_temp.check(
+  not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'ai_call_log' and column_name = 'proposal_id'),
+  'the column that could never be written is gone');
+
+select pg_temp.expect_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-000000000002', 'split', 'No run named.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"x","evidenceIds":["ee000000-0000-0000-0000-000000000003"]}]'::jsonb,
+        null) $q$,
+  'issue_ai_proposal refuses a proposal that cannot name its run');
+
+-- A human resolution has no model call behind it, and must not claim one.
+select pg_temp.expect_error(
+  $q$ insert into public.resolution_proposals
+        (dispute_id, source, decision, summary,
+         disputed_amount_fils, seller_amount_fils, buyer_amount_fils, ai_call_id)
+      values ('dd000000-0000-0000-0000-000000000002', 'human', 'split', 'A person decided.',
+              50000, 30000, 20000, (select id from pg_temp.run)) $q$,
+  'a human proposal cannot name a model run');
 
 select pg_temp.check(
   (select actor from public.dispute_events

@@ -63,12 +63,23 @@ export interface DisputeRepository {
   /** Stores the proposal and moves the dispute to `proposal_issued`. */
   saveProposal(input: SaveProposalInput): Promise<{ proposalId: string }>
   markEscalated(disputeId: string, reason: string): Promise<void>
-  appendAuditRecord(record: AuditRecord): Promise<void>
+
+  /**
+   * Writes the audit row and hands back its id.
+   *
+   * The id is what a proposal is later stamped with, which is the only way the
+   * two can be tied together: the audit row is written first, on purpose, so a
+   * run is recorded even when the store afterwards fails, and the log is
+   * append-only so it can never be told about the proposal in arrears.
+   */
+  appendAuditRecord(record: AuditRecord): Promise<{ callId: number }>
 }
 
 export interface SaveProposalInput {
   readonly disputeId: string
   readonly proposal: ResolutionProposal
+  /** The run this proposal came out of, from `appendAuditRecord`. */
+  readonly aiCallId: number
 }
 
 export interface Clock {

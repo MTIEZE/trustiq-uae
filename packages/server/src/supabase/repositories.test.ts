@@ -20,22 +20,31 @@
  * against the live project.
  */
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { Fils, GroundedFinding, ResolutionProposal } from '@trustiq/core'
 import { SupabaseDisputeRepository } from './repositories.js'
 
-/** The parameter names `public.issue_ai_proposal` declares, read from the SQL. */
+/**
+ * The parameter names `public.issue_ai_proposal` declares, read from the SQL.
+ *
+ * Every migration in order, last definition wins. This used to open 0009 by
+ * name, which pinned the check to the function's first version: 0027 changed
+ * the signature in a different file, and this test would have gone on
+ * comparing against a definition the database no longer has.
+ */
 function declaredParameters(): string[] {
-  const url = new URL(
-    '../../../../supabase/migrations/0009_issue_ai_proposal.sql',
-    import.meta.url,
-  )
-  const sql = readFileSync(url, 'utf8').replace(/--[^\n]*/g, '')
-  const signature = /create\s+or\s+replace\s+function\s+public\.issue_ai_proposal\s*\(([\s\S]*?)\)\s*returns/i
-    .exec(sql)?.[1]
+  const dir = new URL('../../../../supabase/migrations/', import.meta.url)
+  const pattern =
+    /create\s+(?:or\s+replace\s+)?function\s+public\.issue_ai_proposal\s*\(([\s\S]*?)\)\s*returns/gi
+
+  let signature: string | undefined
+  for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+    const sql = readFileSync(new URL(file, dir), 'utf8').replace(/--[^\n]*/g, '')
+    for (const match of sql.matchAll(pattern)) signature = match[1]
+  }
   if (signature === undefined) {
-    throw new Error('issue_ai_proposal not found in migration 0009')
+    throw new Error('no migration declares issue_ai_proposal')
   }
   return [...signature.matchAll(/(p_[a-z_]+)\s+[a-z]/gi)].map((m) => m[1] as string)
 }
@@ -89,6 +98,7 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
     const result = await new SupabaseDisputeRepository(client).saveProposal({
       disputeId: 'dispute-1',
       proposal,
+      aiCallId: 4242,
     })
 
     expect(calls).toHaveLength(1)
@@ -101,10 +111,24 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
     await new SupabaseDisputeRepository(client).saveProposal({
       disputeId: 'dispute-1',
       proposal,
+      aiCallId: 4242,
     })
 
     const sent = Object.keys(calls[0]?.args ?? {}).sort()
     expect(sent).toEqual(declaredParameters().sort())
+  })
+
+  it('names the run that produced it', async () => {
+    // The gap 0027 closed: the audit row and the proposal both existed and
+    // nothing pointed one at the other.
+    const { calls, client } = fakeClient({ data: 'prop-1', error: null })
+    await new SupabaseDisputeRepository(client).saveProposal({
+      disputeId: 'dispute-1',
+      proposal,
+      aiCallId: 4242,
+    })
+
+    expect(calls[0]?.args.p_ai_call_id).toBe(4242)
   })
 
   it('sends the allocation and its total together, so the balance CHECK can fire', async () => {
@@ -112,6 +136,7 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
     await new SupabaseDisputeRepository(client).saveProposal({
       disputeId: 'dispute-1',
       proposal,
+      aiCallId: 4242,
     })
 
     const args = calls[0]?.args ?? {}
@@ -125,6 +150,7 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
     await new SupabaseDisputeRepository(client).saveProposal({
       disputeId: 'dispute-1',
       proposal,
+      aiCallId: 4242,
     })
 
     expect(calls[0]?.args.p_findings).toEqual([
@@ -136,7 +162,7 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
   it('throws when the database refuses the write', async () => {
     const { client } = fakeClient({ data: null, error: { message: 'grounding failed' } })
     await expect(
-      new SupabaseDisputeRepository(client).saveProposal({ disputeId: 'dispute-1', proposal }),
+      new SupabaseDisputeRepository(client).saveProposal({ disputeId: 'dispute-1', proposal, aiCallId: 4242 }),
     ).rejects.toThrow(/grounding failed/)
   })
 
@@ -145,7 +171,7 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
     // the parties and record a run as successful that stored nothing.
     const { client } = fakeClient({ data: null, error: null })
     await expect(
-      new SupabaseDisputeRepository(client).saveProposal({ disputeId: 'dispute-1', proposal }),
+      new SupabaseDisputeRepository(client).saveProposal({ disputeId: 'dispute-1', proposal, aiCallId: 4242 }),
     ).rejects.toThrow(/no proposal id/)
   })
 })

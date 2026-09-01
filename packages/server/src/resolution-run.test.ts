@@ -78,9 +78,12 @@ class FakeRepo implements DisputeRepository {
     this.escalations.push({ disputeId, reason })
   }
 
-  async appendAuditRecord(record: AuditRecord): Promise<void> {
+  async appendAuditRecord(record: AuditRecord): Promise<{ callId: number }> {
     if (this.failAudit) throw new Error('audit table unavailable')
     this.audits.push(record)
+    // Ids the database would hand back: 1, 2, 3. What the tests care about is
+    // that the number a proposal is stamped with is the number this returned.
+    return { callId: this.audits.length }
   }
 }
 
@@ -123,6 +126,19 @@ describe('a resolvable case', () => {
     await runResolution(DISPUTE, deps(repo, goodJson()))
     expect(repo.audits).toHaveLength(1)
     expect(repo.audits[0]?.validationOutcome).toBe('accepted')
+  })
+
+  it('stamps the proposal with the audit row it just wrote', async () => {
+    // The audit row is written first so that a run survives a failed store, and
+    // the log is append-only so it can never be told the outcome afterwards.
+    // The id travelling forward into the proposal is therefore the only thing
+    // tying a resolution to the run that produced it. Every row on the live
+    // project predating this has no such link.
+    const repo = new FakeRepo()
+    await runResolution(DISPUTE, deps(repo, goodJson()))
+
+    expect(repo.audits).toHaveLength(1)
+    expect(repo.proposals[0]?.aiCallId).toBe(1)
   })
 })
 

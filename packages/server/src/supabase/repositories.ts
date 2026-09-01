@@ -217,7 +217,7 @@ export class SupabaseDisputeRepository implements DisputeRepository {
   }
 
   async saveProposal(input: SaveProposalInput): Promise<{ proposalId: string }> {
-    const { proposal, disputeId } = input
+    const { proposal, disputeId, aiCallId } = input
 
     // One call, because the write has to be one transaction.
     //
@@ -245,6 +245,10 @@ export class SupabaseDisputeRepository implements DisputeRepository {
         statement: finding.statement,
         evidenceIds: finding.evidenceIds,
       })),
+      // The audit row written moments ago, before the model output was trusted
+      // enough to store. Without it there is no way back from a proposal to the
+      // prompt, the raw response and the confidence that produced it.
+      p_ai_call_id: aiCallId,
     })
 
     if (error) fail('storing the proposal', error)
@@ -265,10 +269,9 @@ export class SupabaseDisputeRepository implements DisputeRepository {
     if (error) fail(`escalating dispute ${disputeId} (${reason})`, error)
   }
 
-  async appendAuditRecord(record: AuditRecord): Promise<void> {
-    const { error } = await this.client.from('ai_call_log').insert({
+  async appendAuditRecord(record: AuditRecord): Promise<{ callId: number }> {
+    const { data, error } = await this.client.from('ai_call_log').insert({
       dispute_id: record.disputeId,
-      proposal_id: null,
       model_id: record.modelId,
       prompt_version: record.promptVersion,
       request_payload: record.requestPayload,
@@ -279,6 +282,14 @@ export class SupabaseDisputeRepository implements DisputeRepository {
       latency_ms: record.latencyMs,
       error_message: record.errorMessage,
     })
+      .select('id')
+      .single()
+
     if (error) fail('writing the audit record', error)
+    const callId = (data as { id?: unknown } | null)?.id
+    if (typeof callId !== 'number') {
+      throw new RowMappingError('the audit insert returned no id')
+    }
+    return { callId }
   }
 }

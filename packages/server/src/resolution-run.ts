@@ -62,7 +62,7 @@ export async function runResolution(disputeId: string, deps: RunDeps): Promise<R
   })
 
   const audited = await recordAudit(outcome.audit, deps)
-  if (!audited) {
+  if (audited === null) {
     const reason = 'the audit record could not be written, so no proposal was issued'
     await deps.repository.markEscalated(disputeId, reason).catch(() => undefined)
     return { kind: 'escalated', disputeId, reason }
@@ -78,6 +78,7 @@ export async function runResolution(disputeId: string, deps: RunDeps): Promise<R
     const { proposalId } = await deps.repository.saveProposal({
       disputeId,
       proposal: outcome.proposal,
+      aiCallId: audited.callId,
     })
     return { kind: 'proposal', proposalId, disputeId }
   } catch (error) {
@@ -89,12 +90,15 @@ export async function runResolution(disputeId: string, deps: RunDeps): Promise<R
   }
 }
 
-async function recordAudit(record: AuditRecord, deps: RunDeps): Promise<boolean> {
+/** The written row, or null if it could not be written at all. */
+async function recordAudit(
+  record: AuditRecord,
+  deps: RunDeps,
+): Promise<{ callId: number } | null> {
   try {
-    await deps.repository.appendAuditRecord(record)
-    return true
+    return await deps.repository.appendAuditRecord(record)
   } catch {
-    return false
+    return null
   }
 }
 
