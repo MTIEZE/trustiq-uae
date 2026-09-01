@@ -839,6 +839,7 @@ class SupabaseBackend implements Backend {
       'verified' => VerificationStanding.verified,
       'pending' => VerificationStanding.pending,
       'rejected' => VerificationStanding.rejected,
+      'needs_more_info' => VerificationStanding.needsMoreInfo,
       _ => VerificationStanding.none,
     };
 

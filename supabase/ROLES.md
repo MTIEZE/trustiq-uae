@@ -83,6 +83,7 @@ database built from `supabase/migrations` and production is not only that.
 | `admin_ai_quality()` | signed in |
 | `admin_beta_waiting()` | signed in |
 | `admin_daily(p_days integer)` | signed in |
+| `admin_decide_verification(p_request_id uuid, p_outcome text, p_note text)` | signed in |
 | `admin_disputes()` | signed in |
 | `admin_overview()` | signed in |
 | `admin_people(p_query text, p_limit integer)` | signed in |

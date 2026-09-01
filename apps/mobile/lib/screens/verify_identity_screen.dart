@@ -211,6 +211,7 @@ class _Journey extends StatelessWidget {
       VerificationStanding.verified => _Done(when: standing.since),
       VerificationStanding.pending => _Waiting(state: state, standing: standing),
       VerificationStanding.rejected => _Refused(state: state, standing: standing),
+      VerificationStanding.needsMoreInfo => _NeedsMore(state: state, standing: standing),
       VerificationStanding.none => _AskForm(state: state),
     };
   }
@@ -350,6 +351,62 @@ class _Refused extends StatelessWidget {
               if ((standing.reason ?? '').isNotEmpty) ...[
                 const SizedBox(height: Space.md),
                 SectionLabel(l.verifyRejectedWhy),
+                const SizedBox(height: 6),
+                Text(standing.reason!,
+                    style: TextStyle(fontSize: 14.5, height: 1.5, color: c.ink)),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: Space.lg),
+        _AskForm(state: state, again: true),
+      ],
+    );
+  }
+}
+
+/// An operator asked a question, and the request is still open.
+///
+/// Deliberately not the refusal card with different words. A refusal is over
+/// and this is not: the person has something to do, the tone is a request
+/// rather than a verdict, and the form below is the answer rather than a
+/// second attempt.
+class _NeedsMore extends StatelessWidget {
+  const _NeedsMore({required this.state, required this.standing});
+
+  final AppState state;
+  final MyVerification standing;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InfoCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.help_outline, size: IconSize.lg, color: c.caution),
+                  const SizedBox(width: Space.inline),
+                  Expanded(
+                    child: Text(l.verifyMoreTitle,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700, height: 1.35)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Space.sm),
+              Text(l.verifyMoreBody,
+                  style: TextStyle(fontSize: 14, height: 1.5, color: c.inkSoft)),
+              // The question itself. The server will not record one without.
+              if ((standing.reason ?? '').isNotEmpty) ...[
+                const SizedBox(height: Space.md),
+                SectionLabel(l.verifyMoreWhat),
                 const SizedBox(height: 6),
                 Text(standing.reason!,
                     style: TextStyle(fontSize: 14.5, height: 1.5, color: c.ink)),

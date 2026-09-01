@@ -1489,4 +1489,17 @@ class LEn extends L {
 
   @override
   String get legalHeading => 'The small print';
+
+  @override
+  String get verifyMoreTitle => 'One more thing is needed';
+
+  @override
+  String get verifyMoreBody =>
+      'Your request is still open. Somebody read it and needs a little more before they can finish.';
+
+  @override
+  String get verifyMoreWhat => 'What they asked for';
+
+  @override
+  String get verifyMoreSend => 'Send it';
 }

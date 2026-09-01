@@ -2651,6 +2651,30 @@ abstract class L {
   /// In en, this message translates to:
   /// **'The small print'**
   String get legalHeading;
+
+  /// No description provided for @verifyMoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One more thing is needed'**
+  String get verifyMoreTitle;
+
+  /// No description provided for @verifyMoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is still open. Somebody read it and needs a little more before they can finish.'**
+  String get verifyMoreBody;
+
+  /// No description provided for @verifyMoreWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'What they asked for'**
+  String get verifyMoreWhat;
+
+  /// No description provided for @verifyMoreSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send it'**
+  String get verifyMoreSend;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

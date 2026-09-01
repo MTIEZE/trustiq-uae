@@ -818,5 +818,9 @@
   "unblockDone": "They can reach you again.",
   "legalTerms": "Terms of use",
   "legalPrivacy": "Privacy",
-  "legalHeading": "The small print"
+  "legalHeading": "The small print",
+  "verifyMoreTitle": "One more thing is needed",
+  "verifyMoreBody": "Your request is still open. Somebody read it and needs a little more before they can finish.",
+  "verifyMoreWhat": "What they asked for",
+  "verifyMoreSend": "Send it"
 }

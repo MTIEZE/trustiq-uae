@@ -411,7 +411,10 @@ enum DocumentKind { emiratesId, passport, tradeLicence }
 /// tell, and so did `none` and `pending`. Somebody who had asked yesterday saw
 /// exactly what somebody who had never asked saw, which is why the screen
 /// could only ever be a wall of explanation.
-enum VerificationStanding { none, pending, rejected, verified }
+/// `needsMoreInfo` is open, not refused: an operator asked a question and the
+/// request is waiting on an answer. Kept apart from `rejected` because the
+/// two ask completely different things of the person reading them.
+enum VerificationStanding { none, pending, needsMoreInfo, rejected, verified }
 
 /// The answer to "where do I stand", with whatever context that state carries.
 class MyVerification {
@@ -445,7 +448,11 @@ class MyVerification {
   bool get isVerified => standing == VerificationStanding.verified;
   bool get isWaiting => standing == VerificationStanding.pending;
   bool get canAsk => standing == VerificationStanding.none ||
-      standing == VerificationStanding.rejected;
+      standing == VerificationStanding.rejected ||
+      standing == VerificationStanding.needsMoreInfo;
+
+  /// An operator asked for something. The reason carries the question.
+  bool get isAnswering => standing == VerificationStanding.needsMoreInfo;
 }
 
 /// Why the model cannot be asked, when it cannot.

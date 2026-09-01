@@ -3845,4 +3845,182 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', '', false);
 
 \echo ''
+\echo '== an operator can decide a verification, which they could not =='
+
+-- The bug this section exists for: 0021 built deciding as a service-role
+-- action for a script, 0026 wired console buttons to it, and the operator
+-- pressing them was refused three ways. Every test of verification until now
+-- acted as the service role, which is not who presses the button.
+
+reset role;
+insert into auth.users (id, email) values ('0f000000-0000-0000-0000-00000000ab02', 'applicant@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-00000000ab02', 'Wants Verifying', 'applicant@example.ae');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-00000000ab02', false);
+select public.request_verification('Wants Verifying', 'emirates_id', 'Happy to show it on a call.');
+
+\echo ''
+\echo '-- the old service-role path is unchanged --'
+
+-- Deliberately still refused from a session. The script keeps working and the
+-- console no longer goes anywhere near it.
+-- The id is read as the owner and pinned first. Fetched inside the tested
+-- statement it is read as the caller, who has no privilege on that table, so
+-- the refusal came from the subquery and the function was never reached: the
+-- assertion passed and proved nothing.
+reset role;
+create temporary view pg_temp.the_request as
+  select id from app.verification_requests
+  where user_id = '0f000000-0000-0000-0000-00000000ab02';
+
+set role authenticated;
+select set_config('request.jwt.claims', '{"role":"authenticated"}', false);
+select pg_temp.expect_error(
+  $q$ select public.decide_verification(
+        (select id from pg_temp.the_request),
+        true, 'Approved from a user session, which must not work.') $q$,
+  'decide_verification still refuses a caller holding a session');
+select set_config('request.jwt.claims', '', false);
+
+\echo ''
+\echo '-- and the operator path works --'
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-00000000ab02', false);
+select pg_temp.expect_error(
+  $q$ select public.admin_decide_verification(
+        (select request_id from public.admin_verification_queue() limit 1),
+        'approved', 'Verifying myself, which must not work.') $q$,
+  'somebody who is not an operator cannot decide');
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select pg_temp.check(
+  exists (select 1 from public.admin_verification_queue() q where q.user_id = '0f000000-0000-0000-0000-00000000ab02'),
+  'an operator sees the request in the queue');
+
+do $$
+declare
+  v_id uuid;
+begin
+  select request_id into v_id from public.admin_verification_queue()
+  where user_id = '0f000000-0000-0000-0000-00000000ab02';
+
+  perform pg_temp.expect_error(
+    format($f$ select public.admin_decide_verification(%L, 'approved', 'ok') $f$, v_id),
+    'an approval with no real reason is refused');
+
+  perform pg_temp.expect_error(
+    format($f$ select public.admin_decide_verification(%L, 'maybe', 'A long enough note here.') $f$, v_id),
+    'and an outcome that is not one of the three is refused');
+
+  -- Asked for more rather than closed.
+  perform public.admin_decide_verification(
+    v_id, 'needs_more_info',
+    'Please say which emirate issued the card, the number is not needed.');
+end
+$$;
+
+reset role;
+select pg_temp.check(
+  (select state from app.verification_requests where user_id = '0f000000-0000-0000-0000-00000000ab02') = 'needs_more_info',
+  'asking for more leaves the request open');
+
+select pg_temp.check(
+  (select decided_at is null from app.verification_requests where user_id = '0f000000-0000-0000-0000-00000000ab02'),
+  'and undecided, because nothing was decided');
+
+select pg_temp.check(
+  (select count(*) from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab02' and kind = 'verification_more_info') = 1,
+  'the person is told what is needed');
+
+select pg_temp.check(
+  (select identity_verified_at is null from public.profiles where id = '0f000000-0000-0000-0000-00000000ab02'),
+  'and is not verified by being asked a question');
+
+-- The person's own view of the same row. This said 'none' — "you have never
+-- asked" — while the queue waited on their answer, because the case mapped
+-- every state it did not recognise to none. Two descriptions of one row is the
+-- exact failure this area exists to prevent.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-00000000ab02', false);
+select pg_temp.check(
+  (select standing from public.my_verification()) = 'needs_more_info',
+  'and their own view says a question is waiting, not that they never asked');
+select pg_temp.check(
+  (select reason from public.my_verification()) like '%which emirate%',
+  'carrying the question itself');
+reset role;
+
+-- The person answers, which is an update rather than a second request.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-00000000ab02', false);
+select public.request_verification('Wants Verifying', 'emirates_id', 'Issued in Sharjah.');
+
+reset role;
+select pg_temp.check(
+  (select count(*) from app.verification_requests where user_id = '0f000000-0000-0000-0000-00000000ab02') = 1,
+  'answering does not open a second request');
+
+select pg_temp.check(
+  (select state from app.verification_requests where user_id = '0f000000-0000-0000-0000-00000000ab02') = 'pending',
+  'it goes back into the queue');
+
+select pg_temp.check(
+  (select reason is null from app.verification_requests where user_id = '0f000000-0000-0000-0000-00000000ab02'),
+  'and the question is cleared, because it was answered');
+
+-- Approved, at last, through the operator's own session.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+do $$
+declare
+  v_id uuid;
+begin
+  select request_id into v_id from public.admin_verification_queue()
+  where user_id = '0f000000-0000-0000-0000-00000000ab02';
+  perform public.admin_decide_verification(
+    v_id, 'approved', 'Emirates ID shown on a call, name and photo match the account.');
+end
+$$;
+
+reset role;
+select pg_temp.check(
+  (select identity_verified_at is not null from public.profiles where id = '0f000000-0000-0000-0000-00000000ab02'),
+  'approving actually verifies the profile');
+
+select pg_temp.check(
+  (select identity_provider from public.profiles where id = '0f000000-0000-0000-0000-00000000ab02') = 'manual_review',
+  'stamped as a person having checked, never as UAE Pass');
+
+select pg_temp.check(
+  (select count(*) from app.identity_checks where user_id = '0f000000-0000-0000-0000-00000000ab02' and outcome = 'verified') = 1,
+  'and the check is on the identity record');
+
+select pg_temp.check(
+  (select state from app.verification_requests where user_id = '0f000000-0000-0000-0000-00000000ab02') = 'approved',
+  'the request is closed as approved');
+
+select pg_temp.check(
+  (select count(*) from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab02' and kind = 'verification_approved') = 1,
+  'the person is told they are verified');
+
+select pg_temp.check(
+  exists (select 1 from app.admin_access_log
+          where subject_id = '0f000000-0000-0000-0000-00000000ab02' and what = 'verification'),
+  'and the operator who decided it is on the access log');
+
+-- The gate the whole thing exists for.
+select pg_temp.check(
+  not exists (select 1 from public.admin_verification_queue() q where q.user_id = '0f000000-0000-0000-0000-00000000ab02'),
+  'and it leaves the queue');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

@@ -1480,4 +1480,17 @@ class LAr extends L {
 
   @override
   String get legalHeading => 'التفاصيل القانونية';
+
+  @override
+  String get verifyMoreTitle => 'هناك أمر إضافي مطلوب';
+
+  @override
+  String get verifyMoreBody =>
+      'طلبك ما زال مفتوحاً. اطّلع عليه أحدهم ويحتاج إلى القليل بعد قبل أن يتمكن من إنهائه.';
+
+  @override
+  String get verifyMoreWhat => 'ما طُلب منك';
+
+  @override
+  String get verifyMoreSend => 'أرسِله';
 }

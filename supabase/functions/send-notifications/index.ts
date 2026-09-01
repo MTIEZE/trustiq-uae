@@ -65,7 +65,12 @@ interface AccountNotice {
   email: string
   full_name: string
   locale: string
-  kind: 'suspended' | 'reinstated'
+  kind:
+    | 'suspended'
+    | 'reinstated'
+    | 'verification_approved'
+    | 'verification_rejected'
+    | 'verification_more_info'
   reason: string
 }
 
@@ -84,6 +89,27 @@ const ACCOUNT_COPY = {
       lead: 'The suspension on your account has been lifted and you can sign in again. What was recorded:',
       close: 'Nothing was lost while it was closed.',
     },
+    verification_approved: {
+      subject: 'Your TrustIQ identity is verified',
+      lead: 'A person at TrustIQ has checked your identity and your account is now verified. What they recorded:',
+      close:
+        'You can now accept a contract and ask for a resolution when one goes wrong. ' +
+        'Verified means a person looked at what you showed them, and nothing more than that.',
+    },
+    verification_rejected: {
+      subject: 'TrustIQ could not verify your identity',
+      lead: 'Your verification request was not approved. The reason given:',
+      close:
+        'You can ask again once that is sorted out. Nothing else about your account has ' +
+        'changed, and nothing has been deleted.',
+    },
+    verification_more_info: {
+      subject: 'TrustIQ needs a little more from you',
+      lead: 'Your verification is still open and is waiting on you. What is needed:',
+      close:
+        'Open TrustIQ and send it, and the request goes straight back into the queue. ' +
+        'It has not been refused.',
+    },
     footer:
       'TrustIQ records what two people agreed. It never holds your money. ' +
       'You are getting this because it is about your own account.',
@@ -100,6 +126,25 @@ const ACCOUNT_COPY = {
       subject: 'حسابك في TrustIQ مفتوح من جديد',
       lead: 'رُفع التعليق عن حسابك ويمكنك تسجيل الدخول مجدداً. ما تم تسجيله:',
       close: 'لم يُفقد شيء خلال فترة الإغلاق.',
+    },
+    verification_approved: {
+      subject: 'تم التحقق من هويتك في TrustIQ',
+      lead: 'راجع شخص في TrustIQ هويتك وأصبح حسابك موثّقاً الآن. ما تم تسجيله:',
+      close:
+        'يمكنك الآن قبول عقد وطلب تسوية عند حدوث خلاف. ' +
+        'التوثيق يعني أن شخصاً اطّلع على ما عرضته، لا أكثر من ذلك.',
+    },
+    verification_rejected: {
+      subject: 'تعذّر على TrustIQ التحقق من هويتك',
+      lead: 'لم تتم الموافقة على طلب التوثيق. السبب:',
+      close:
+        'يمكنك التقديم مجدداً بعد معالجة ذلك. لم يتغيّر أي شيء آخر في حسابك، ولم يُحذف شيء.',
+    },
+    verification_more_info: {
+      subject: 'يحتاج TrustIQ إلى المزيد منك',
+      lead: 'طلب التوثيق ما زال مفتوحاً وينتظرك. المطلوب:',
+      close:
+        'افتح TrustIQ وأرسله، وسيعود الطلب مباشرة إلى قائمة المراجعة. لم يُرفض.',
     },
     footer:
       'تسجّل TrustIQ ما اتفق عليه طرفان. ولا تحتفظ بأموالك أبداً. ' +

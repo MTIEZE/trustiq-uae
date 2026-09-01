@@ -432,17 +432,21 @@
           '</td>' +
           '<td>' + esc(String(r.document_kind).replace(/_/g, ' ')) + '</td>' +
           '<td>' + (r.how ? esc(r.how) : '<span style="color:var(--faint)">—</span>') + '</td>' +
-          '<td class="mono">' + day(r.waiting_since) + '</td>' +
+          '<td class="mono">' + day(r.waiting_since) +
+          (r.state === 'needs_more_info'
+            ? '<br><span class="pill warn">waiting on them</span>'
+            : '') + '</td>' +
           '<td><div class="row-actions">' +
           '<button class="primary" data-approve="' + r.request_id + '">Approve</button>' +
+          '<button data-more="' + r.request_id + '">Ask for more</button>' +
           '<button class="danger" data-reject="' + r.request_id + '">Refuse</button>' +
           '</div></td></tr>'
       }).join('')
 
       return frame('Verification',
-        'Approving stamps the profile through the one function that does that, and writes what ' +
-        'you looked at to a record nobody can edit. A refusal has to say why, and the person ' +
-        'reads it word for word.',
+        'Every outcome needs a reason, approval included, and every reason is emailed to the ' +
+        'person word for word. Asking for more hands the request back to them rather than ' +
+        'closing it, and it returns here when they answer.',
         '<div class="scroll"><table><tr><th>Who</th><th>Document</th><th>How</th>' +
         '<th>Waiting since</th><th></th></tr>' + body + '</table></div>')
     })
@@ -630,22 +634,55 @@
       }
     })
 
-    Array.prototype.forEach.call($('view').querySelectorAll('[data-approve]'), function (b) {
-      b.onclick = function () {
-        ask({
-          title: 'Verify this person',
-          body: 'Say what you actually looked at. It goes on a record that cannot be edited ' +
-                'afterwards, and it is what somebody reads if this is ever questioned.',
-          label: 'What you saw',
-          confirm: 'Verify',
-        }).then(function (note) {
-          if (!note) return
-          rpc('decide_verification', {
-            p_request_id: b.dataset.approve, p_approve: true, p_note: note,
-          }).then(function () { show('verification') })
-            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
-        })
-      }
+    // One function for all three, because they are one decision with three
+    // answers. It goes through the operator's own session: the older
+    // decide_verification is service-role only and refused every one of these
+    // with "permission denied" from the day this console shipped.
+    var VERDICTS = {
+      approve: {
+        attr: 'approve', outcome: 'approved',
+        title: 'Verify this person',
+        body: 'Say what you actually looked at. It is emailed to them word for word and kept ' +
+              'on a record that cannot be edited afterwards.',
+        label: 'What you saw', confirm: 'Verify',
+      },
+      more: {
+        attr: 'more', outcome: 'needs_more_info',
+        title: 'Ask them for more',
+        body: 'The request stays open and comes back here when they answer. Write what you ' +
+              'need from them, not what is missing in the abstract.',
+        label: 'What you need', confirm: 'Ask',
+      },
+      reject: {
+        attr: 'reject', outcome: 'rejected',
+        title: 'Refuse this request',
+        body: 'This closes it. They read this word for word and it is the only thing they ' +
+              'have to act on, so write it to them rather than about them.',
+        label: 'Why', confirm: 'Refuse', danger: true,
+      },
+    }
+
+    Object.keys(VERDICTS).forEach(function (key) {
+      var v = VERDICTS[key]
+      Array.prototype.forEach.call(
+        $('view').querySelectorAll('[data-' + v.attr + ']'),
+        function (b) {
+          b.onclick = function () {
+            ask({
+              title: v.title, body: v.body, label: v.label,
+              confirm: v.confirm, danger: v.danger,
+            }).then(function (note) {
+              if (!note) return
+              rpc('admin_decide_verification', {
+                p_request_id: b.dataset[v.attr],
+                p_outcome: v.outcome,
+                p_note: note,
+              }).then(function () { show('verification') })
+                .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+            })
+          }
+        },
+      )
     })
 
     Array.prototype.forEach.call($('view').querySelectorAll('[data-actioned]'), function (b) {

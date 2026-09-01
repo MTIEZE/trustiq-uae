@@ -427,5 +427,9 @@
   "unblockDone": "يمكنه الوصول إليك مرة أخرى.",
   "legalTerms": "شروط الاستخدام",
   "legalPrivacy": "الخصوصية",
-  "legalHeading": "التفاصيل القانونية"
+  "legalHeading": "التفاصيل القانونية",
+  "verifyMoreTitle": "هناك أمر إضافي مطلوب",
+  "verifyMoreBody": "طلبك ما زال مفتوحاً. اطّلع عليه أحدهم ويحتاج إلى القليل بعد قبل أن يتمكن من إنهائه.",
+  "verifyMoreWhat": "ما طُلب منك",
+  "verifyMoreSend": "أرسِله"
 }
