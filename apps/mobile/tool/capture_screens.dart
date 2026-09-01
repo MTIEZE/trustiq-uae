@@ -13,10 +13,7 @@
 //
 // Not part of the suite. It writes files and proves nothing.
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trustiq_app/app_state.dart';
 import 'package:trustiq_app/data/demo_backend.dart';
@@ -30,24 +27,7 @@ import 'package:trustiq_app/screens/verify_identity_screen.dart';
 import 'package:trustiq_app/theme.dart';
 import 'package:trustiq_app/widgets/language_button.dart';
 
-/// Every font the app declares, including the one it does not declare.
-///
-/// A test binding ships with no fonts at all, so the first version of this
-/// loaded IBM Plex by hand and produced screens where every single icon was an
-/// empty square. Material Icons is not in pubspec because `uses-material-design`
-/// puts it in the bundle, and the bundle is where this now reads from, so
-/// nothing has to be listed twice.
-Future<void> loadFonts() async {
-  final manifest = jsonDecode(await rootBundle.loadString('FontManifest.json'))
-      as List<dynamic>;
-  for (final entry in manifest.cast<Map<String, dynamic>>()) {
-    final loader = FontLoader(entry['family'] as String);
-    for (final font in (entry['fonts'] as List<dynamic>).cast<Map<String, dynamic>>()) {
-      loader.addFont(rootBundle.load(font['asset'] as String));
-    }
-    await loader.load();
-  }
-}
+import 'fonts.dart';
 
 void main() {
   setUp(() async => loadFonts());
