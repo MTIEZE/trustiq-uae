@@ -309,6 +309,7 @@
     { id: 'overview', label: 'Overview' },
     { id: 'verification', label: 'Verification', badge: 'pending' },
     { id: 'people', label: 'People' },
+    { id: 'reports', label: 'Reports' },
     { id: 'disputes', label: 'Disputes' },
     { id: 'activity', label: 'Activity' },
   ]
@@ -486,6 +487,35 @@
     })
   }
 
+  SECTIONS.reports = function () {
+    return rpc('admin_reports', { p_state: 'open' }).then(function (rows) {
+      if (!rows.length) {
+        return frame('Reports', null, '<div class="empty">Nothing has been reported.</div>')
+      }
+      var reasons = {"abusive":"Abusive or threatening","fraud":"Fraud","impersonation":"Impersonation","illegal":"Illegal","spam":"Spam","other":"Other"}
+      var body = rows.map(function (r) {
+        return '<tr>' +
+          '<td><span class="pill bad">' + esc(reasons[r.reason] || r.reason) + '</span></td>' +
+          '<td>' + esc(r.subject_kind) + '<br><span class="mono" style="color:var(--faint)">' +
+          esc(String(r.subject_id).slice(0, 8)) + '</span></td>' +
+          '<td>' + (r.detail ? esc(r.detail) : '<span style="color:var(--faint)">no detail given</span>') + '</td>' +
+          '<td>' + esc(r.reporter) + '</td>' +
+          '<td class="mono">' + day(r.created_at) + '</td>' +
+          '<td class="right">' +
+          '<button class="primary" data-actioned="' + esc(r.id) + '">Actioned</button>' +
+          '<button class="danger" data-dismiss="' + esc(r.id) + '">Dismiss</button>' +
+          '</td></tr>'
+      }).join('')
+
+      return frame('Reports',
+        'Raised by a party about a contract, a dispute or the person on the other side of it. ' +
+        'The person who raised it sees the outcome but never your note, so write the note for ' +
+        'the next operator.',
+        '<div class="scroll"><table><tr><th>Reason</th><th>About</th><th>What they said</th>' +
+        '<th>Raised by</th><th>When</th><th class="right">Decide</th></tr>' + body + '</table></div>')
+    })
+  }
+
   SECTIONS.disputes = function () {
     return rpc('admin_disputes').then(function (rows) {
       if (!rows.length) {
@@ -608,6 +638,43 @@
           rpc('decide_verification', {
             p_request_id: b.dataset.approve, p_approve: true, p_note: note,
           }).then(function () { show('verification') })
+            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+        })
+      }
+    })
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-actioned]'), function (b) {
+      b.onclick = function () {
+        ask({
+          title: 'Close this as actioned',
+          body: 'Say what you did about it. The note stays on the report and is what the next ' +
+                'operator reads; the person who raised it is told the outcome and not the note.',
+          label: 'What you did',
+          confirm: 'Actioned',
+        }).then(function (note) {
+          if (!note) return
+          rpc('admin_resolve_report', {
+            p_report_id: b.dataset.actioned, p_outcome: 'actioned', p_note: note,
+          }).then(function () { show('reports') })
+            .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
+        })
+      }
+    })
+
+    Array.prototype.forEach.call($('view').querySelectorAll('[data-dismiss]'), function (b) {
+      b.onclick = function () {
+        ask({
+          title: 'Dismiss this report',
+          body: 'Say why it needs nothing. A queue closed with "ok" eleven times tells the next ' +
+                'person nothing, and this is the record of a judgement about somebody.',
+          label: 'Why it needs nothing',
+          confirm: 'Dismiss',
+          danger: true,
+        }).then(function (note) {
+          if (!note) return
+          rpc('admin_resolve_report', {
+            p_report_id: b.dataset.dismiss, p_outcome: 'dismissed', p_note: note,
+          }).then(function () { show('reports') })
             .catch(function (e) { $('view').insertAdjacentHTML('afterbegin', fail(e)) })
         })
       }

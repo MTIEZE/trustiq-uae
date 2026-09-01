@@ -15,6 +15,30 @@ import 'evidence_service.dart';
 /// exposes to the app; the app checks first only so it can avoid offering a
 /// button that would be refused. When the two disagree, the database wins and
 /// the message it returns is what the person sees.
+/// What a report is about.
+enum ReportSubject {
+  contract('contract'),
+  dispute('dispute'),
+  person('person');
+
+  const ReportSubject(this.wireName);
+  final String wireName;
+}
+
+/// Why. The six the database accepts, and no free-text category: a queue
+/// sorted by six words can be read, and one sorted by everything cannot.
+enum ReportReason {
+  abusive('abusive'),
+  fraud('fraud'),
+  impersonation('impersonation'),
+  illegal('illegal'),
+  spam('spam'),
+  other('other');
+
+  const ReportReason(this.wireName);
+  final String wireName;
+}
+
 abstract interface class Backend {
   /// What this build is talking to, for showing in the interface.
   String get label;
@@ -177,6 +201,31 @@ abstract interface class Backend {
   Future<TransitionError?> openDispute(String contractId, String claim);
 
   Future<void> submitCounterClaim(String contractId, String claim);
+
+  /// Reports a contract, a dispute or the other party.
+  ///
+  /// Play's policy on user-generated content expects a route like this, which
+  /// is what prompted it. The reason to keep it is that a product about trust
+  /// with no way to say "this person is not acting in good faith" is missing
+  /// the thing it is named after.
+  ///
+  /// Raising the same report twice is the same report: the server returns the
+  /// first one rather than filling a queue with one person pressing a button.
+  Future<void> report({
+    required ReportSubject subject,
+    required String subjectId,
+    required ReportReason reason,
+    String? detail,
+  });
+
+  /// Refuses future contracts from this person, in both directions.
+  ///
+  /// Does not touch a contract that already exists. You cannot unsee one you
+  /// are party to, and hiding it would take away evidence somebody may need
+  /// precisely because it went wrong.
+  Future<void> blockPerson(String userId);
+
+  Future<void> unblockPerson(String userId);
 
   Future<void> acceptProposal(String contractId);
 

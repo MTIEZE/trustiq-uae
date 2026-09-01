@@ -614,6 +614,26 @@ class AppState extends ChangeNotifier {
   ///
   /// Idempotent, and the dispute closes only once both roles have accepted,
   /// exactly as `recordAcceptance` and the database define it.
+  /// Reports something to a person at TrustIQ. The other party is not told.
+  Future<bool> report({
+    required ReportSubject subject,
+    required String subjectId,
+    required ReportReason reason,
+    String? detail,
+  }) =>
+      _guard(() => _backend.report(
+            subject: subject,
+            subjectId: subjectId,
+            reason: reason,
+            detail: detail,
+          ));
+
+  /// Refuses future contracts in both directions. Changes nothing about the
+  /// contracts that already exist.
+  Future<bool> blockPerson(String userId) => _guard(() => _backend.blockPerson(userId));
+
+  Future<bool> unblockPerson(String userId) => _guard(() => _backend.unblockPerson(userId));
+
   Future<void> acceptProposal(String contractId) async {
     await _guard(() async {
       await _backend.acceptProposal(contractId);

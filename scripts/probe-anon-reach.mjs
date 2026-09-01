@@ -36,6 +36,13 @@ const calls = [
   ['issue_human_resolution', { p_dispute_id: NOWHERE, p_decision: 'split', p_summary: 'probe',
     p_seller_amount_fils: 1, p_buyer_amount_fils: 1 }],
   ['claim_dispute', { p_dispute_id: NOWHERE }],
+  ['block_person', { p_user_id: NOWHERE }],
+  ['unblock_person', { p_user_id: NOWHERE }],
+  ['my_blocks', {}],
+  ['report_content', { p_kind: 'contract', p_subject_id: NOWHERE, p_reason: 'spam', p_detail: null }],
+  ['my_reports', {}],
+  ['admin_reports', { p_state: 'open' }],
+  ['admin_resolve_report', { p_report_id: NOWHERE, p_outcome: 'dismissed', p_note: 'probe, not a decision' }],
   ['find_counterparty', { p_email: 'nobody@example.test' }],
   ['apply_transaction_event', { p_transaction_id: NOWHERE, p_event: 'submit' }],
 ]

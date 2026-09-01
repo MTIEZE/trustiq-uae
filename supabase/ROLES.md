@@ -86,12 +86,15 @@ database built from `supabase/migrations` and production is not only that.
 | `admin_overview()` | signed in |
 | `admin_people(p_query text, p_limit integer)` | signed in |
 | `admin_person(p_user_id uuid)` | signed in |
+| `admin_reports(p_state text)` | signed in |
+| `admin_resolve_report(p_report_id uuid, p_outcome text, p_note text)` | signed in |
 | `admin_set_suspended(p_user_id uuid, p_suspended boolean, p_reason text)` | signed in |
 | `admin_verification_pending()` | signed in |
 | `admin_verification_queue()` | signed in |
 | `apply_dispute_event(p_dispute_id uuid, p_event dispute_event)` | signed in |
 | `apply_transaction_event(p_transaction_id uuid, p_event transaction_event)` | signed in |
 | `beta_list()` | system only |
+| `block_person(p_user_id uuid)` | signed in |
 | `claim_dispute(p_dispute_id uuid)` | signed in |
 | `claim_invitation(p_code text)` | signed in |
 | `client_reachable_functions()` | system only |
@@ -106,18 +109,22 @@ database built from `supabase/migrations` and production is not only that.
 | `mark_notifications_read(p_before timestamp with time zone)` | signed in |
 | `mark_notifications_sent(p_ids bigint[], p_error text)` | system only |
 | `may_request_resolution(p_dispute_id uuid)` | signed in |
+| `my_blocks()` | signed in |
 | `my_invitations()` | signed in |
 | `my_notifications(p_limit integer)` | signed in |
+| `my_reports()` | signed in |
 | `my_verification()` | signed in |
 | `notifications_to_send(p_grace interval)` | system only |
 | `record_activity()` | signed in |
 | `record_manual_verification(p_user_id uuid, p_note text)` | system only |
 | `renew_due_contracts()` | system only |
+| `report_content(p_kind text, p_subject_id uuid, p_reason text, p_detail text)` | signed in |
 | `request_milestone_revision(p_milestone_id uuid)` | signed in |
 | `request_verification(p_legal_name text, p_document_kind text, p_how text)` | signed in |
 | `revoke_invitation(p_id uuid)` | signed in |
 | `revoke_verification(p_user_id uuid, p_note text)` | system only |
 | `set_preferred_locale(p_locale text)` | signed in |
+| `unblock_person(p_user_id uuid)` | signed in |
 | `verification_queue()` | system only |
 | `withdraw_verification_request()` | signed in |
 | `write_deadline_notices(p_accept_within interval, p_period_within interval)` | system only |

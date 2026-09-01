@@ -1417,4 +1417,67 @@ class LEn extends L {
   String characterCount(int count) {
     return '$count characters';
   }
+
+  @override
+  String get reportAction => 'Report a problem';
+
+  @override
+  String get reportTitle => 'Report a problem';
+
+  @override
+  String get reportLead =>
+      'This goes to a person at TrustIQ, not to the other party. They are not told you reported it.';
+
+  @override
+  String get reportReasonAbusive => 'Abusive or threatening';
+
+  @override
+  String get reportReasonFraud => 'Fraud or a scam';
+
+  @override
+  String get reportReasonImpersonation => 'Pretending to be somebody else';
+
+  @override
+  String get reportReasonIllegal => 'Illegal';
+
+  @override
+  String get reportReasonSpam => 'Spam';
+
+  @override
+  String get reportReasonOther => 'Something else';
+
+  @override
+  String get reportDetailHint => 'What happened (optional)';
+
+  @override
+  String get reportSend => 'Send the report';
+
+  @override
+  String get reportSent => 'Sent. Somebody will read it.';
+
+  @override
+  String get reportAlready =>
+      'You have already reported this. It is still with us.';
+
+  @override
+  String get blockAction => 'Refuse future contracts';
+
+  @override
+  String get blockTitle => 'Refuse future contracts from this person?';
+
+  @override
+  String get blockLead =>
+      'They will not be able to start anything new with you, and you will not be able to start anything with them. This contract stays exactly as it is, and so does everything filed on it.';
+
+  @override
+  String get blockConfirm => 'Refuse future contracts';
+
+  @override
+  String get blockDone => 'They cannot start anything new with you.';
+
+  @override
+  String get unblockAction => 'Allow contracts again';
+
+  @override
+  String get unblockDone => 'They can reach you again.';
 }

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:trustiq_core/trustiq_core.dart';
 
 import '../app_state.dart';
+import '../data/backend.dart';
 import '../data/demo_data.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/report_sheet.dart';
 import 'dispute_screen.dart';
 import 'open_dispute_screen.dart';
 import 'verify_identity_screen.dart';
@@ -54,10 +56,12 @@ class ContractDetailScreen extends StatelessWidget {
               contract.reference,
             ),
             actions: [
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 16),
-                child: Center(child: StateChip(contract.state)),
-              ),
+              Center(child: StateChip(contract.state)),
+              // Reporting and refusing sit behind the overflow rather than on
+              // the bar. They are rare, and a button offering to report the
+              // person you are working with, visible on every contract you
+              // have, sets a tone the product does not want.
+              _TroubleMenu(state: state, contract: contract, other: other),
             ],
           ),
           body: ListView(
@@ -756,5 +760,67 @@ class _ActionButton extends StatelessWidget {
         ),
       ActionTone.neutral => OutlinedButton(onPressed: onPressed, child: Text(label)),
     };
+  }
+}
+
+/// Report, and refuse future contracts.
+class _TroubleMenu extends StatelessWidget {
+  const _TroubleMenu({required this.state, required this.contract, required this.other});
+
+  final AppState state;
+  final Contract contract;
+  final Party other;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      itemBuilder: (context) => [
+        PopupMenuItem(value: 'report', child: Text(l.reportAction)),
+        PopupMenuItem(value: 'block', child: Text(l.blockAction)),
+      ],
+      onSelected: (choice) async {
+        final messenger = ScaffoldMessenger.of(context);
+        final c = context.c;
+
+        if (choice == 'report') {
+          // A dispute, if there is one, is the more specific thing to report:
+          // it is where the claims are. Otherwise the contract.
+          final dispute = contract.dispute;
+          final sent = await showReportSheet(
+            context,
+            subject: dispute == null ? ReportSubject.contract : ReportSubject.dispute,
+            subjectId: dispute?.id ?? contract.id,
+            onSend: (reason, detail) => state.report(
+              subject: dispute == null ? ReportSubject.contract : ReportSubject.dispute,
+              subjectId: dispute?.id ?? contract.id,
+              reason: reason,
+              detail: detail,
+            ),
+          );
+          if (sent) {
+            messenger.showSnackBar(SnackBar(content: Text(l.reportSent)));
+          } else if (state.error != null) {
+            messenger.showSnackBar(
+              SnackBar(content: Text(state.error!), backgroundColor: c.critical),
+            );
+          }
+          return;
+        }
+
+        if (await confirmBlock(context)) {
+          final ok = await state.blockPerson(other.id);
+          messenger.showSnackBar(
+            ok
+                ? SnackBar(content: Text(l.blockDone))
+                : SnackBar(
+                    content: Text(state.error ?? l.somethingWentWrong),
+                    backgroundColor: c.critical,
+                  ),
+          );
+        }
+      },
+    );
   }
 }

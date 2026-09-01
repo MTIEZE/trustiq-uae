@@ -3514,4 +3514,231 @@ select pg_temp.check(
 select set_config('request.jwt.claim.sub', '', false);
 
 \echo ''
+\echo '== reporting somebody, and refusing to deal with them again =='
+
+-- Two fresh people, so nothing here disturbs the contracts the tests above
+-- have been walking through their state machines.
+reset role;
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-0000000000c1', 'reporter@example.ae'),
+  ('0f000000-0000-0000-0000-0000000000c2', 'reported@example.ae');
+insert into public.profiles (id, full_name, email, identity_verified_at, identity_provider) values
+  ('0f000000-0000-0000-0000-0000000000c1', 'The Reporter', 'reporter@example.ae', now(), 'uae_pass'),
+  ('0f000000-0000-0000-0000-0000000000c2', 'The Reported', 'reported@example.ae', now(), 'uae_pass');
+
+set role authenticated;
+
+\echo ''
+\echo '-- a report has to come from somebody who is actually party to it --'
+
+select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', false);
+select pg_temp.expect_error(
+  $q$ select public.report_content('contract', 'aaaaaaaa-0000-0000-0000-000000000001', 'abusive', 'Nothing to do with me.') $q$,
+  'a stranger cannot report a contract they are not party to');
+
+-- The same answer for an id that does not exist at all, so the function cannot
+-- be used to find out which contracts are real.
+select pg_temp.expect_error(
+  $q$ select public.report_content('contract', 'aaaaaaaa-dead-dead-dead-aaaaaaaaaaaa', 'abusive', null) $q$,
+  'and an imaginary contract is refused the same way');
+
+\echo ''
+\echo '-- a party can --'
+
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+do $$
+declare
+  v_first  uuid;
+  v_second uuid;
+begin
+  v_first := public.report_content(
+    'contract', 'aaaaaaaa-0000-0000-0000-000000000001', 'abusive', 'Threats in the terms.');
+  perform pg_temp.check(v_first is not null, 'a party can report a contract');
+
+  -- Pressed twice by somebody who is upset. One row, not two.
+  v_second := public.report_content(
+    'contract', 'aaaaaaaa-0000-0000-0000-000000000001', 'abusive', 'Threats in the terms, again.');
+  perform pg_temp.check(v_second = v_first, 'reporting the same thing twice does not open a second one');
+end
+$$;
+
+select pg_temp.check(
+  (select count(*) from public.my_reports()) = 1,
+  'and the person who raised it can see it');
+
+-- Counted from a role that can see the table. `authenticated` has no
+-- privilege on app.content_reports at all, which is the point of it living
+-- there, so asking from that role measures the grant rather than the queue.
+reset role;
+select pg_temp.check(
+  (select count(*) from app.content_reports
+   where subject_id = 'aaaaaaaa-0000-0000-0000-000000000001' and state = 'open') = 1,
+  'one open row in the queue');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+
+-- Reporting a person needs a contract in common, which is the same membership
+-- rule wearing a different hat.
+select pg_temp.expect_error(
+  $q$ select public.report_content('person', '0f000000-0000-0000-0000-0000000000c2', 'fraud', 'A stranger.') $q$,
+  'you cannot report a person you have never dealt with');
+
+select pg_temp.expect_error(
+  $q$ select public.report_content('person', '11111111-1111-1111-1111-111111111111', 'spam', 'Myself.') $q$,
+  'nor yourself');
+
+\echo ''
+\echo '-- what was reported is frozen; what an operator decided is not --'
+
+reset role;
+select pg_temp.expect_error(
+  $q$ update app.content_reports set detail = 'Something else entirely.'
+      where subject_id = 'aaaaaaaa-0000-0000-0000-000000000001' $q$,
+  'the report text cannot be rewritten, service role included');
+
+select pg_temp.expect_error(
+  $q$ delete from app.content_reports
+      where subject_id = 'aaaaaaaa-0000-0000-0000-000000000001' $q$,
+  'and a report cannot be deleted, only dismissed');
+
+\echo ''
+\echo '-- the queue is an operator action --'
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select pg_temp.expect_error(
+  $q$ select count(*) from public.admin_reports('open') $q$,
+  'somebody who is not an operator cannot read the reports');
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+select pg_temp.check(
+  (select count(*) from public.admin_reports('open')) >= 1,
+  'an operator can');
+
+select pg_temp.expect_error(
+  $q$ select public.admin_resolve_report(
+        (select id from public.admin_reports('open') limit 1), 'actioned', 'ok') $q$,
+  'closing one with no real reason is refused');
+
+select pg_temp.expect_error(
+  $q$ select public.admin_resolve_report(
+        (select id from public.admin_reports('open') limit 1), 'ignored', 'A long enough note.') $q$,
+  'and an outcome that is neither actioned nor dismissed is refused');
+
+do $$
+declare
+  v_id uuid;
+begin
+  -- Through the operator's own function rather than off the table. An
+  -- authenticated role has no privilege on app.content_reports at all, which is
+  -- the whole point of it living in that schema.
+  select id into v_id from public.admin_reports('open') limit 1;
+  perform public.admin_resolve_report(v_id, 'dismissed', 'Read the terms; nothing abusive in them.');
+end
+$$;
+
+-- Back to the person who raised it. my_reports() reads auth.uid(), so asked
+-- while still acting as the operator it answers about the operator's own
+-- reports, of which there are none, and the assertion passes vacuously on null.
+select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', false);
+select pg_temp.check(
+  (select state from public.my_reports() limit 1) = 'dismissed',
+  'the person who raised it is told what came of it');
+
+reset role;
+select pg_temp.check(
+  (select reviewed_by from app.content_reports limit 1) = '0f000000-0000-0000-0000-000000000001',
+  'and the operator who closed it is on the row');
+set role authenticated;
+
+\echo ''
+\echo '-- blocking stops the next contract, not the one you are in --'
+
+-- On the two accounts created at the top of this section rather than on the
+-- fixtures from the beginning of the file. Written against those first, and
+-- the baseline below failed: three thousand lines of account closure and
+-- verification had moved them somewhere, which meant "blocked answers null"
+-- was passing because the account was already unreachable. An assertion that
+-- passes for the wrong reason is worse than one that fails.
+reset role;
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+values
+  ('aaaaaaaa-0000-0000-0000-0000000000c1',
+   '0f000000-0000-0000-0000-0000000000c1',
+   '0f000000-0000-0000-0000-0000000000c2',
+   'Work they already agreed', 'Signed before any of this.', 20000,
+   '0f000000-0000-0000-0000-0000000000c1');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000c1', false);
+
+select pg_temp.check(
+  public.find_counterparty('reported@example.ae') = '0f000000-0000-0000-0000-0000000000c2',
+  'the lookup finds them before any of this');
+
+select pg_temp.expect_error(
+  $q$ select public.block_person('0f000000-0000-0000-0000-0000000000c1') $q$,
+  'you cannot block yourself');
+
+select public.block_person('0f000000-0000-0000-0000-0000000000c2');
+
+select pg_temp.check(
+  (select count(*) from public.my_blocks()) = 1,
+  'the block is recorded');
+
+select pg_temp.check(
+  (select user_id from public.my_blocks()) = '0f000000-0000-0000-0000-0000000000c2',
+  'against the right person');
+
+-- The contract they are already in is untouched, and still readable by the
+-- party who blocked. Hiding it would take away evidence one of them may need
+-- precisely because it went wrong.
+select pg_temp.check(
+  (select count(*) from public.transactions
+   where id = 'aaaaaaaa-0000-0000-0000-0000000000c1') = 1,
+  'and the contract they already have is still there');
+
+reset role;
+select pg_temp.expect_error(
+  $q$ insert into public.transactions
+        (buyer_id, seller_id, description, terms, total_amount_fils, created_by)
+      values ('0f000000-0000-0000-0000-0000000000c1',
+              '0f000000-0000-0000-0000-0000000000c2',
+              'A second job', 'More of the same.', 10000,
+              '0f000000-0000-0000-0000-0000000000c1') $q$,
+  'but no new contract can be opened between them');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000c1', false);
+
+-- Silence rather than an error, so a lookup cannot be used to work out that
+-- somebody blocked you.
+select pg_temp.check(
+  public.find_counterparty('reported@example.ae') is null,
+  'and the lookup answers as if the account were not there');
+
+select public.unblock_person('0f000000-0000-0000-0000-0000000000c2');
+select pg_temp.check(
+  public.find_counterparty('reported@example.ae') = '0f000000-0000-0000-0000-0000000000c2',
+  'lifting it puts them back');
+
+-- The other direction counts too: being blocked stops you starting something,
+-- not only blocking somebody.
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000c2', false);
+select public.block_person('0f000000-0000-0000-0000-0000000000c1');
+
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-0000000000c1', false);
+select pg_temp.check(
+  public.find_counterparty('reported@example.ae') is null,
+  'a block works against the person who did not do the blocking');
+
+select pg_temp.check(
+  (select count(*) from public.my_blocks()) = 0,
+  'and my_blocks never shows who has blocked me');
+
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

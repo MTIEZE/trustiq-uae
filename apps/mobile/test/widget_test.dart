@@ -214,6 +214,70 @@ void main() {
     // line under it, which looks like the app having lost something.
     expect(find.text('the agreed terms'), findsOneWidget);
   });
+
+  testWidgets('a party can report what they are looking at', (tester) async {
+    // Play's user-generated content policy expects this route to exist. So
+    // does anybody who opens a contract and finds threats in the terms.
+    _tallSurface(tester);
+    final backend = DemoBackend();
+    await tester.pumpWidget(TrustIqApp(backend: backend));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Logo design for a startup'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Report a problem'));
+    await tester.pumpAndSettle();
+
+    // It says who reads it, before anything is chosen. Somebody deciding
+    // whether to report the person they are mid-contract with needs that.
+    expect(
+      find.textContaining('not to the other party'),
+      findsOneWidget,
+    );
+
+    final send = find.widgetWithText(FilledButton, 'Send the report');
+    expect(
+      tester.widget<FilledButton>(send).onPressed,
+      isNull,
+      reason: 'nothing can be sent before a reason is chosen',
+    );
+
+    await tester.tap(find.text('Abusive or threatening'));
+    await tester.pumpAndSettle();
+    await tester.tap(send);
+    await tester.pumpAndSettle();
+
+    expect(backend.reported, isNotEmpty);
+    expect(find.text('Sent. Somebody will read it.'), findsOneWidget);
+  });
+
+  testWidgets('and refuse any future contract from the other party', (tester) async {
+    _tallSurface(tester);
+    final backend = DemoBackend();
+    await tester.pumpWidget(TrustIqApp(backend: backend));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Logo design for a startup'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Refuse future contracts'));
+    await tester.pumpAndSettle();
+
+    // The dialog has to say what survives it. Somebody who thinks blocking
+    // deletes the contract they are arguing about would press this and lose
+    // the evidence they need.
+    expect(find.textContaining('This contract stays exactly as it is'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Refuse future contracts'));
+    await tester.pumpAndSettle();
+
+    expect(backend.blocked, isNotEmpty);
+  });
   testWidgets('a backend that cannot verify offers a request, not an explanation', (tester) async {
     // The live backend cannot record a verification: the schema refuses a
     // session that tries to verify itself. This screen used to answer that by

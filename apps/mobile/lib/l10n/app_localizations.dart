@@ -2513,6 +2513,126 @@ abstract class L {
   /// In en, this message translates to:
   /// **'{count} characters'**
   String characterCount(int count);
+
+  /// No description provided for @reportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get reportAction;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a problem'**
+  String get reportTitle;
+
+  /// No description provided for @reportLead.
+  ///
+  /// In en, this message translates to:
+  /// **'This goes to a person at TrustIQ, not to the other party. They are not told you reported it.'**
+  String get reportLead;
+
+  /// No description provided for @reportReasonAbusive.
+  ///
+  /// In en, this message translates to:
+  /// **'Abusive or threatening'**
+  String get reportReasonAbusive;
+
+  /// No description provided for @reportReasonFraud.
+  ///
+  /// In en, this message translates to:
+  /// **'Fraud or a scam'**
+  String get reportReasonFraud;
+
+  /// No description provided for @reportReasonImpersonation.
+  ///
+  /// In en, this message translates to:
+  /// **'Pretending to be somebody else'**
+  String get reportReasonImpersonation;
+
+  /// No description provided for @reportReasonIllegal.
+  ///
+  /// In en, this message translates to:
+  /// **'Illegal'**
+  String get reportReasonIllegal;
+
+  /// No description provided for @reportReasonSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam'**
+  String get reportReasonSpam;
+
+  /// No description provided for @reportReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get reportReasonOther;
+
+  /// No description provided for @reportDetailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened (optional)'**
+  String get reportDetailHint;
+
+  /// No description provided for @reportSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the report'**
+  String get reportSend;
+
+  /// No description provided for @reportSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent. Somebody will read it.'**
+  String get reportSent;
+
+  /// No description provided for @reportAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already reported this. It is still with us.'**
+  String get reportAlready;
+
+  /// No description provided for @blockAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse future contracts'**
+  String get blockAction;
+
+  /// No description provided for @blockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse future contracts from this person?'**
+  String get blockTitle;
+
+  /// No description provided for @blockLead.
+  ///
+  /// In en, this message translates to:
+  /// **'They will not be able to start anything new with you, and you will not be able to start anything with them. This contract stays exactly as it is, and so does everything filed on it.'**
+  String get blockLead;
+
+  /// No description provided for @blockConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse future contracts'**
+  String get blockConfirm;
+
+  /// No description provided for @blockDone.
+  ///
+  /// In en, this message translates to:
+  /// **'They cannot start anything new with you.'**
+  String get blockDone;
+
+  /// No description provided for @unblockAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow contracts again'**
+  String get unblockAction;
+
+  /// No description provided for @unblockDone.
+  ///
+  /// In en, this message translates to:
+  /// **'They can reach you again.'**
+  String get unblockDone;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

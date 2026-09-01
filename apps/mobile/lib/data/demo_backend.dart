@@ -208,6 +208,34 @@ class DemoBackend implements Backend {
   }
 
   @override
+  Future<void> report({
+    required ReportSubject subject,
+    required String subjectId,
+    required ReportReason reason,
+    String? detail,
+  }) async {
+    // Accepted and dropped. The demo has no operator to read a queue, and a
+    // report that silently failed would be worse than one that goes nowhere
+    // visible: the screen tells the person it was sent, and in the demo that
+    // is true as far as it goes.
+    reported.add(subjectId);
+  }
+
+  @override
+  Future<void> blockPerson(String userId) async {
+    blocked.add(userId);
+  }
+
+  @override
+  Future<void> unblockPerson(String userId) async {
+    blocked.remove(userId);
+  }
+
+  /// What the demo has been told, so a test can assert it was told.
+  final Set<String> reported = <String>{};
+  final Set<String> blocked = <String>{};
+
+  @override
   Future<void> acceptProposal(String contractId) async {
     final contract = _byId(contractId);
     final dispute = contract.dispute;

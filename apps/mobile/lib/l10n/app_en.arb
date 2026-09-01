@@ -795,5 +795,25 @@
         "type": "int"
       }
     }
-  }
+  },
+  "reportAction": "Report a problem",
+  "reportTitle": "Report a problem",
+  "reportLead": "This goes to a person at TrustIQ, not to the other party. They are not told you reported it.",
+  "reportReasonAbusive": "Abusive or threatening",
+  "reportReasonFraud": "Fraud or a scam",
+  "reportReasonImpersonation": "Pretending to be somebody else",
+  "reportReasonIllegal": "Illegal",
+  "reportReasonSpam": "Spam",
+  "reportReasonOther": "Something else",
+  "reportDetailHint": "What happened (optional)",
+  "reportSend": "Send the report",
+  "reportSent": "Sent. Somebody will read it.",
+  "reportAlready": "You have already reported this. It is still with us.",
+  "blockAction": "Refuse future contracts",
+  "blockTitle": "Refuse future contracts from this person?",
+  "blockLead": "They will not be able to start anything new with you, and you will not be able to start anything with them. This contract stays exactly as it is, and so does everything filed on it.",
+  "blockConfirm": "Refuse future contracts",
+  "blockDone": "They cannot start anything new with you.",
+  "unblockAction": "Allow contracts again",
+  "unblockDone": "They can reach you again."
 }

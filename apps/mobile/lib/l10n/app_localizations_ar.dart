@@ -1409,4 +1409,66 @@ class LAr extends L {
   String characterCount(int count) {
     return '$count حرفاً';
   }
+
+  @override
+  String get reportAction => 'الإبلاغ عن مشكلة';
+
+  @override
+  String get reportTitle => 'الإبلاغ عن مشكلة';
+
+  @override
+  String get reportLead =>
+      'يصل هذا إلى شخص في TrustIQ، وليس إلى الطرف الآخر. ولن يُخبَر بأنك أبلغت عنه.';
+
+  @override
+  String get reportReasonAbusive => 'إساءة أو تهديد';
+
+  @override
+  String get reportReasonFraud => 'احتيال أو نصب';
+
+  @override
+  String get reportReasonImpersonation => 'انتحال شخصية شخص آخر';
+
+  @override
+  String get reportReasonIllegal => 'مخالف للقانون';
+
+  @override
+  String get reportReasonSpam => 'رسائل مزعجة';
+
+  @override
+  String get reportReasonOther => 'شيء آخر';
+
+  @override
+  String get reportDetailHint => 'ما الذي حدث (اختياري)';
+
+  @override
+  String get reportSend => 'إرسال البلاغ';
+
+  @override
+  String get reportSent => 'تم الإرسال. سيقرأه أحدهم.';
+
+  @override
+  String get reportAlready => 'سبق أن أبلغت عن هذا. البلاغ ما زال لدينا.';
+
+  @override
+  String get blockAction => 'رفض العقود المستقبلية';
+
+  @override
+  String get blockTitle => 'رفض أي عقود مستقبلية من هذا الشخص؟';
+
+  @override
+  String get blockLead =>
+      'لن يتمكن من بدء أي شيء جديد معك، ولن تتمكن من بدء أي شيء معه. يبقى هذا العقد كما هو تمامًا، وكذلك كل ما تم إيداعه فيه.';
+
+  @override
+  String get blockConfirm => 'رفض العقود المستقبلية';
+
+  @override
+  String get blockDone => 'لم يعد بإمكانه بدء أي شيء جديد معك.';
+
+  @override
+  String get unblockAction => 'السماح بالعقود مجددًا';
+
+  @override
+  String get unblockDone => 'يمكنه الوصول إليك مرة أخرى.';
 }

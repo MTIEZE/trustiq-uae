@@ -525,6 +525,31 @@ class SupabaseBackend implements Backend {
   }
 
   @override
+  Future<void> report({
+    required ReportSubject subject,
+    required String subjectId,
+    required ReportReason reason,
+    String? detail,
+  }) async {
+    await _client.rpc('report_content', params: {
+      'p_kind': subject.wireName,
+      'p_subject_id': subjectId,
+      'p_reason': reason.wireName,
+      'p_detail': detail,
+    });
+  }
+
+  @override
+  Future<void> blockPerson(String userId) async {
+    await _client.rpc('block_person', params: {'p_user_id': userId});
+  }
+
+  @override
+  Future<void> unblockPerson(String userId) async {
+    await _client.rpc('unblock_person', params: {'p_user_id': userId});
+  }
+
+  @override
   Future<void> acceptProposal(String contractId) async {
     final proposalId = await _currentProposalId(contractId);
     try {
