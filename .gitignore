@@ -57,3 +57,15 @@ apps/mobile/tool/goldens/
 # Renders from tool/capture_screens.dart. The copies the site actually serves
 # live in apps/web/public/app/ and are committed; these are the working output.
 apps/mobile/tool/screens/
+
+# The Android upload key itself.
+#
+# apps/mobile/android/.gitignore already covers key.properties, which names the
+# keystore. It does not cover the keystore, and that is the file that matters:
+# leaking it lets somebody else sign builds as TrustIQ, and this repository is
+# public. Listed before one exists, because the moment keytool runs it lands in
+# the working tree. The path is repeated here so the rule survives somebody
+# tidying the Android folder's own ignore file.
+apps/mobile/android/key.properties
+*.jks
+*.keystore
