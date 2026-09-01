@@ -52,6 +52,61 @@ type Waiting = {
   ids: number[]
 }
 
+/**
+ * A notice about somebody's own account rather than about a contract.
+ *
+ * Kept apart from the contract mail because it is a different thing to say and
+ * because the in-app channel does not exist for it: a suspended person cannot
+ * sign in to read anything, so this is the only way they hear.
+ */
+interface AccountNotice {
+  id: number
+  recipient_id: string
+  email: string
+  full_name: string
+  locale: string
+  kind: 'suspended' | 'reinstated'
+  reason: string
+}
+
+const ACCOUNT_COPY = {
+  en: {
+    suspended: {
+      subject: 'Your TrustIQ account has been suspended',
+      lead: 'Your account has been suspended, so you will not be able to sign in. The reason recorded is:',
+      close:
+        'Nothing has been deleted, and no contract you are party to has changed: the other ' +
+        'person keeps their copy either way. If you think this is wrong, reply to this email ' +
+        'and a person will read it.',
+    },
+    reinstated: {
+      subject: 'Your TrustIQ account is open again',
+      lead: 'The suspension on your account has been lifted and you can sign in again. What was recorded:',
+      close: 'Nothing was lost while it was closed.',
+    },
+    footer:
+      'TrustIQ records what two people agreed. It never holds your money. ' +
+      'You are getting this because it is about your own account.',
+  },
+  ar: {
+    suspended: {
+      subject: 'تم تعليق حسابك في TrustIQ',
+      lead: 'تم تعليق حسابك، ولن تتمكن من تسجيل الدخول. السبب المسجّل:',
+      close:
+        'لم يُحذف أي شيء، ولم يتغيّر أي عقد أنت طرف فيه: يحتفظ الطرف الآخر بنسخته في الحالتين. ' +
+        'إن كنت ترى أن هذا خطأ، ردّ على هذه الرسالة وسيقرأها شخص.',
+    },
+    reinstated: {
+      subject: 'حسابك في TrustIQ مفتوح من جديد',
+      lead: 'رُفع التعليق عن حسابك ويمكنك تسجيل الدخول مجدداً. ما تم تسجيله:',
+      close: 'لم يُفقد شيء خلال فترة الإغلاق.',
+    },
+    footer:
+      'تسجّل TrustIQ ما اتفق عليه طرفان. ولا تحتفظ بأموالك أبداً. ' +
+      'تصلك هذه الرسالة لأنها تخص حسابك أنت.',
+  },
+} as const
+
 const COPY = {
   en: {
     subject: (n: number) =>
@@ -87,6 +142,27 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+function renderNotice(row: AccountNotice): { subject: string; html: string; text: string } {
+  const copy = ACCOUNT_COPY[row.locale === 'ar' ? 'ar' : 'en']
+  const one = copy[row.kind]
+  const rtl = row.locale === 'ar'
+
+  return {
+    subject: one.subject,
+    text: [`${row.full_name},`, '', one.lead, '', row.reason, '', one.close, '', copy.footer].join('\n'),
+    html:
+      `<div dir="${rtl ? 'rtl' : 'ltr'}" style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;color:#0E1518">` +
+      `<p>${escapeHtml(row.full_name)},</p>` +
+      `<p>${escapeHtml(one.lead)}</p>` +
+      // The operator's own words, quoted rather than paraphrased. They are the
+      // only thing on this page the person can act on.
+      `<blockquote style="margin:0 0 16px;padding:12px 16px;border-inline-start:3px solid #0D5F66;background:#F5F7F7">` +
+      `${escapeHtml(row.reason)}</blockquote>` +
+      `<p>${escapeHtml(one.close)}</p>` +
+      `<p style="color:#7C8890;font-size:13px">${escapeHtml(copy.footer)}</p></div>`,
+  }
 }
 
 function render(row: Waiting): { subject: string; html: string; text: string } {
@@ -215,6 +291,59 @@ Deno.serve(async (request: Request): Promise<Response> => {
       sent += 1
     }
   }
+
+  // ── Account notices ─────────────────────────────────────────────────
+  //
+  // A second queue, drained in the same run. Separate from the loop above
+  // because a suspension is one message to one person, not a digest of what is
+  // waiting, and because a failure in one queue must not stop the other.
+
+  const notices = await db.rpc('account_notices_to_send', {})
+  if (notices.error) {
+    console.error(`could not read the account notices: ${notices.error.message}`)
+  } else {
+    for (const notice of (notices.data ?? []) as AccountNotice[]) {
+      const { subject, html, text } = renderNotice(notice)
+      let failure: string | null = null
+
+      try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': brevoKey,
+            'content-type': 'application/json',
+            accept: 'application/json',
+          },
+          body: JSON.stringify({
+            sender: { email: sender, name: 'TrustIQ' },
+            to: [{ email: notice.email, name: notice.full_name }],
+            subject,
+            htmlContent: html,
+            textContent: text,
+          }),
+        })
+        if (!response.ok) failure = `brevo ${response.status}`
+      } catch (e) {
+        failure = `network: ${e instanceof Error ? e.name : 'unknown'}`
+      }
+
+      const marked = await db.rpc('mark_account_notices_sent', {
+        p_ids: [notice.id],
+        p_error: failure,
+      })
+      if (marked.error) {
+        console.error(`could not mark an account notice: ${marked.error.message}`)
+      }
+
+      if (failure) {
+        failed += 1
+        console.error(`an account notice failed: ${failure}`)
+      } else {
+        sent += 1
+      }
+    }
+  }
+
 
   return json({ recipients: batches.length, sent, failed })
 })

@@ -596,7 +596,10 @@
         ask({
           title: 'Suspend this account',
           body: 'They will not be able to sign in. Nothing is deleted, and no contract changes: ' +
-                'the other party keeps their copy either way.',
+                'the other party keeps their copy either way. What you write below is emailed ' +
+                'to them word for word, and it is the only thing they have to go on, so write ' +
+                'it to them rather than about them.',
+          label: 'What they will be told',
           confirm: 'Suspend',
           danger: true,
         }).then(function (reason) {
@@ -613,7 +616,9 @@
       b.onclick = function () {
         ask({
           title: 'Let them back in',
-          body: 'Signing in works again immediately.',
+          body: 'Signing in works again immediately, and they are emailed to say so. What you ' +
+                'write below is in that email word for word.',
+          label: 'What they will be told',
           confirm: 'Restore',
         }).then(function (reason) {
           if (!reason) return

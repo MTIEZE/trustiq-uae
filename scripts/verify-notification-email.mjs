@@ -185,6 +185,41 @@ const again = await db.rpc('notifications_to_send', {})
 check('and it is not offered a second time',
   (again.data ?? []).filter((r) => r.email === recipientEmail).length === 0)
 
+step('And the other queue: an account notice')
+
+// A suspension is the one thing the console does to somebody that they cannot
+// see in the app afterwards, because it stops them signing in. It goes out on
+// its own queue, drained by the same function, and this proves the whole path
+// rather than the row.
+await sql(`insert into app.account_notices (recipient_id, kind, reason)
+           values ('${recipient.id}', 'suspended',
+                   'A test notice from verify-notification-email.mjs. Nothing has happened to your account.')`)
+
+const waiting = await db.rpc('account_notices_to_send', {})
+const notice = (waiting.data ?? []).find((r) => r.email === recipientEmail)
+check('the sender sees the notice', Boolean(notice), JSON.stringify(waiting.data ?? []))
+
+const second = await fetch(`${cfg.SUPABASE_URL}/functions/v1/send-notifications`, {
+  method: 'POST',
+  headers: {
+    apikey: cfg.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${cfg.SUPABASE_SERVICE_ROLE_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: '{}',
+})
+const secondBody = await second.text()
+console.log(`  HTTP ${second.status}  ${secondBody.slice(0, 160)}`)
+
+let noticeCounts = {}
+try { noticeCounts = JSON.parse(secondBody) } catch { /* reported below */ }
+check('it went out', (noticeCounts.sent ?? 0) >= 1, JSON.stringify(noticeCounts))
+check('with nothing failing', (noticeCounts.failed ?? 0) === 0, JSON.stringify(noticeCounts))
+
+const drained = await db.rpc('account_notices_to_send', {})
+check('and the notice left the queue',
+  (drained.data ?? []).filter((r) => r.email === recipientEmail).length === 0)
+
 console.log(failures === 0
   ? `\n  Now look in ${recipientEmail}. Subject should name one thing waiting,\n  and the body should list the contract by its description.\n`
   : `\n${failures} check(s) failed.\n`)

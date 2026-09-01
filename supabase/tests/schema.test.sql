@@ -3741,4 +3741,108 @@ select pg_temp.check(
 select set_config('request.jwt.claim.sub', '', false);
 
 \echo ''
+\echo '== a suspension is told to the person it happens to =='
+
+-- Until 0030 this was the one thing the console did to somebody without ever
+-- saying so: banned_until was set, the reason went on the access log, and the
+-- person found out because signing in stopped working.
+
+reset role;
+insert into auth.users (id, email) values
+  ('0f000000-0000-0000-0000-00000000ab01', 'suspended.person@example.ae');
+insert into public.profiles (id, full_name, email) values
+  ('0f000000-0000-0000-0000-00000000ab01', 'Someone Suspended', 'suspended.person@example.ae');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+
+select public.admin_set_suspended(
+  '0f000000-0000-0000-0000-00000000ab01', true,
+  'Your account is closed while we check a document you filed. Reply and a person will read it.');
+
+reset role;
+
+select pg_temp.check(
+  (select count(*) from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01' and kind = 'suspended') = 1,
+  'suspending somebody writes them a notice');
+
+select pg_temp.check(
+  (select reason from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01')
+    like 'Your account is closed%',
+  'carrying the operator''s own words, not a summary of them');
+
+select pg_temp.check(
+  (select count(*) from public.account_notices_to_send()
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01') = 1,
+  'and it is queued for delivery');
+
+-- The seeded accounts all use reserved domains. Every one of those would
+-- bounce, against the reputation the real mail depends on.
+select pg_temp.check(
+  not exists (
+    select 1 from public.account_notices_to_send() n
+    where n.email ~* '@([a-z0-9-]+\.)*(test|invalid|example|localhost)$'),
+  'nothing addressed to a reserved domain is ever queued');
+
+select pg_temp.expect_error(
+  $q$ update app.account_notices set reason = 'Something friendlier.'
+      where recipient_id = '0f000000-0000-0000-0000-00000000ab01' $q$,
+  'what somebody was told cannot be edited afterwards');
+
+select pg_temp.expect_error(
+  $q$ delete from app.account_notices
+      where recipient_id = '0f000000-0000-0000-0000-00000000ab01' $q$,
+  'nor deleted');
+
+-- Delivery is the one thing that does move.
+do $$
+declare
+  v_id bigint;
+begin
+  select id into v_id from app.account_notices
+  where recipient_id = '0f000000-0000-0000-0000-00000000ab01';
+  perform public.mark_account_notices_sent(array[v_id], null);
+end
+$$;
+
+select pg_temp.check(
+  (select emailed_at is not null from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01'),
+  'but marking it sent does');
+
+select pg_temp.check(
+  (select count(*) from public.account_notices_to_send()
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01') = 0,
+  'and it leaves the queue, so nobody is mailed twice');
+
+-- Lifting it is its own message. Being let back in and being locked out are
+-- not the same thing to say.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '0f000000-0000-0000-0000-000000000001', false);
+select public.admin_set_suspended(
+  '0f000000-0000-0000-0000-00000000ab01', false,
+  'Checked and cleared. Sorry for the interruption.');
+
+reset role;
+select pg_temp.check(
+  (select count(*) from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01' and kind = 'reinstated') = 1,
+  'lifting it says so too');
+
+select pg_temp.expect_error(
+  $q$ select public.admin_set_suspended(
+        '0f000000-0000-0000-0000-00000000ab01', true, 'no') $q$,
+  'and a notice with nothing in it is still refused');
+
+select pg_temp.check(
+  (select count(*) from app.account_notices
+   where recipient_id = '0f000000-0000-0000-0000-00000000ab01') = 2,
+  'the refused one wrote nothing');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', '', false);
+
+\echo ''
 \echo 'ALL SCHEMA TESTS PASSED'

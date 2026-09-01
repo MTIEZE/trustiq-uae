@@ -77,6 +77,7 @@ database built from `supabase/migrations` and production is not only that.
 | --- | --- |
 | `accept_milestone(p_milestone_id uuid)` | signed in |
 | `accept_resolution_proposal(p_proposal_id uuid)` | signed in |
+| `account_notices_to_send()` | system only |
 | `admin_access_history(p_days integer)` | system only |
 | `admin_activity(p_limit integer)` | signed in |
 | `admin_ai_quality()` | signed in |
@@ -106,6 +107,7 @@ database built from `supabase/migrations` and production is not only that.
 | `invite_counterparty(p_email text, p_invitee_is party_role, p_description text, p_terms text, p_total_amount_fils bigint)` | signed in |
 | `issue_ai_proposal(p_dispute_id uuid, p_decision resolution_decision, p_summary text, p_disputed_amount_fils bigint, p_seller_amount_fils bigint, p_buyer_amount_fils bigint, p_confidence numeric, p_model_id text, p_issued_at timestamp with time zone, p_findings jsonb, p_ai_call_id bigint)` | system only |
 | `issue_human_resolution(p_dispute_id uuid, p_decision resolution_decision, p_summary text, p_seller_amount_fils bigint, p_buyer_amount_fils bigint, p_findings jsonb)` | signed in |
+| `mark_account_notices_sent(p_ids bigint[], p_error text)` | system only |
 | `mark_notifications_read(p_before timestamp with time zone)` | signed in |
 | `mark_notifications_sent(p_ids bigint[], p_error text)` | system only |
 | `may_request_resolution(p_dispute_id uuid)` | signed in |
