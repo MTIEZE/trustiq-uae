@@ -1471,4 +1471,13 @@ class LAr extends L {
 
   @override
   String get unblockDone => 'يمكنه الوصول إليك مرة أخرى.';
+
+  @override
+  String get legalTerms => 'شروط الاستخدام';
+
+  @override
+  String get legalPrivacy => 'الخصوصية';
+
+  @override
+  String get legalHeading => 'التفاصيل القانونية';
 }

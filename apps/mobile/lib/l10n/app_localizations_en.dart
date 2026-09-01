@@ -1480,4 +1480,13 @@ class LEn extends L {
 
   @override
   String get unblockDone => 'They can reach you again.';
+
+  @override
+  String get legalTerms => 'Terms of use';
+
+  @override
+  String get legalPrivacy => 'Privacy';
+
+  @override
+  String get legalHeading => 'The small print';
 }

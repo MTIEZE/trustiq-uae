@@ -20,16 +20,19 @@
   worse than no page.
 -->
 <style>
+  /* The app's palette, light first, because the app is light first and follows
+     the device. packages/core/src/palette-parity.test.ts holds this in step. */
   :root {
-    --bg: #060908;
-    --surface: #121C19;
-    --border: #24332F;
-    --accent: #2DD4A7;
-    --amber: #E8B36A;
-    --coral: #E8716A;
-    --text: #EAF2EF;
-    --text-dim: #8FA39D;
-    --text-faint: #5A6E68;
+    --bg: #F5F7F7; --surface: #FFFFFF; --border: #E4E9E9;
+    --accent: #0D5F66; --amber: #8A6110;
+    --text: #0E1518; --dim: #4A575E; --faint: #7C8890;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D1214; --surface: #151C1E; --border: #222B2D;
+      --accent: #4FBFC7; --amber: #D9A94E;
+      --text: #E9EEEE; --dim: #A6B3B5; --faint: #78868A;
+    }
   }
   * { box-sizing: border-box; }
   body {
@@ -55,7 +58,7 @@
     width: 44px; height: 44px;
     display: grid; place-items: center;
     border-radius: 12px;
-    background: rgba(45, 212, 167, 0.12);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
     color: var(--accent);
     font-size: 22px;
     margin-bottom: 22px;
@@ -75,7 +78,7 @@
   }
   .lang:hover { color: var(--text); border-color: var(--text-faint); }
   [dir="rtl"] .lang { float: left; }
-  [data-tone="ok"] .mark { color: var(--accent); background: rgba(45, 212, 167, 0.12); }
+  [data-tone="ok"] .mark { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
   [data-tone="warn"] .mark { color: var(--amber); background: rgba(232, 179, 106, 0.12); }
   [data-tone="bad"] .mark { color: var(--coral); background: rgba(232, 113, 106, 0.12); }
 </style>

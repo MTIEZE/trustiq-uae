@@ -14,10 +14,19 @@
   before the app exists and keeps working if everything else breaks.
 -->
 <style>
+  /* The app's palette, light first, because the app is light first and follows
+     the device. packages/core/src/palette-parity.test.ts holds this in step. */
   :root {
-    --bg: #060908; --surface: #121C19; --border: #24332F;
-    --accent: #2DD4A7; --amber: #E8B36A;
-    --text: #EAF2EF; --dim: #8FA39D; --faint: #5A6E68;
+    --bg: #F5F7F7; --surface: #FFFFFF; --border: #E4E9E9;
+    --accent: #0D5F66; --amber: #8A6110;
+    --text: #0E1518; --dim: #4A575E; --faint: #7C8890;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D1214; --surface: #151C1E; --border: #222B2D;
+      --accent: #4FBFC7; --amber: #D9A94E;
+      --text: #E9EEEE; --dim: #A6B3B5; --faint: #78868A;
+    }
   }
   * { box-sizing: border-box; }
   body {

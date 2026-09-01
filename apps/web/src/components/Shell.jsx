@@ -57,6 +57,7 @@ export function Footer() {
             <li><a href="/trustiq-uae/business.html">For business</a></li>
             <li><a href="/trustiq-uae/about.html">About</a></li>
             <li><a href="/trustiq-uae/download.html">Get the app</a></li>
+            <li><a href="/trustiq-uae/terms.html">Terms</a></li>
             <li><a href="/trustiq-uae/privacy.html">Privacy</a></li>
             <li><a href="/trustiq-uae/delete-account.html">Delete your account</a></li>
             <li><a href="https://github.com/MTIEZE/trustiq-uae">Source</a></li>

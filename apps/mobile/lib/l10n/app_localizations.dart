@@ -2633,6 +2633,24 @@ abstract class L {
   /// In en, this message translates to:
   /// **'They can reach you again.'**
   String get unblockDone;
+
+  /// No description provided for @legalTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of use'**
+  String get legalTerms;
+
+  /// No description provided for @legalPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get legalPrivacy;
+
+  /// No description provided for @legalHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'The small print'**
+  String get legalHeading;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

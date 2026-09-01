@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../app_state.dart';
 import '../data/backend.dart';
@@ -148,6 +149,15 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             const SizedBox(height: Space.section),
 
+            // Both of these exist as pages on the site and were reachable from
+            // nowhere inside the app. A reviewer looks for them here, and so
+            // does anybody wondering what they agreed to.
+            SectionLabel(l.legalHeading),
+            const SizedBox(height: Space.sm),
+            const _LegalLink(page: 'terms.html', which: _Legal.terms),
+            const _LegalLink(page: 'privacy.html', which: _Legal.privacy),
+            const SizedBox(height: Space.section),
+
             SectionLabel(l.closeAccount),
             const SizedBox(height: Space.sm),
             Text(
@@ -183,6 +193,49 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+enum _Legal { terms, privacy }
+
+/// One line out to a page on the site.
+///
+/// Opened in the browser rather than in a web view: these are documents, they
+/// have to keep working when the app does not, and a web view would put the
+/// app's chrome around a page that is deliberately independent of it.
+class _LegalLink extends StatelessWidget {
+  const _LegalLink({required this.page, required this.which});
+
+  final String page;
+  final _Legal which;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final l = context.l;
+    final label = which == _Legal.terms ? l.legalTerms : l.legalPrivacy;
+
+    return InkWell(
+      onTap: () async {
+        final uri = Uri.parse('https://mtieze.github.io/trustiq-uae/$page');
+        final messenger = ScaffoldMessenger.of(context);
+        final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!opened) {
+          // Says so rather than doing nothing. A row that swallows the tap
+          // reads as a broken app, not as a device with no browser.
+          messenger.showSnackBar(SnackBar(content: Text(uri.toString())));
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Space.sm),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: const TextStyle(fontSize: 15))),
+            Icon(Icons.open_in_new, size: IconSize.sm, color: c.inkFaint),
+          ],
+        ),
       ),
     );
   }

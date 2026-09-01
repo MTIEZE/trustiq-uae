@@ -815,5 +815,8 @@
   "blockConfirm": "Refuse future contracts",
   "blockDone": "They cannot start anything new with you.",
   "unblockAction": "Allow contracts again",
-  "unblockDone": "They can reach you again."
+  "unblockDone": "They can reach you again.",
+  "legalTerms": "Terms of use",
+  "legalPrivacy": "Privacy",
+  "legalHeading": "The small print"
 }

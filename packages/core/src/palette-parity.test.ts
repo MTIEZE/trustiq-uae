@@ -100,18 +100,25 @@ describe('the site and the app are the same colours', () => {
     expect(lightTokens()['--text']).not.toEqual(darkTokens()['--text'])
   })
 
-  it('no stylesheet still names the old palette', () => {
+  it('nothing the site serves still names the old palette', () => {
     // The site's own colours before this: a near-black ground and a mint accent
     // that appears nowhere in the product.
     //
-    // Every stylesheet, not just App.css. This read one file while the site had
-    // one, and a second file arriving is exactly how a check like this stops
-    // covering what it claims to.
-    const dir = join(ROOT, 'apps', 'web', 'src')
-    for (const file of readdirSync(dir).filter((f) => f.endsWith('.css'))) {
-      const css = readFileSync(join(dir, file), 'utf8')
+    // Stylesheets and the standalone pages together. This read App.css alone,
+    // then every .css, and both times it missed the four hand-written pages in
+    // public/ that carry their own styles — privacy, the deletion page and the
+    // confirmation page sat on the old palette for days after the rest of the
+    // site moved, and the check that existed to catch exactly that did not look
+    // at them.
+    const web = join(ROOT, 'apps', 'web')
+    const files = [
+      ...readdirSync(join(web, 'src')).filter((f) => f.endsWith('.css')).map((f) => join('src', f)),
+      ...readdirSync(join(web, 'public')).filter((f) => f.endsWith('.html')).map((f) => join('public', f)),
+    ]
+    for (const file of files) {
+      const text = readFileSync(join(web, file), 'utf8')
       for (const gone of ['#2DD4A7', '#060908', '#121C19', 'rgba(45, 212, 167']) {
-        expect(css, `${gone} is left in ${file}`).not.toContain(gone)
+        expect(text, `${gone} is left in ${file}`).not.toContain(gone)
       }
     }
   })
