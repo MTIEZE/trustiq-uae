@@ -60,8 +60,8 @@ function goodOutput(over: Partial<RawResolution> = {}): RawResolution {
     decision: 'split',
     summary: 'Delivery was on time but quality could not be verified from the evidence.',
     findings: [
-      { statement: 'A signed contract exists dated June 1.', evidenceIds: [CONTRACT] },
-      { statement: 'Delivery was made on June 8, inside the agreed window.', evidenceIds: [DELIVERY] },
+      { statement: 'A signed contract exists dated June 1.', evidenceIds: [CONTRACT], citesTerms: false },
+      { statement: 'Delivery was made on June 8, inside the agreed window.', evidenceIds: [DELIVERY], citesTerms: false },
     ],
     sellerPercent: 60,
     confidence: 0.85,
@@ -264,7 +264,7 @@ describe('validation against the case file', () => {
       fakeClient(
         completed(
           goodOutput({
-            findings: [{ statement: 'An email confirms the change.', evidenceIds: ['ev_ghost'] }],
+            findings: [{ statement: 'An email confirms the change.', evidenceIds: ['ev_ghost'], citesTerms: false }],
           }),
         ),
       ),
@@ -282,7 +282,7 @@ describe('validation against the case file', () => {
     const result = await resolveDispute(
       disputeCase(),
       fakeClient(
-        completed(goodOutput({ findings: [{ statement: 'The work was bad.', evidenceIds: [] }] })),
+        completed(goodOutput({ findings: [{ statement: 'The work was bad.', evidenceIds: [], citesTerms: false }] })),
       ),
       OPTIONS,
     )
@@ -316,7 +316,7 @@ describe('validation against the case file', () => {
   it('records the failure in the audit trail rather than discarding the run', async () => {
     const result = await resolveDispute(
       disputeCase(),
-      fakeClient(completed(goodOutput({ findings: [{ statement: 'x', evidenceIds: ['ev_ghost'] }] }))),
+      fakeClient(completed(goodOutput({ findings: [{ statement: 'x', evidenceIds: ['ev_ghost'], citesTerms: false }] }))),
       OPTIONS,
     )
     expect(result.audit.validationOutcome).toBe('UNKNOWN_EVIDENCE')
@@ -367,7 +367,7 @@ describe('every path is audited', () => {
     ['error', { kind: 'error', message: 'boom', retryable: false, latencyMs: 1 }],
     ['malformed json', { kind: 'completed', json: 'nope', modelId: 'm', latencyMs: 1 }],
     ['bad percentage', completed(goodOutput({ sellerPercent: 200 }))],
-    ['hallucinated evidence', completed(goodOutput({ findings: [{ statement: 'x', evidenceIds: ['ev_x'] }] }))],
+    ['hallucinated evidence', completed(goodOutput({ findings: [{ statement: 'x', evidenceIds: ['ev_x'], citesTerms: false }] }))],
     ['policy escalation', completed(goodOutput({ confidence: 0.1 }))],
     ['accepted', completed(goodOutput())],
   ]

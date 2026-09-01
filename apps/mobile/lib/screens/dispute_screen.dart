@@ -672,9 +672,7 @@ class _ProposalCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            finding.evidenceIds
-                                .map((id) => _filenameFor(id))
-                                .join(', '),
+                            _sourcesFor(context, finding),
                             style: TextStyle(
                               fontSize: 11.5,
                               color: c.inkFaint,
@@ -738,6 +736,21 @@ class _ProposalCard extends StatelessWidget {
   String _filenameFor(String evidenceId) {
     final match = contract.evidence.where((e) => e.id == evidenceId);
     return match.isEmpty ? evidenceId : match.first.filename;
+  }
+
+  /// What a finding rests on, named so a party can go and look at it.
+  ///
+  /// The agreement counts. A finding may be founded on it rather than on a
+  /// filed document, and reading only the filenames left those findings with a
+  /// blank line under them, which looked like the app had lost something.
+  String _sourcesFor(
+    BuildContext context,
+    ({String statement, List<String> evidenceIds, bool citesTerms}) finding,
+  ) {
+    return [
+      if (finding.citesTerms) context.l.findingRestsOnTerms,
+      for (final id in finding.evidenceIds) _filenameFor(id),
+    ].join(', ');
   }
 
   void _confirmReject(BuildContext context) {

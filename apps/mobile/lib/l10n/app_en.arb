@@ -149,6 +149,10 @@
     }
   },
   "addEvidence": "Add evidence",
+  "findingRestsOnTerms": "the agreed terms",
+  "@findingRestsOnTerms": {
+    "description": "Shown under a finding that is founded on the contract itself rather than on a filed document."
+  },
   "yourTurn": "Your turn",
   "yourTurnBlurb": "The other party has given their account. Nothing is analysed until you give yours, so the case is waiting on you.",
   "giveYourAccount": "Give your account",
@@ -270,16 +274,30 @@
   "verifiedByHandBody": "UAE Pass is not connected yet. During the closed beta someone at TrustIQ checks your Emirates ID themselves and records what they saw.",
   "verifiedByHandWorthLess": "This is worth less than UAE Pass, and your profile says so: it is stored as a manual check, not as a UAE Pass one. Anyone reading it later can tell the difference.",
   "verifiedByHandContact": "Write to {contact} and ask to be verified.",
-  "@verifiedByHandContact": {"placeholders": {"contact": {"type": "String"}}},
+  "@verifiedByHandContact": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
   "verifiedByHandNoContact": "Verification is arranged with TrustIQ directly during the closed beta.",
   "verifiedByHandRecord": "Whoever verifies you has to write down what they looked at. That note is kept, and it cannot be edited or removed afterwards, including by TrustIQ.",
   "verifiedByHandNothingToDo": "There is nothing to do on this screen. It is here so you know what has to happen before a contract can be accepted, and why it is not automatic yet.",
-
   "onboardingSkip": "Skip",
   "onboardingNext": "Next",
   "onboardingBack": "Back",
   "onboardingStep": "Step {current} of {total}",
-  "@onboardingStep": {"placeholders": {"current": {"type": "int"}, "total": {"type": "int"}}},
+  "@onboardingStep": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "onboarding1Title": "A record you can both point at",
   "onboarding1Body": "Before the work starts, you and the other person write down what was agreed. Once you both accept it, neither of you can change the terms. Everything that happens after that is timestamped, and neither side can quietly rewrite it later.",
   "onboarding1Aside": "For freelance work, a private sale, any deal with no platform standing behind it.",
@@ -299,12 +317,23 @@
   "howItWorks": "How TrustIQ works",
   "yourIdentity": "Your identity",
   "identityVerifiedOn": "Verified on {date}",
-  "@identityVerifiedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@identityVerifiedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "identityNotVerifiedYet": "Not verified yet. You can draft and send contracts, but not accept one.",
-
   "noAccountTitle": "They have no TrustIQ account",
   "noAccountBody": "Nobody holds {email}. You can send them an invitation instead: they get a code, and when they join, this contract is waiting for them already sent.",
-  "@noAccountBody": {"placeholders": {"email": {"type": "String"}}},
+  "@noAccountBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "sendAnInvitation": "Send an invitation",
   "cancel": "Cancel",
   "invitationSent": "Invitation ready",
@@ -313,9 +342,30 @@
   "copyTheMessage": "Copy the message",
   "copied": "Copied",
   "invitationMessage": "I have set up our agreement on TrustIQ: {description}, {amount}. Download TrustIQ, sign up with {email}, and enter code {code} to see it.",
-  "@invitationMessage": {"placeholders": {"description": {"type": "String"}, "amount": {"type": "String"}, "email": {"type": "String"}, "code": {"type": "String"}}},
+  "@invitationMessage": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "email": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "invitationBoundNote": "The code only works for {email}. Anyone else who sees it cannot use it.",
-  "@invitationBoundNote": {"placeholders": {"email": {"type": "String"}}},
+  "@invitationBoundNote": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "invitationExpiryNote": "It stops working after 30 days, and you can withdraw it before then.",
   "invitations": "Invitations",
   "invitationsSent": "Sent",
@@ -334,52 +384,134 @@
   "withdrawInvitation": "Withdraw this invitation?",
   "withdrawInvitationBody": "The code stops working. Nothing has been agreed yet, so there is nothing to undo.",
   "theyWillBe": "They will be the {role}",
-  "@theyWillBe": {"placeholders": {"role": {"type": "String"}}},
+  "@theyWillBe": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "buyerWord": "buyer",
   "sellerWord": "seller",
-
   "whoBuyer": "The buyer",
   "whoSeller": "The seller",
   "whoSystem": "TrustIQ",
   "evSubmit": "{who} sent the contract",
-  "@evSubmit": {"placeholders": {"who": {"type": "String"}}},
+  "@evSubmit": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evAccept": "{who} accepted the terms",
-  "@evAccept": {"placeholders": {"who": {"type": "String"}}},
+  "@evAccept": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evDecline": "{who} declined the terms",
-  "@evDecline": {"placeholders": {"who": {"type": "String"}}},
+  "@evDecline": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evWithdraw": "{who} withdrew the contract",
-  "@evWithdraw": {"placeholders": {"who": {"type": "String"}}},
+  "@evWithdraw": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evMarkDelivered": "{who} marked the work delivered",
-  "@evMarkDelivered": {"placeholders": {"who": {"type": "String"}}},
+  "@evMarkDelivered": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evRequestRevision": "{who} requested changes",
-  "@evRequestRevision": {"placeholders": {"who": {"type": "String"}}},
+  "@evRequestRevision": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evConfirmDelivery": "{who} confirmed the delivery",
-  "@evConfirmDelivery": {"placeholders": {"who": {"type": "String"}}},
+  "@evConfirmDelivery": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evOpenDispute": "{who} opened a dispute",
-  "@evOpenDispute": {"placeholders": {"who": {"type": "String"}}},
+  "@evOpenDispute": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evResolveDispute": "{who} resolved the dispute",
-  "@evResolveDispute": {"placeholders": {"who": {"type": "String"}}},
+  "@evResolveDispute": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evCancelByAgreement": "{who} cancelled the contract",
-  "@evCancelByAgreement": {"placeholders": {"who": {"type": "String"}}},
+  "@evCancelByAgreement": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "evExpire": "The contract expired",
   "devSubmitForAi": "Both accounts are in, and the case went to the agent",
   "devIssueProposal": "A resolution was proposed",
   "devAcceptProposal": "{who} accepted the resolution",
-  "@devAcceptProposal": {"placeholders": {"who": {"type": "String"}}},
+  "@devAcceptProposal": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "devRejectProposal": "{who} refused it and asked for a person",
-  "@devRejectProposal": {"placeholders": {"who": {"type": "String"}}},
+  "@devRejectProposal": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "devEscalate": "The case went to a human reviewer",
   "devAssignReviewer": "A reviewer took the case",
   "devIssueHumanResolution": "A reviewer decided the case",
   "devWithdrawDispute": "{who} withdrew the dispute",
-  "@devWithdrawDispute": {"placeholders": {"who": {"type": "String"}}},
+  "@devWithdrawDispute": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "notifications": "Activity",
   "nothingWaiting": "Nothing is waiting on you.",
   "nothingWaitingBody": "When the other party moves on one of your contracts, it appears here.",
   "needsYou": "Needs you",
   "markAllRead": "Mark all as read",
   "activityNote": "This list is built from the contract record itself, so it says exactly what happened and nothing else.",
-
   "stages": "Stages",
   "stageWaiting": "Not started",
   "stageDelivered": "Delivered",
@@ -391,7 +523,16 @@
   "sendStageBackBody": "The seller will be told it needs more work. The attempt stays on the record: a stage that took three tries reads as three tries.",
   "stagesNote": "Each stage is agreed as it lands, not all at the end. The last one accepted closes the contract, so nobody is asked to sign for the same thing twice.",
   "stagesTotal": "{done} of {total} accepted",
-  "@stagesTotal": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
+  "@stagesTotal": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "addAStage": "Add a stage",
   "stageTitle": "What this stage covers",
   "stageAmount": "Amount for this stage",
@@ -400,25 +541,51 @@
   "stagesOptional": "Optional. Without stages the contract is one delivery, confirmed once. With them, the client agrees to each piece as it arrives.",
   "stagesOverTotal": "The stages add up to more than the contract.",
   "stagesRemainder": "{amount} of the contract is not in any stage.",
-  "@stagesRemainder": {"placeholders": {"amount": {"type": "String"}}},
+  "@stagesRemainder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "stagesFixedAfter": "Stages cannot be added or changed once the contract is sent.",
   "mvDeliver": "{who} delivered a stage",
-  "@mvDeliver": {"placeholders": {"who": {"type": "String"}}},
+  "@mvDeliver": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "mvAccept": "{who} accepted a stage",
-  "@mvAccept": {"placeholders": {"who": {"type": "String"}}},
+  "@mvAccept": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "mvRequestRevision": "{who} sent a stage back",
-  "@mvRequestRevision": {"placeholders": {"who": {"type": "String"}}},
-
+  "@mvRequestRevision": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      }
+    }
+  },
   "counterpartyNotVerified": "{name} has not verified their identity yet. A contract only becomes binding between verified identities, so nothing can be accepted until they do.",
-  "@counterpartyNotVerified": {"placeholders": {"name": {"type": "String"}}},
+  "@counterpartyNotVerified": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "youAreNotVerified": "Your identity is not verified",
   "youAreNotVerifiedBody": "You can draft contracts, send them and file evidence. Accepting one needs your identity, because the other party has no way of knowing who agreed.",
   "getVerified": "Get verified",
   "formNeedsVerifiedNote": "Send it now if you like. Neither of you can accept it until both identities are verified, and yours is not.",
-
-  "yourAccount": "Your account",
   "signedInAs": "Signed in as",
-  "language": "Language",
   "signOut": "Sign out",
   "closeAccount": "Close your account",
   "closeAccountBlurb": "Everything that identifies you is erased. What the other party to a contract needs is kept, attached to a record that no longer names you.",
@@ -428,21 +595,24 @@
   "accountClosed": "Your account is closed",
   "accountDeletedBody": "Nothing pointed at it, so it was deleted entirely.",
   "accountKeptBody": "What was kept, and only this: {kept}.",
-  "@accountKeptBody": {"placeholders": {"kept": {"type": "String"}}},
+  "@accountKeptBody": {
+    "placeholders": {
+      "kept": {
+        "type": "String"
+      }
+    }
+  },
   "closeAccountFailed": "The account could not be closed. Nothing has changed.",
-
   "noConnection": "TrustIQ could not reach the internet.",
   "noConnectionBody": "Check your connection and try again. Nothing was sent, so nothing has changed.",
   "somethingWentWrong": "Something went wrong.",
   "somethingWentWrongBody": "Try again. If it keeps happening, tell us what you were doing.",
-
   "heldPausedTitle": "TrustIQ is paused",
   "heldPausedBody": "The service is briefly unavailable. Nothing you have already agreed is affected, and no contract can change while it is paused.",
   "heldOutdatedTitle": "This version is too old to use",
   "heldOutdatedBody": "Update TrustIQ from the store you installed it from. Your contracts and documents are untouched and will be there when you come back.",
   "heldRetry": "Check again",
   "heldChecking": "Checking",
-
   "verifyStartTitle": "Start your verification",
   "verifyStartBody": "One request, checked by a person. You are told the outcome either way, and if it is no, you are told what to change.",
   "verifyStartAction": "Start verification",
@@ -459,21 +629,44 @@
   "verifySubmit": "Send my request",
   "verifyPendingTitle": "Your request is with us",
   "verifyPendingBody": "Sent {when}. Someone will look at it and you will be told the outcome. You can keep using TrustIQ in the meantime; only making a contract binding needs this.",
-  "@verifyPendingBody": {"placeholders": {"when": {"type": "String"}}},
+  "@verifyPendingBody": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "verifyPendingShowing": "You said you can show: {document}",
-  "@verifyPendingShowing": {"placeholders": {"document": {"type": "String"}}},
+  "@verifyPendingShowing": {
+    "placeholders": {
+      "document": {
+        "type": "String"
+      }
+    }
+  },
   "verifyWithdraw": "Withdraw my request",
   "verifyWithdrawn": "Your request has been withdrawn.",
   "verifyRejectedTitle": "Your request was not accepted",
   "verifyRejectedBody": "Answered {when}. You can send a new request as soon as you have dealt with this.",
-  "@verifyRejectedBody": {"placeholders": {"when": {"type": "String"}}},
+  "@verifyRejectedBody": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "verifyRejectedWhy": "What needs to change",
   "verifyAskAgain": "Send a new request",
   "verifyDoneTitle": "Your identity is verified",
   "verifyDoneBody": "Verified {when}. Nothing else is needed from you.",
-  "@verifyDoneBody": {"placeholders": {"when": {"type": "String"}}},
+  "@verifyDoneBody": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "verifySent": "Request sent.",
-
   "askResolutionTitle": "Both accounts are in",
   "askResolutionBody": "An AI agent reads both sides against the documents filed and proposes a resolution. It only ends the dispute if you both accept it, and either of you can refuse and ask for a person instead.",
   "askResolutionAction": "Ask for a resolution",
@@ -484,7 +677,6 @@
   "resolutionVerifyAction": "Verify my account",
   "resolutionFailed": "The analysis could not be started. Nothing has changed, and you can try again.",
   "resolutionStarted": "The case has been read.",
-
   "stepHowLong": "How long it runs",
   "stepHowLongBlurb": "Most work is one job with no period. Say otherwise only if this is an arrangement that runs for a stretch of time.",
   "periodOneOff": "One piece of work",
@@ -504,23 +696,69 @@
   "periodFixedAfterSending": "Like the rest of the terms, this can only be changed while the contract is a draft.",
   "contractPeriod": "Period",
   "contractPeriodFrom": "{from} to {to}",
-  "@contractPeriodFrom": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
+  "@contractPeriodFrom": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
   "contractPeriodFromOpen": "From {from}, no end date",
-  "@contractPeriodFromOpen": {"placeholders": {"from": {"type": "String"}}},
+  "@contractPeriodFromOpen": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
   "contractRenewsOn": "Renews {when}",
-  "@contractRenewsOn": {"placeholders": {"when": {"type": "String"}}},
+  "@contractRenewsOn": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "contractEndsOn": "Ends {when}, and does not renew",
-  "@contractEndsOn": {"placeholders": {"when": {"type": "String"}}},
+  "@contractEndsOn": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "contractDecideBy": "You both decide by {when}",
-
   "whatComesLater": "Not yet",
   "laterOnce": "{action} — once the contract is {state}",
-  "@laterOnce": {"placeholders": {"action": {"type": "String"}, "state": {"type": "String"}}},
+  "@laterOnce": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
   "laterNote": "Read from the same table the app checks before it lets anything happen, so this cannot promise something the rules do not.",
   "theirMove": "Waiting on {name}",
-  "@theirMove": {"placeholders": {"name": {"type": "String"}}},
-  "@contractDecideBy": {"placeholders": {"when": {"type": "String"}}},
-
+  "@theirMove": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@contractDecideBy": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "amountMustBePositive": "The amount must be more than zero.",
   "amountTwoDecimals": "Amounts go to two decimal places. 1 AED is 100 fils, and there is nothing smaller.",
   "amountFormat": "Enter an amount in AED, like 500 or 1250.50.",

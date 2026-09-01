@@ -78,8 +78,8 @@ function fakeClient(rpcResult: { data: unknown; error: { message: string } | nul
 }
 
 const findings: GroundedFinding[] = [
-  { statement: 'The brief specified three concepts.', evidenceIds: ['ev-1'] as never },
-  { statement: 'Two were delivered.', evidenceIds: ['ev-1', 'ev-2'] as never },
+  { statement: 'The brief specified three concepts.', evidenceIds: [] as never, citesTerms: true },
+  { statement: 'Two were delivered.', evidenceIds: ['ev-1', 'ev-2'] as never, citesTerms: false },
 ]
 
 const proposal: ResolutionProposal = {
@@ -154,8 +154,8 @@ describe('SupabaseDisputeRepository.saveProposal', () => {
     })
 
     expect(calls[0]?.args.p_findings).toEqual([
-      { statement: 'The brief specified three concepts.', evidenceIds: ['ev-1'] },
-      { statement: 'Two were delivered.', evidenceIds: ['ev-1', 'ev-2'] },
+      { statement: 'The brief specified three concepts.', evidenceIds: [], citesTerms: true },
+      { statement: 'Two were delivered.', evidenceIds: ['ev-1', 'ev-2'], citesTerms: false },
     ])
   })
 

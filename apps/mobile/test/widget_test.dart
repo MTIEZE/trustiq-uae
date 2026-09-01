@@ -208,6 +208,11 @@ void main() {
     // The proposal is framed as a proposal, with both answers available.
     expect(find.text('Accept this resolution'), findsOneWidget);
     expect(find.text('Refuse and ask for a human'), findsOneWidget);
+
+    // A finding may rest on the agreement rather than on a filed document, and
+    // it has to say so. Read as filenames alone, such a finding had a blank
+    // line under it, which looks like the app having lost something.
+    expect(find.text('the agreed terms'), findsOneWidget);
   });
   testWidgets('a backend that cannot verify offers a request, not an explanation', (tester) async {
     // The live backend cannot record a verification: the schema refuses a

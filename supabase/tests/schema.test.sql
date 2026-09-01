@@ -849,6 +849,130 @@ select pg_temp.expect_error(
               50000, 30000, 20000, (select id from pg_temp.run)) $q$,
   'a human proposal cannot name a model run');
 
+\echo ''
+\echo '== a finding may rest on the agreed terms =='
+
+-- The gap 0028 closed. Every ungrounded refusal on the live project was the
+-- model saying what the agreement required, which had no id to cite. The rule
+-- that a finding rests on something has not moved; the set of things it may
+-- rest on has one more member.
+
+-- A third dispute, so the proposal above stays where the tests before it left it.
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by, state)
+values
+  ('aaaaaaaa-0000-0000-0000-000000000009',
+   '11111111-1111-1111-1111-111111111111',
+   '22222222-2222-2222-2222-222222222222',
+   'A website', 'Build a modern website for the business.', 50000,
+   '11111111-1111-1111-1111-111111111111', 'disputed');
+
+insert into public.disputes
+  (id, transaction_id, opened_by, opened_by_role, buyer_claim, seller_claim, disputed_amount_fils)
+values
+  ('dd000000-0000-0000-0000-000000000009',
+   'aaaaaaaa-0000-0000-0000-000000000009',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'This is not what I imagined.',
+   'A five page responsive site was delivered.',
+   50000);
+
+select public.apply_dispute_event('dd000000-0000-0000-0000-000000000009', 'submit_for_ai');
+
+insert into public.ai_call_log
+  (dispute_id, model_id, prompt_version, request_payload, validation_outcome, confidence)
+values
+  ('dd000000-0000-0000-0000-000000000009', 'claude-opus-5', 'test/1',
+   '{"probe":true}'::jsonb, 'accepted', 0.74);
+
+create temporary view pg_temp.run_nine as
+  select max(id) as id from public.ai_call_log
+  where dispute_id = 'dd000000-0000-0000-0000-000000000009';
+
+-- And a fourth, left in ai_review with no proposal on it. The refusal further
+-- down needs a dispute that issue_proposal is still a legal move from: pointed
+-- at one that already has a proposal, the state machine stops the call before
+-- the grounding trigger is ever reached, and the assertion proves nothing.
+insert into public.transactions
+  (id, buyer_id, seller_id, description, terms, total_amount_fils, created_by, state)
+values
+  ('aaaaaaaa-0000-0000-0000-00000000000a',
+   '11111111-1111-1111-1111-111111111111',
+   '22222222-2222-2222-2222-222222222222',
+   'Nothing to go on', 'Do the thing.', 50000,
+   '11111111-1111-1111-1111-111111111111', 'disputed');
+
+insert into public.disputes
+  (id, transaction_id, opened_by, opened_by_role, buyer_claim, seller_claim, disputed_amount_fils)
+values
+  ('dd000000-0000-0000-0000-00000000000a',
+   'aaaaaaaa-0000-0000-0000-00000000000a',
+   '11111111-1111-1111-1111-111111111111', 'buyer',
+   'It was not done.', 'It was done.', 50000);
+
+select public.apply_dispute_event('dd000000-0000-0000-0000-00000000000a', 'submit_for_ai');
+
+insert into public.ai_call_log
+  (dispute_id, model_id, prompt_version, request_payload, validation_outcome, confidence)
+values
+  ('dd000000-0000-0000-0000-00000000000a', 'claude-opus-5', 'test/1',
+   '{"probe":true}'::jsonb, 'accepted', 0.9);
+
+create temporary view pg_temp.run_ten as
+  select max(id) as id from public.ai_call_log
+  where dispute_id = 'dd000000-0000-0000-0000-00000000000a';
+
+-- No evidence exists on this contract at all, so the only possible anchor is
+-- the agreement. Before 0028 this proposal could not be stored in any form.
+do $$
+declare
+  v_id uuid;
+begin
+  v_id := public.issue_ai_proposal(
+    'dd000000-0000-0000-0000-000000000009', 'split',
+    'The agreement is too vague to measure delivery against, so the loss is shared.',
+    50000, 25000, 25000, 0.74, 'claude-opus-5', now(),
+    '[{"statement":"The agreed terms set no page count, revision allowance or acceptance criteria.",
+       "evidenceIds":[], "citesTerms":true}]'::jsonb,
+    (select id from pg_temp.run_nine));
+
+  set constraints all immediate;
+  perform pg_temp.check(v_id is not null, 'a proposal resting only on the terms is stored');
+end
+$$;
+
+select pg_temp.check(
+  (select f.cites_terms from public.resolution_findings f
+   join public.resolution_proposals p on p.id = f.proposal_id
+   where p.dispute_id = 'dd000000-0000-0000-0000-000000000009'),
+  'and the finding records that it rests on the terms');
+
+select pg_temp.check(
+  (select count(*) from public.resolution_finding_evidence fe
+   join public.resolution_findings f on f.id = fe.finding_id
+   join public.resolution_proposals p on p.id = f.proposal_id
+   where p.dispute_id = 'dd000000-0000-0000-0000-000000000009') = 0,
+  'with no document behind it');
+
+-- The rule itself is unchanged: resting on nothing is still refused.
+select pg_temp.expect_deferred_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-00000000000a', 'split', 'Rests on nothing.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"The work was obviously careless.","evidenceIds":[],"citesTerms":false}]'::jsonb,
+        (select id from pg_temp.run_ten)) $q$,
+  'a finding resting on neither evidence nor the terms is still refused');
+
+-- And the wider anchor is not a way in for invented documents.
+select pg_temp.expect_error(
+  $q$ select public.issue_ai_proposal(
+        'dd000000-0000-0000-0000-000000000002', 'split', 'Cites a ghost and the terms.',
+        50000, 30000, 20000, 0.9, 'claude-opus-5', now(),
+        '[{"statement":"The terms required a report and one was filed.",
+           "evidenceIds":["ee000000-0000-0000-0000-0000000000fe"],"citesTerms":true}]'::jsonb,
+        (select id from pg_temp.run)) $q$,
+  'citing the terms does not excuse evidence nobody submitted');
+
 select pg_temp.check(
   (select actor from public.dispute_events
    where dispute_id = 'dd000000-0000-0000-0000-000000000002'

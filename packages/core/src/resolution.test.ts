@@ -21,8 +21,8 @@ function proposal(overrides: Partial<ResolutionProposal> = {}): ResolutionPropos
     decision: 'split',
     summary: 'Delivery happened on time but quality could not be verified from the evidence.',
     findings: [
-      { statement: 'A signed contract exists dated June 1.', evidenceIds: [CONTRACT] },
-      { statement: 'Delivery was made on June 8, inside the agreed window.', evidenceIds: [DELIVERY] },
+      { statement: 'A signed contract exists dated June 1.', evidenceIds: [CONTRACT], citesTerms: false },
+      { statement: 'Delivery was made on June 8, inside the agreed window.', evidenceIds: [DELIVERY], citesTerms: false },
     ],
     allocation: { seller: split.seller, buyer: split.buyer },
     confidence: 0.62,
@@ -111,19 +111,55 @@ describe('validateProposal', () => {
     if (!result.ok) expect(result.error.code).toBe('EMPTY_SUMMARY')
   })
 
-  it('rejects a finding that cites no evidence', () => {
+  it('rejects a finding that rests on nothing at all', () => {
     const ungrounded = proposal({
-      findings: [{ statement: 'The work was clearly substandard.', evidenceIds: [] }],
+      findings: [
+        { statement: 'The work was clearly substandard.', evidenceIds: [], citesTerms: false },
+      ],
     })
     const result = validateProposal(ungrounded, context)
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error.code).toBe('UNGROUNDED_FINDING')
   })
 
+  it('accepts a finding that rests on the agreed terms alone', () => {
+    // What the agreement required is usually the most important line in a
+    // dispute, and it was uncitable: only filed documents carried ids, so the
+    // model either dropped the point or had the whole proposal refused. Ten
+    // live runs on 1 September 2026 were refused for exactly this.
+    const onTerms = proposal({
+      findings: [
+        {
+          statement: 'The agreement set no deadline, so late delivery cannot be a breach of it.',
+          evidenceIds: [],
+          citesTerms: true,
+        },
+      ],
+    })
+    expect(validateProposal(onTerms, context).ok).toBe(true)
+  })
+
+  it('still refuses invented evidence on a finding that also rests on the terms', () => {
+    // The looser rule must not become a way in. Citing the agreement does not
+    // excuse a document that was never filed.
+    const both = proposal({
+      findings: [
+        {
+          statement: 'The agreement required a report, and one was filed.',
+          evidenceIds: ['ev_ghost' as EvidenceId],
+          citesTerms: true,
+        },
+      ],
+    })
+    const result = validateProposal(both, context)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error.code).toBe('UNKNOWN_EVIDENCE')
+  })
+
   it('rejects a finding that cites evidence nobody submitted', () => {
     const hallucinated = proposal({
       findings: [
-        { statement: 'An email from June 3 confirms the change.', evidenceIds: ['ev_ghost' as EvidenceId] },
+        { statement: 'An email from June 3 confirms the change.', evidenceIds: ['ev_ghost' as EvidenceId], citesTerms: false },
       ],
     })
     const result = validateProposal(hallucinated, context)

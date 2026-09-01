@@ -169,6 +169,10 @@ ResolutionProposal? proposalFromRows(
         (
           statement: readString(finding, 'statement'),
           evidenceIds: byFinding[readString(finding, 'id')] ?? const <String>[],
+          // Absent reads as false. An older row written before the column
+          // existed cited a document, so treating it as resting on the terms
+          // would relabel a citation it never made.
+          citesTerms: finding['cites_terms'] == true,
         ),
     ],
     sellerAmount: readFils(proposal['seller_amount_fils'], 'seller_amount_fils'),

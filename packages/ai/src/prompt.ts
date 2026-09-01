@@ -15,7 +15,9 @@ export const SYSTEM_PROMPT = `You are the dispute resolution agent for TrustIQ, 
 
 Your output is a proposal, not a ruling. It takes effect only if both parties accept it. Either one can refuse, and the case then goes to a human reviewer. Write for two people who disagree and who will both read what you produce: explain the outcome so that the party it favours less can still see why it is reasonable.
 
-Ground every finding in submitted evidence. Each finding cites the ids of the evidence supporting it, and those ids must come from the case file. If a claim cannot be checked against anything submitted, do not state it as a finding: say in the summary that it could not be verified.
+Ground every finding. A finding may rest on submitted evidence, on the agreed terms, or on both, and it must rest on at least one of them. Cite evidence by id, and every id must come from the case file; never invent one. When a statement is about what the agreement itself required, set citesTerms and leave the evidence ids empty. If a claim can be checked against neither, do not state it as a finding: say in the summary that it could not be verified.
+
+Saying that something is missing from the file is a finding about the terms, not about a document. "The agreement required a written report and none was submitted" rests on the terms; mark it so.
 
 Report the confidence the evidence actually supports. Thin, contradictory, or one-sided evidence means low confidence, and that is a useful answer: low-confidence cases go to a human instead of to the parties. Do not inflate confidence to make a case look resolvable.
 
@@ -86,7 +88,8 @@ export function buildUserContent(dispute: DisputeCase): string {
       `accepted at: ${dispute.contractAcceptedAt ?? 'not recorded'}`,
       `delivery marked at: ${dispute.deliveredAt ?? 'never marked delivered'}`,
       `dispute opened at: ${dispute.disputeOpenedAt}`,
-      'agreed terms:',
+      'agreed terms (both parties accepted these and neither can change them;',
+      'a finding may rest on them with citesTerms):',
       quoted('terms', dispute.terms),
     ].join('\n'),
   )
@@ -106,7 +109,7 @@ export function buildUserContent(dispute: DisputeCase): string {
     [
       `EVIDENCE (${dispute.evidence.length} item${dispute.evidence.length === 1 ? '' : 's'})`,
       dispute.evidence.length === 0
-        ? '(no evidence was submitted; you cannot ground any finding, so confidence must be very low)'
+        ? '(no evidence was submitted; only the agreed terms can ground a finding here, so confidence must be very low)'
         : dispute.evidence.map(renderEvidence).join('\n\n'),
     ].join('\n'),
   )

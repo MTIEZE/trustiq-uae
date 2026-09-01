@@ -29,13 +29,28 @@ export interface Allocation {
 /**
  * A single grounded claim in the model's reasoning.
  *
- * Requiring evidence references is what separates a resolution from an opinion.
- * If the model cannot point at the document that supports a statement, that
- * statement does not belong in a decision about someone's money.
+ * Requiring a reference is what separates a resolution from an opinion. If the
+ * model cannot point at what supports a statement, that statement does not
+ * belong in a decision about someone's money.
+ *
+ * There are two things it may point at, and there used to be one. Ten live runs
+ * on 1 September 2026 showed every refusal for an ungrounded finding was the
+ * same sentence in different words: the model saying what the agreement
+ * required. That is true, it is usually the most important line in the case,
+ * and it was uncitable, because only filed documents carried ids. So the model
+ * either left the citation empty and had the whole proposal thrown away, or
+ * said nothing about the contract at all. With exactly one document filed, that
+ * refused three runs out of three.
+ *
+ * The agreement is the strongest thing in the file: both parties accepted it
+ * and neither can change it afterwards. `citesTerms` says the statement rests
+ * on it. What has not moved is the rule that a finding rests on *something*.
  */
 export interface GroundedFinding {
   readonly statement: string
   readonly evidenceIds: readonly EvidenceId[]
+  /** Whether this statement is founded on the agreed terms themselves. */
+  readonly citesTerms: boolean
 }
 
 export interface ResolutionProposal {
@@ -110,10 +125,10 @@ export function validateProposal(
 
   const known = new Set<string>(context.knownEvidenceIds)
   for (const finding of proposal.findings) {
-    if (finding.evidenceIds.length === 0) {
+    if (finding.evidenceIds.length === 0 && !finding.citesTerms) {
       return err({
         code: 'UNGROUNDED_FINDING',
-        message: `Finding "${truncate(finding.statement)}" cites no evidence.`,
+        message: `Finding "${truncate(finding.statement)}" rests on neither evidence nor the agreed terms.`,
       })
     }
     for (const id of finding.evidenceIds) {

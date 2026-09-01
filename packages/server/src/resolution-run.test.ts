@@ -99,7 +99,7 @@ function goodJson(over: Record<string, unknown> = {}): ModelOutcome {
     json: JSON.stringify({
       decision: 'split',
       summary: 'Delivered on time; quality unverifiable from the evidence.',
-      findings: [{ statement: 'A contract exists.', evidenceIds: [CONTRACT] }],
+      findings: [{ statement: 'A contract exists.', evidenceIds: [CONTRACT], citesTerms: false }],
       sellerPercent: 60,
       confidence: 0.9,
       ...over,
@@ -174,7 +174,7 @@ describe('escalations reach the reviewer with a readable reason', () => {
     ],
     [
       'a hallucinated citation',
-      goodJson({ findings: [{ statement: 'x', evidenceIds: ['ev_ghost'] }] }),
+      goodJson({ findings: [{ statement: 'x', evidenceIds: ['ev_ghost'], citesTerms: false }] }),
       'UNKNOWN_EVIDENCE',
     ],
   ]

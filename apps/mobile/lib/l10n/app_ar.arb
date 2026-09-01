@@ -101,6 +101,10 @@
   "youShort": "أنت",
   "evidenceCount": "الأدلة ({count})",
   "addEvidence": "إضافة دليل",
+  "findingRestsOnTerms": "الشروط المتفق عليها",
+  "@findingRestsOnTerms": {
+    "description": "Shown under a finding that is founded on the contract itself rather than on a filed document."
+  },
   "yourTurn": "دورك",
   "yourTurnBlurb": "قدّم الطرف الآخر بيانه. لا يبدأ أي تحليل قبل أن تقدّم بيانك، فالقضية بانتظارك.",
   "giveYourAccount": "قدّم بيانك",
@@ -135,7 +139,7 @@
   "theContract": "العقد",
   "amount": "المبلغ",
   "whatPartySays": "ما يقوله {name}",
-  "yourAccount": "بيانك",
+  "yourAccount": "حسابك",
   "claimHint": "اذكر ما حدث وكيف يختلف عن الشروط أعلاه. أشِر إلى تواريخ ومخرجات محددة بدل النوايا: هذه هي ما يمكن التحقق منه مقابل الأدلة.",
   "claimExample": "سُلّم مفهومان فقط من الثلاثة، والثالث تنويع لوني للثاني.",
   "claimMinimum": "{min} حرفاً على الأقل. بيان من سطر واحد لا يترك للمراجع ما يعمل عليه.",
@@ -183,7 +187,6 @@
   "verifiedByHandNoContact": "يُرتَّب التوثيق مع TrustIQ مباشرة خلال النسخة التجريبية المغلقة.",
   "verifiedByHandRecord": "على من يوثّق هويتك أن يدوّن ما اطّلع عليه. تُحفظ هذه الملاحظة ولا يمكن تعديلها ولا حذفها لاحقاً، ولا حتى من TrustIQ.",
   "verifiedByHandNothingToDo": "لا يوجد ما تفعله في هذه الشاشة. هي هنا لتعرف ما الذي يجب أن يحدث قبل أن يمكن قبول أي عقد، ولماذا ليس تلقائياً بعد.",
-
   "onboardingSkip": "تخطٍّ",
   "onboardingNext": "التالي",
   "onboardingBack": "السابق",
@@ -208,7 +211,6 @@
   "yourIdentity": "هويتك",
   "identityVerifiedOn": "موثّقة في {date}",
   "identityNotVerifiedYet": "غير موثّقة بعد. يمكنك صياغة العقود وإرسالها، لكن لا يمكنك قبول عقد.",
-
   "noAccountTitle": "ليس لديه حساب في TrustIQ",
   "noAccountBody": "لا أحد يملك {email}. يمكنك إرسال دعوة له بدلاً من ذلك: يحصل على رمز، وعندما ينضم يجد هذا العقد بانتظاره ومُرسلاً بالفعل.",
   "sendAnInvitation": "إرسال دعوة",
@@ -240,7 +242,6 @@
   "theyWillBe": "سيكون {role}",
   "buyerWord": "المشتري",
   "sellerWord": "البائع",
-
   "whoBuyer": "المشتري",
   "whoSeller": "البائع",
   "whoSystem": "TrustIQ",
@@ -269,7 +270,6 @@
   "needsYou": "يحتاجك",
   "markAllRead": "تعليم الكل كمقروء",
   "activityNote": "تُبنى هذه القائمة من سجل العقد نفسه، فهي تقول ما حدث بالضبط ولا شيء غير ذلك.",
-
   "stages": "المراحل",
   "stageWaiting": "لم تبدأ",
   "stageDelivered": "سُلّمت",
@@ -293,16 +293,12 @@
   "mvDeliver": "سلّم {who} مرحلة",
   "mvAccept": "قبل {who} مرحلة",
   "mvRequestRevision": "أعاد {who} مرحلة",
-
   "counterpartyNotVerified": "لم يوثّق {name} هويته بعد. ولا يصبح العقد ملزماً إلا بين هويتين موثّقتين، فلا يمكن قبول أي شيء قبل أن يفعل.",
   "youAreNotVerified": "هويتك غير موثّقة",
   "youAreNotVerifiedBody": "يمكنك صياغة العقود وإرسالها وإيداع الأدلة. أما قبول عقد فيحتاج إلى توثيق هويتك، لأن الطرف الآخر لا سبيل له لمعرفة من وافق.",
   "getVerified": "وثّق هويتك",
   "formNeedsVerifiedNote": "أرسله الآن إن شئت. لا يستطيع أيٌّ منكما قبوله قبل توثيق الهويتين، وهويتك ليست موثّقة.",
-
-  "yourAccount": "حسابك",
   "signedInAs": "مسجّل الدخول بـ",
-  "language": "اللغة",
   "signOut": "تسجيل الخروج",
   "closeAccount": "إغلاق حسابك",
   "closeAccountBlurb": "يُمحى كل ما يعرّف بك. ويبقى ما يحتاجه الطرف الآخر في العقد، مرتبطاً بسجل لم يعد يحمل اسمك.",
@@ -313,19 +309,16 @@
   "accountDeletedBody": "لم يكن هناك ما يشير إليه، فحُذف بالكامل.",
   "accountKeptBody": "ما بقي، ولا شيء غيره: {kept}.",
   "closeAccountFailed": "تعذّر إغلاق الحساب. لم يتغيّر شيء.",
-
   "noConnection": "تعذّر على TrustIQ الوصول إلى الإنترنت.",
   "noConnectionBody": "تحقّق من اتصالك وحاول مرة أخرى. لم يُرسل شيء، فلم يتغيّر شيء.",
   "somethingWentWrong": "حدث خطأ ما.",
   "somethingWentWrongBody": "حاول مرة أخرى. وإن تكرّر، أخبرنا بما كنت تفعل.",
-
   "heldPausedTitle": "تريست آي كيو متوقّف مؤقتًا",
   "heldPausedBody": "الخدمة غير متاحة لفترة قصيرة. لا شيء ممّا اتفقتم عليه يتأثر، ولا يمكن لأي عقد أن يتغيّر أثناء التوقف.",
   "heldOutdatedTitle": "هذه النسخة قديمة ولا يمكن استخدامها",
   "heldOutdatedBody": "حدّث تريست آي كيو من المتجر الذي ثبّته منه. عقودك ومستنداتك كما هي وستجدها عند عودتك.",
   "heldRetry": "تحقّق مرة أخرى",
   "heldChecking": "جارٍ التحقق",
-
   "verifyStartTitle": "ابدأ التحقق من هويتك",
   "verifyStartBody": "طلب واحد، يراجعه شخص. ستُبلَّغ بالنتيجة في الحالتين، وإن كان الجواب لا، ستُبلَّغ بما ينبغي تغييره.",
   "verifyStartAction": "ابدأ التحقق",
@@ -352,7 +345,6 @@
   "verifyDoneTitle": "تم التحقق من هويتك",
   "verifyDoneBody": "تم التحقق {when}. لا يلزم منك شيء آخر.",
   "verifySent": "أُرسل الطلب.",
-
   "askResolutionTitle": "وصلت روايتا الطرفين",
   "askResolutionBody": "يقرأ وكيل ذكاء اصطناعي الروايتين في ضوء المستندات المودعة ويقترح تسوية. ولا تُنهي التسوية النزاع إلا إذا قبلتماها معًا، ولأيٍّ منكما أن يرفض ويطلب شخصًا بدلًا من ذلك.",
   "askResolutionAction": "اطلب تسوية",
@@ -363,7 +355,6 @@
   "resolutionVerifyAction": "تحقّق من حسابي",
   "resolutionFailed": "تعذّر بدء التحليل. لم يتغيّر شيء، ويمكنك المحاولة مرة أخرى.",
   "resolutionStarted": "تمت قراءة الملف.",
-
   "stepHowLong": "مدّة سريانه",
   "stepHowLongBlurb": "معظم الأعمال مهمة واحدة بلا مدّة. لا تحدّد مدّة إلا إن كان هذا ترتيبًا يسري على فترة زمنية.",
   "periodOneOff": "عمل واحد",
@@ -387,12 +378,10 @@
   "contractRenewsOn": "يتجدّد في {when}",
   "contractEndsOn": "ينتهي في {when}، ولا يتجدّد",
   "contractDecideBy": "تقرّران معًا قبل {when}",
-
   "whatComesLater": "ليس بعد",
   "laterOnce": "{action} — بمجرد أن يصبح العقد {state}",
   "laterNote": "مقروء من الجدول نفسه الذي يتحقّق منه التطبيق قبل أن يسمح بأي إجراء، فلا يمكن أن يَعِد بما لا تسمح به القواعد.",
   "theirMove": "في انتظار {name}",
-
   "amountMustBePositive": "يجب أن يكون المبلغ أكبر من صفر.",
   "amountTwoDecimals": "المبالغ تُكتب بمنزلتين عشريتين. الدرهم الواحد 100 فلس، ولا يوجد أصغر من ذلك.",
   "amountFormat": "أدخل مبلغاً بالدرهم، مثل 500 أو 1250.50.",

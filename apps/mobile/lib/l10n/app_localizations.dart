@@ -703,6 +703,12 @@ abstract class L {
   /// **'Add evidence'**
   String get addEvidence;
 
+  /// Shown under a finding that is founded on the contract itself rather than on a filed document.
+  ///
+  /// In en, this message translates to:
+  /// **'the agreed terms'**
+  String get findingRestsOnTerms;
+
   /// No description provided for @yourTurn.
   ///
   /// In en, this message translates to:

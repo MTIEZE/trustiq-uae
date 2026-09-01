@@ -266,7 +266,7 @@ class SupabaseBackend implements Backend {
         findings = await _select(
           () => _client
               .from('resolution_findings')
-              .select('id, proposal_id, position, statement')
+              .select('id, proposal_id, position, statement, cites_terms')
               .inFilter('proposal_id', proposalIds),
           'findings',
         );

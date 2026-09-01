@@ -333,6 +333,9 @@ class LEn extends L {
   String get addEvidence => 'Add evidence';
 
   @override
+  String get findingRestsOnTerms => 'the agreed terms';
+
+  @override
   String get yourTurn => 'Your turn';
 
   @override

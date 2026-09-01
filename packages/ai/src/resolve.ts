@@ -168,6 +168,7 @@ export async function resolveDispute(
     findings: raw.findings.map<GroundedFinding>((finding) => ({
       statement: finding.statement,
       evidenceIds: finding.evidenceIds as EvidenceId[],
+      citesTerms: finding.citesTerms,
     })),
     allocation: { seller: split.seller, buyer: split.buyer },
     confidence: raw.confidence,
@@ -262,6 +263,12 @@ function checkShape(raw: RawResolution): string | null {
     }
     if (!Array.isArray(finding.evidenceIds) || finding.evidenceIds.some((id) => typeof id !== 'string')) {
       return `findings[${index}].evidenceIds must be an array of strings`
+    }
+    // Checked rather than coerced. A missing flag read as false would turn a
+    // finding the model meant to rest on the agreement into an unsupported
+    // one, and the proposal would be thrown away for the wrong reason.
+    if (typeof finding.citesTerms !== 'boolean') {
+      return `findings[${index}].citesTerms must be a boolean`
     }
   }
   return null

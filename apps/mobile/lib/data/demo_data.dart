@@ -125,7 +125,7 @@ class ResolutionProposal {
 
   final ResolutionDecision decision;
   final String summary;
-  final List<({String statement, List<String> evidenceIds})> findings;
+  final List<({String statement, List<String> evidenceIds, bool citesTerms})> findings;
   final Fils sellerAmount;
   final Fils buyerAmount;
   final ProposalSource source;
@@ -406,10 +406,22 @@ List<Contract> seedContracts() => [
               (
                 statement: 'The brief asks for three concepts within seven days.',
                 evidenceIds: ['ev_contract'],
+                citesTerms: false,
               ),
               (
                 statement: 'Delivery was made on 8 August, inside that window.',
                 evidenceIds: ['ev_delivery'],
+                citesTerms: false,
+              ),
+              // Founded on the agreement rather than on a document. Before the
+              // terms could be cited, a point like this had nowhere to attach
+              // and the whole proposal was refused for making it.
+              (
+                statement:
+                    'The agreement sets no deduction for a shortfall, so the amount '
+                    'is shared rather than withheld.',
+                evidenceIds: <String>[],
+                citesTerms: true,
               ),
             ],
             sellerAmount: filsFromAed('300'),

@@ -29,11 +29,11 @@ export const RESOLUTION_SCHEMA: Record<string, unknown> = {
     findings: {
       type: 'array',
       description:
-        'The factual basis for the outcome. Each statement must be supported by evidence that was actually submitted.',
+        'The factual basis for the outcome. Every statement must rest on submitted evidence, on the agreed terms, or on both.',
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['statement', 'evidenceIds'],
+        required: ['statement', 'evidenceIds', 'citesTerms'],
         properties: {
           statement: {
             type: 'string',
@@ -42,8 +42,13 @@ export const RESOLUTION_SCHEMA: Record<string, unknown> = {
           evidenceIds: {
             type: 'array',
             description:
-              'Ids of the evidence supporting this statement. Every id must appear in the case file. Never invent one.',
+              'Ids of the evidence supporting this statement. Every id must appear in the case file. Never invent one. Leave empty when the statement rests on the agreed terms alone.',
             items: { type: 'string' },
+          },
+          citesTerms: {
+            type: 'boolean',
+            description:
+              'True when this statement is founded on the agreed terms: what was promised, by when, and on what conditions. Use it rather than leaving a statement about the agreement unsupported. A statement with no evidence ids and citesTerms false is refused.',
           },
         },
       },
@@ -65,7 +70,7 @@ export const RESOLUTION_SCHEMA: Record<string, unknown> = {
 export interface RawResolution {
   decision: string
   summary: string
-  findings: { statement: string; evidenceIds: string[] }[]
+  findings: { statement: string; evidenceIds: string[]; citesTerms: boolean }[]
   sellerPercent: number
   confidence: number
 }

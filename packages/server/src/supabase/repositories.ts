@@ -244,6 +244,7 @@ export class SupabaseDisputeRepository implements DisputeRepository {
       p_findings: proposal.findings.map((finding) => ({
         statement: finding.statement,
         evidenceIds: finding.evidenceIds,
+        citesTerms: finding.citesTerms,
       })),
       // The audit row written moments ago, before the model output was trusted
       // enough to store. Without it there is no way back from a proposal to the

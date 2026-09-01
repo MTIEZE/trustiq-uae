@@ -331,6 +331,9 @@ class LAr extends L {
   String get addEvidence => 'إضافة دليل';
 
   @override
+  String get findingRestsOnTerms => 'الشروط المتفق عليها';
+
+  @override
   String get yourTurn => 'دورك';
 
   @override
