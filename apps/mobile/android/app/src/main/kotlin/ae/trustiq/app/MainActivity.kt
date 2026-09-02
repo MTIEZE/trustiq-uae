@@ -1,4 +1,4 @@
-package ae.trustiq.trustiq_app
+package ae.trustiq.app
 
 import io.flutter.embedding.android.FlutterActivity
 

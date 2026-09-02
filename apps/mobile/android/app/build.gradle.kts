@@ -16,7 +16,7 @@ plugins {
 }
 
 android {
-    namespace = "ae.trustiq.trustiq_app"
+    namespace = "ae.trustiq.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +28,10 @@ android {
     defaultConfig {
         // Permanent once the app is published. Changing it later is a new app
         // on the store, not an update to this one.
-        applicationId = "ae.trustiq.trustiq_app"
+        // Permanent. Play ties a listing to this string for the life of the
+        // app: it cannot be changed after the first upload, and it is what
+        // shows in the store URL. Chosen before anything was uploaded.
+        applicationId = "ae.trustiq.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
