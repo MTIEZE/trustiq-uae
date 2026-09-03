@@ -6,8 +6,23 @@ import java.util.Properties
 val keystoreProperties = Properties()
 val keystoreFile = rootProject.file("key.properties")
 if (keystoreFile.exists()) {
-    keystoreFile.inputStream().use { keystoreProperties.load(it) }
+    // Read as text with the byte order mark stripped, rather than straight
+    // from the stream. Windows PowerShell writes UTF-8 with a BOM whenever it
+    // is asked for UTF-8, and Properties.load reads those three bytes as part
+    // of the first key: the first key silently gains three invisible ones,
+    // the lookup below returns null, and Gradle says only "null cannot be cast
+    // to non-null type kotlin.String" with a line number. That cost an hour.
+    keystoreProperties.load(keystoreFile.readText().removePrefix("\uFEFF").reader())
 }
+
+/** A signing property, or a sentence saying which one is missing. */
+fun signingProperty(name: String): String =
+    keystoreProperties[name] as? String
+        ?: throw GradleException(
+            "key.properties has no \"$name\". It needs storePassword, keyPassword, " +
+                "keyAlias and storeFile, and must be saved as UTF-8 without a byte order " +
+                "mark. Found: " + keystoreProperties.keys.joinToString(", "),
+        )
 
 plugins {
     id("com.android.application")
@@ -26,11 +41,10 @@ android {
     }
 
     defaultConfig {
-        // Permanent once the app is published. Changing it later is a new app
-        // on the store, not an update to this one.
         // Permanent. Play ties a listing to this string for the life of the
-        // app: it cannot be changed after the first upload, and it is what
-        // shows in the store URL. Chosen before anything was uploaded.
+        // app: it cannot be changed after the first upload, changing it later
+        // is a new app rather than an update, and it is what shows in the
+        // store URL. Chosen before anything was uploaded.
         applicationId = "ae.trustiq.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -47,10 +61,15 @@ android {
     signingConfigs {
         create("release") {
             if (keystoreFile.exists()) {
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
+                // rootProject, not file(). Inside this module `file()` resolves
+                // against android/app/, so a plain filename would be looked for
+                // next to this build script rather than beside key.properties in
+                // android/, where the keystore actually is. The two belong
+                // together and now resolve the same way.
+                storeFile = rootProject.file(signingProperty("storeFile"))
+                storePassword = signingProperty("storePassword")
+                keyAlias = signingProperty("keyAlias")
+                keyPassword = signingProperty("keyPassword")
             }
         }
     }
